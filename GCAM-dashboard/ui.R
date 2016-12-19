@@ -19,7 +19,8 @@ shinyUI(fluidPage(
         textOutput('projFilename'),
         h3('Scenarios in project file:'),
         verbatimTextOutput('scenarios'),
-        h3('Queries in first scenario:'),
+        selectInput('scenarioInput','Select scenarios',choices=list(), multiple=TRUE),
+        h3('Queries present in ALL selected scenarios:'),
         verbatimTextOutput('queries')
     )
   )

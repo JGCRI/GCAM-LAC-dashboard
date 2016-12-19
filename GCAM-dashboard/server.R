@@ -7,7 +7,7 @@ srcdir <- getSrcDirectory(server.R)
 source(file.path(srcdir,'server-helpers.R'))
 
 # Define server logic required to draw a histogram
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
 
     rFileinfo <- reactive({
         fileinfo <- input$projectFile
@@ -19,6 +19,7 @@ shinyServer(function(input, output) {
         else {
             project.data <- loadProject(fileinfo$datapath)   # should be only one file
             project.filename <- fileinfo$name
+            updateSelectInput(session, 'scenarioInput', choices=listScenarios(project.data))
         }
         list(project.filename=project.filename, project.data=project.data)
     })
@@ -28,20 +29,10 @@ shinyServer(function(input, output) {
     })
 
     output$scenarios <- renderText({
-        pd <- rFileinfo()$project.data
-        if(is.null(pd)) {
-            '->none<-'
-        } else {
-            listScenarios(rFileinfo()$project.data)} %>% paste(collapse='\n')
-        })
+        getProjectScenarios(rFileinfo)
+    })
 
     output$queries <- renderText({
-        pd <- rFileinfo()$project.data
-        if(is.null(pd)) {
-            '->none<-'
-        } else {
-            scen1 <- listScenarios(pd)[1]
-            listQueries(pd, scen1) %>% paste(collapse='\n')
-        }
+        getScenarioQueries(rFileinfo, input$scenarioInput)
     })
 })
