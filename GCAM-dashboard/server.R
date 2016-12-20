@@ -71,4 +71,22 @@ shinyServer(function(input, output, session) {
     output$queries <- renderText({
         getScenarioQueries(rFileinfo, input$scenarioInput, concat='\n')
     })
+
+    output$mapPlot <- renderPlot({
+        diffscen <- if(input$diffCheck) {
+            input$diffScenario
+        } else {
+            NULL
+        }
+        plotMap(rFileinfo()$project.data, input$plotQuery,
+                input$plotScenario, diffscen, input$mapProjection)
+    })
+
+### Debugging
+    observe({
+                print('****************Change of Input****************')
+                cat('plotScenario: ', input$plotScenario, '\n')
+                cat('diffScenario: ', input$diffScenario, '\n')
+                cat('plotQuery: ', input$plotQuery, '\n')
+            })
 })

@@ -21,14 +21,28 @@ shinyUI(fluidPage(
 
     # main display area
     mainPanel(
-        h2('Project Status'),
-        h3('Project file: '),
-        verbatimTextOutput('projFilename'),
-        h3('Scenarios in project file:'),
-        verbatimTextOutput('scenarios'),
-        selectInput('scenarioInput','Select scenarios',choices=list(), multiple=TRUE),
-        h3('Queries present in ALL selected scenarios:'),
-        verbatimTextOutput('queries')
-    )
-  )
+        tabsetPanel(
+            tabPanel('Project Info',
+                h2('Project Information'),
+                h3('Project file: '),
+                verbatimTextOutput('projFilename'),
+                h3('Scenarios in project file:'),
+                verbatimTextOutput('scenarios'),
+                selectInput('scenarioInput','Select scenarios',choices=list(), multiple=TRUE),
+                h3('Queries present in ALL selected scenarios:'),
+                verbatimTextOutput('queries')
+            ),
+
+            tabPanel('Map View',
+                plotOutput('mapPlot'),
+                h3('Options'),
+                selectInput('mapProjection', 'Map Type',
+                            choices=c(Global='global', `Latin America and Caribbean`='lac'),
+                            selected = 'lac')
+            )
+
+        )  # tabset panel
+
+    ) #  main Panel
+  )   # sidebar layout
 ))
