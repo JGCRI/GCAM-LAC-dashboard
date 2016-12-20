@@ -13,28 +13,28 @@ getProjectName <- function(rFileinfo)
     }
 }
 
-getProjectScenarios <- function(rFileinfo)
+getProjectScenarios <- function(rFileinfo, concat=NULL)
 {
     pd <- rFileinfo()$project.data
     if(is.null(pd)) {
         '->none<-'
     } else {
-        listScenarios(rFileinfo()$project.data) %>% paste(collapse='\n')
+        listScenarios(rFileinfo()$project.data) %>% paste(collapse=concat)
     }
 }
 
-getScenarioQueries <- function(rFileinfo, scenarios)
+getScenarioQueries <- function(rFileinfo, scenarios, concat=NULL)
 {
     prj <- rFileinfo()$project.data
     if(is.null(prj)) {
         '->none<-'
     }
-    else if(length(scenarios) == 0) {
+    else if(length(scenarios) == 0 || all(scenarios=='')) {
         '->No scenarios selected<-'
     }
     else {
         lapply(scenarios, . %>% listQueries(prj, .)) %>%
             Reduce(intersect,.) %>%
-            paste(collapse='\n')
+            paste(collapse=concat)
     }
 }
