@@ -3,6 +3,11 @@
 ### Conventions:
 ###    rFileinfo:  The reactive fileinfo structure returned by the file browser
 
+tag.noscen <- '->No scenarios selected<-'     # placeholder when no scenario selected
+
+
+## UI helpers
+
 getProjectName <- function(rFileinfo)
 {
     fn <- rFileinfo()$project.filename
@@ -30,7 +35,7 @@ getScenarioQueries <- function(rFileinfo, scenarios, concat=NULL)
         '->none<-'
     }
     else if(length(scenarios) == 0 || all(scenarios=='')) {
-        '->No scenarios selected<-'
+        tag.noscen
     }
     else {
         lapply(scenarios, . %>% listQueries(prj, .)) %>%
@@ -42,6 +47,17 @@ getScenarioQueries <- function(rFileinfo, scenarios, concat=NULL)
 
 ### Helpers for making plots
 library('ggplot2')
+library('dplyr')
+library('tidyr')
+library('lazyeval')
+library('RColorBrewer')
+library('gcammaptools')
+
+data(map.rgn32)
+data(map.basin235)
+
+pal.reg <- brewer.pal(9,'Blues')
+pal.dif <- brewer.pal(9, 'RdBu')
 
 default.plot <- function(label.text='No data selected')
 {
@@ -49,25 +65,109 @@ default.plot <- function(label.text='No data selected')
         theme_minimal()
 }
 
-plotMap <- function(prjdata, query, pltscen, diffscen, projection)
+plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
 {
     if(is.null(prjdata)) {
         default.plot()
     }
-    else if( is.null(pltscen) ||
-             !pltscen %in% listScenarios(prjdata) ||
-            (!is.null(diffscen) && pltscen==diffscen) ) {
-        ## These condition(s) all indicate a transitional state
+    else if(is.null(pltscen) ||
+            !pltscen %in% listScenarios(prjdata) ||
+            (!is.null(diffscen) && pltscen==diffscen) ||
+            query==tag.noscen) {
+        ## These condition(s) all indicate a transitional state, so don't do anything.
         last_plot()
     }
     else {
         scens <- paste(c(pltscen, diffscen), collapse=', ')
-        cat('scenarios: ', scens, '\n')
-        qr <- paste('query: ', query)
-        cat('queries: ', query, '\n')
-        cat('projection: ', projection, '\n')
-        label.txt <- paste(c('scenarios: ', 'query: ', 'projection: '),
-                           c(scens, query, projection), collapse='\n')
-        default.plot(label.txt)
+
+        is.diff <- !is.null(diffscen)      # We'll do a couple of things differently for a diff plot
+
+        ## name of the year column
+        xyear <- paste('X',year, sep='')
+
+        pltdata <- getPlotData(prjdata, query, pltscen, diffscen, year)
+        mapset <- attr(pltdata,'mapset')
+        pltdata <- addRegionID(pltdata, lookupfile=mapset, drops=mapset)
+        if(mapset==rgn32)
+            map.dat <- map.rgn32
+        else if(mapset==basin235)
+            map.dat <- map.basin235
+        plt.map <- merge(map.dat, pltdata)
+
+        ## get the projection and extent for the map
+        map.params <- getMapParams(projselect)
+
+        pal <- if(is.diff) {
+            pal.dif
+        }
+        else {
+            pal.reg
+        }
+
+        plot_GCAM(plt.map, col=xyear,
+                  proj=map.params$proj, extent=map.params$ext, orientation=map.params$orientation,
+                  colors=pal, legend=TRUE)
     }
+}
+
+
+### Data wrangling
+
+getPlotData <- function(prjdata, query, pltscen, diffscen, year)
+{
+    tp <- getQuery(prjdata, query, pltscen)
+    if(!is.null(diffscen)) {
+        dp <- getQuery(prjdata, query, diffscen)
+    }
+    else {
+        dp <- NULL
+    }
+
+    ## Try to figure out what type of map we are supposed to be plotting here.
+    if('basin' %in% names(tp)) {
+        ## mapping the 235 basins
+        key <- 'basin'
+        mapset <- basin235
+    }
+    else {
+        ## mapping the 32 regions
+        key <- 'region'
+        mapset <- rgn32
+    }
+
+    xyear <- paste('X',year,sep='')
+    if(!is.null(dp)) {
+        ## we're doing a difference plot, so aggregate the difference scenario and subtract
+        tp[[xyear]] <- tp[[xyear]] - dp[[xyear]]
+    }
+    ## select the key and year columns, then sum all values with the same key.  Force the sum
+    ## to have the same name as the original column
+    outcol <- list(interp(~sum(col), col=as.name(xyear)), ~summarize.unit(Units))
+    tp <- select_(tp, .dots=c(key, xyear, 'Units')) %>% group_by_(.dots=key) %>%
+        summarise_(.dots=setNames(outcol, c(xyear, 'Units'))) %>% rename_('region'=key)
+
+    ## Occasionally you get a region with "0.0" for the unit string because most of its entries were zero.
+    ## Fix these so that the column all has the same unit.
+    tp$Units <- summarize.unit(tp$Units)
+
+    attr(tp, 'mapset') <- mapset       # kind of ugly.  Is there some other way we could communicate this?
+    tp
+}
+
+getMapParams <- function(projselect)
+{
+    ## currently valid values are 'global' and 'lac'
+    if(projselect == 'global') {
+        list(proj=eck3, ext=EXTENT_WORLD, orientation=NULL)
+    }
+    else if(projselect == 'lac') {
+        list(proj=ortho, ext=EXTENT_LA, orientation=ORIENTATION_LA)
+    }
+}
+
+summarize.unit <- function(unitcol)
+{
+    ## Summarize the unit column of a GCAM data frame by taking the most common entry.  (GCAM isn't always great about
+    ## setting its unit tag)
+    unitcol[which.max(table(unitcol))]
 }

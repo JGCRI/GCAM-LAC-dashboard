@@ -78,15 +78,16 @@ shinyServer(function(input, output, session) {
         } else {
             NULL
         }
+        year <- 2050             # placeholder until we put a year control in.
         plotMap(rFileinfo()$project.data, input$plotQuery,
-                input$plotScenario, diffscen, input$mapProjection)
+                input$plotScenario, diffscen, input$mapProjection, year)
     })
 
 ### Debugging
-    observe({
-                print('****************Change of Input****************')
-                cat('plotScenario: ', input$plotScenario, '\n')
-                cat('diffScenario: ', input$diffScenario, '\n')
-                cat('plotQuery: ', input$plotQuery, '\n')
-            })
+    ## observe({
+    ##             print('****************Change of Input****************')
+    ##             cat('plotScenario: ', input$plotScenario, '\n')
+    ##             cat('diffScenario: ', input$diffScenario, '\n')
+    ##             cat('plotQuery: ', input$plotQuery, '\n')
+    ##         })
 })
