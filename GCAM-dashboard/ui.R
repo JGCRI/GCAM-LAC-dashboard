@@ -35,6 +35,7 @@ shinyUI(fluidPage(
             ),
 
             tabPanel('Map View',
+                h3(textOutput('mapName', inline=TRUE),align='center'),
                 plotOutput('mapPlot',height='600px'),
                 sliderInput('mapYear', 'Year', width='80%', min=2010, max=2100, step=5, value=2050,
                             sep='', animate = TRUE),

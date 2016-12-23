@@ -83,6 +83,8 @@ shinyServer(function(input, output, session) {
                 input$plotScenario, diffscen, input$mapProjection, year)
     })
 
+    output$mapName <- renderText({input$plotQuery})
+
 ### Debugging
     ## observe({
     ##             print('****************Change of Input****************')
