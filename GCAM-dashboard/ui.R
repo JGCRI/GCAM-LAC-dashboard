@@ -35,7 +35,9 @@ shinyUI(fluidPage(
             ),
 
             tabPanel('Map View',
-                plotOutput('mapPlot'),
+                plotOutput('mapPlot',height='600px'),
+                sliderInput('mapYear', 'Year', width='80%', min=2010, max=2100, step=5, value=2050,
+                            sep='', animate = TRUE),
                 h3('Options'),
                 selectInput('mapProjection', 'Map Type',
                             choices=c(Global='global', `Latin America and Caribbean`='lac'),

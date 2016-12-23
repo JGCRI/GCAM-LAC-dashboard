@@ -4,7 +4,7 @@
 ###    rFileinfo:  The reactive fileinfo structure returned by the file browser
 
 tag.noscen <- '->No scenarios selected<-'     # placeholder when no scenario selected
-
+year.regex <- 'X[0-9]{4}'
 
 ## UI helpers
 
@@ -56,9 +56,6 @@ library('gcammaptools')
 data(map.rgn32)
 data(map.basin235)
 
-pal.reg <- brewer.pal(9,'Blues')
-pal.dif <- brewer.pal(9, 'RdBu')
-
 default.plot <- function(label.text='No data selected')
 {
     ggplot(mapping=aes(x=0,y=0)) + geom_label(aes_(label=label.text), size=10) +
@@ -81,6 +78,7 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
         scens <- paste(c(pltscen, diffscen), collapse=', ')
 
         is.diff <- !is.null(diffscen)      # We'll do a couple of things differently for a diff plot
+        mapLimits <- getMapLimits(prjdata, pltscen, diffscen, query)
 
         ## name of the year column
         xyear <- paste('X',year, sep='')
@@ -97,16 +95,11 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
         ## get the projection and extent for the map
         map.params <- getMapParams(projselect)
 
-        pal <- if(is.diff) {
-            pal.dif
-        }
-        else {
-            pal.reg
-        }
+        pal <- getMapPalette(is.diff)
 
         plot_GCAM(plt.map, col=xyear,
                   proj=map.params$proj, extent=map.params$ext, orientation=map.params$orientation,
-                  colors=pal, legend=TRUE)
+                  colors=pal, legend=TRUE, limits=mapLimits)
     }
 }
 
@@ -162,6 +155,41 @@ getMapParams <- function(projselect)
     }
     else if(projselect == 'lac') {
         list(proj=ortho, ext=EXTENT_LA, orientation=ORIENTATION_LA)
+    }
+}
+
+getMapPalette <- function(is.diff)
+{
+    if(is.diff) {
+        brewer.pal(9, 'RdBu')
+    } else {
+        brewer.pal(9,'Blues')
+    }
+}
+
+getMapLimits <- function(prjdata, pltscen, diffscen, query)
+{
+    pltdata <-
+        getQuery(prjdata, query, pltscen) %>%
+        select(matches(year.regex)) %>%
+        as.matrix
+
+    if(!is.null(diffscen)) {
+        diffdata <-
+            getQuery(prjdata, query, diffscen) %>%
+            select(matches(year.regex)) %>%
+            as.matrix
+        pltdata <- pltdata - diffdata
+    }
+
+    limits <- c(min(pltdata, na.rm=TRUE), max(pltdata, na.rm=TRUE))
+    if(is.null(diffscen)) {
+        ## For a difference plot, force the limits to be balanced on either side of zero
+        mag <- max(abs(limits))
+        c(-mag, mag)
+    }
+    else {
+        limits
     }
 }
 

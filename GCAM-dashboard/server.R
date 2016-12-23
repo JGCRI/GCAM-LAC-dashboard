@@ -78,7 +78,7 @@ shinyServer(function(input, output, session) {
         } else {
             NULL
         }
-        year <- 2050             # placeholder until we put a year control in.
+        year <- input$mapYear
         plotMap(rFileinfo()$project.data, input$plotQuery,
                 input$plotScenario, diffscen, input$mapProjection, year)
     })
