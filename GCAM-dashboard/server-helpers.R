@@ -84,6 +84,7 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
         xyear <- paste('X',year, sep='')
 
         pltdata <- getPlotData(prjdata, query, pltscen, diffscen, year)
+        unitstr <- summarize.unit(pltdata$Units)
         mapset <- attr(pltdata,'mapset')
         pltdata <- addRegionID(pltdata, lookupfile=mapset, drops=mapset)
         if(mapset==rgn32)
@@ -99,7 +100,9 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
 
         plot_GCAM(plt.map, col=xyear,
                   proj=map.params$proj, extent=map.params$ext, orientation=map.params$orientation,
-                  colors=pal, legend=TRUE, limits=mapLimits)
+                  colors=pal, legend=TRUE, limits=mapLimits, qtitle=unitstr) +
+            guides(fill=guide_colorbar(title.position='bottom', title.hjust=0.5,
+                                       barwidth=unit(4,'in')))
     }
 }
 
