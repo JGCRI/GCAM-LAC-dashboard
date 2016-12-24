@@ -11,6 +11,7 @@
     ** Color scale selector
     ** Zero pin or not
 * Getting some off-scale values in some plots.
+* Some queries are incompatible for difference plots (difference after aggregating?)
 
 ### Data
 * Check why Reference "Electricity Generation by Technology" appears to have negative values.

@@ -186,7 +186,7 @@ getMapLimits <- function(prjdata, pltscen, diffscen, query)
     }
 
     limits <- c(min(pltdata, na.rm=TRUE), max(pltdata, na.rm=TRUE))
-    if(is.null(diffscen)) {
+    if(!is.null(diffscen)) {
         ## For a difference plot, force the limits to be balanced on either side of zero
         mag <- max(abs(limits))
         c(-mag, mag)
