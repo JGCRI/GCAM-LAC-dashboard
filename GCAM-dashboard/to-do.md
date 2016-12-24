@@ -10,8 +10,7 @@
 * Additional controls for plot appearance
     ** Color scale selector
     ** Zero pin or not
-* Getting some off-scale values in some plots.
-* Some queries are incompatible for difference plots (difference after aggregating?)
+* Non-conformable arrays error.  (Aggregate before differencing?)
 
 ### Data
 * Check why Reference "Electricity Generation by Technology" appears to have negative values.

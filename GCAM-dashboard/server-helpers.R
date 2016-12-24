@@ -78,12 +78,12 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
         scens <- paste(c(pltscen, diffscen), collapse=', ')
 
         is.diff <- !is.null(diffscen)      # We'll do a couple of things differently for a diff plot
-        mapLimits <- getMapLimits(prjdata, pltscen, diffscen, query)
 
         ## name of the year column
         xyear <- paste('X',year, sep='')
 
         pltdata <- getPlotData(prjdata, query, pltscen, diffscen, year)
+        mapLimits <- getMapLimits(pltdata, is.diff)
         unitstr <- summarize.unit(pltdata$Units)
         mapset <- attr(pltdata,'mapset')
         pltdata <- addRegionID(pltdata, lookupfile=mapset, drops=mapset)
@@ -131,16 +131,19 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, year)
         mapset <- rgn32
     }
 
-    xyear <- paste('X',year,sep='')
+    xyears <- grep(year.regex, names(tp), value=TRUE)
     if(!is.null(dp)) {
-        ## we're doing a difference plot, so aggregate the difference scenario and subtract
-        tp[[xyear]] <- tp[[xyear]] - dp[[xyear]]
+        ## we're doing a difference plot, so subtract the difference scenario.
+        tp[xyears] <- as.matrix(tp[xyears]) - as.matrix(dp[xyears])
     }
     ## select the key and year columns, then sum all values with the same key.  Force the sum
     ## to have the same name as the original column
-    outcol <- list(interp(~sum(col), col=as.name(xyear)), ~summarize.unit(Units))
-    tp <- select_(tp, .dots=c(key, xyear, 'Units')) %>% group_by_(.dots=key) %>%
-        summarise_(.dots=setNames(outcol, c(xyear, 'Units'))) %>% rename_('region'=key)
+    outcol <- c(
+        lapply(xyears, function(xyear){interp(~sum(col), col=as.name(xyear))}),
+        ~summarize.unit(Units)
+    )
+    tp <- select_(tp, .dots=c(key, xyears, 'Units')) %>% group_by_(.dots=key) %>%
+        summarise_(.dots=setNames(outcol, c(xyears, 'Units'))) %>% rename_('region'=key)
 
     ## Occasionally you get a region with "0.0" for the unit string because most of its entries were zero.
     ## Fix these so that the column all has the same unit.
@@ -170,23 +173,11 @@ getMapPalette <- function(is.diff)
     }
 }
 
-getMapLimits <- function(prjdata, pltscen, diffscen, query)
+getMapLimits <- function(pltdata, is.diff)
 {
-    pltdata <-
-        getQuery(prjdata, query, pltscen) %>%
-        select(matches(year.regex)) %>%
-        as.matrix
-
-    if(!is.null(diffscen)) {
-        diffdata <-
-            getQuery(prjdata, query, diffscen) %>%
-            select(matches(year.regex)) %>%
-            as.matrix
-        pltdata <- pltdata - diffdata
-    }
-
+    pltdata <- select(pltdata, matches(year.regex))
     limits <- c(min(pltdata, na.rm=TRUE), max(pltdata, na.rm=TRUE))
-    if(!is.null(diffscen)) {
+    if(is.diff) {
         ## For a difference plot, force the limits to be balanced on either side of zero
         mag <- max(abs(limits))
         c(-mag, mag)
