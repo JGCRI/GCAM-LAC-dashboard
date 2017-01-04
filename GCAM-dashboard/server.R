@@ -85,6 +85,27 @@ shinyServer(function(input, output, session) {
 
     output$mapName <- renderText({input$plotQuery})
 
+    output$timePlot <- renderPlot({
+        diffscen <- if(input$diffCheck) {
+            input$diffScenario
+        } else {
+            NULL
+        }
+        plotTime(rFileinfo()$project.data, input$plotQuery, input$plotScenario,
+                 diffscen, input$tvSubcatVar, input$tvFilterCheck, input$tvRgns)
+    })
+
+    ## update controls on time view panel
+    observe({
+        if(!is.null(rFileinfo()$project.data)) {
+            d <- rFileinfo()$project.data
+            scen <- input$plotScenario
+            query <- input$plotQuery
+            tbl <- getQuery(d,query,scen)
+            rgns <- unique(tbl$region) %>% sort
+            updateCheckboxGroupInput(session, 'tvRgns', choices = rgns)
+        }
+    })
 ### Debugging
     ## observe({
     ##             print('****************Change of Input****************')

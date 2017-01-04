@@ -193,3 +193,9 @@ summarize.unit <- function(unitcol)
     ## setting its unit tag)
     unitcol[which.max(table(unitcol))]
 }
+
+plotTime <- function(data, query, scen, diffscen, subcatvar, filter, rgns)
+{
+    label <- paste(query,scen,diffscen,subcatvar,filter,rgns, sep='\n')
+    default.plot(label.text=label)
+}

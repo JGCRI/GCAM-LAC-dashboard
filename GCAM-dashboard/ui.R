@@ -43,6 +43,18 @@ shinyUI(fluidPage(
                 selectInput('mapProjection', 'Map Type',
                             choices=c(Global='global', `Latin America and Caribbean`='lac'),
                             selected = 'lac')
+            ),
+
+            tabPanel('Time View',
+                plotOutput('timePlot', height='600px'),
+                h3('Options'),
+                selectInput('tvSubcatVar', 'Break totals into subcategories by:',
+                            choices=c('none','region')),
+                checkboxInput('tvFilterCheck', 'Limit plot to selected regions'),
+                conditionalPanel(
+                    condition = "input.tvFilterCheck == true",
+                    checkboxGroupInput('tvRgns', 'Regions to display', choices=list())
+                )
             )
 
         )  # tabset panel
