@@ -187,8 +187,6 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
     ## Occasionally you get a region with "0.0" for the unit string because most of its entries were zero.
     ## Fix these so that the column all has the same unit.
     tp$Units <- summarize.unit(tp$Units)
-
-    attr(tp, 'mapset') <- mapset       # kind of ugly.  Is there some other way we could communicate this?
     tp
 }
 
