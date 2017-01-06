@@ -58,4 +58,18 @@ of interest).
 
 ### Plotting data over time
 
-(Not yet implemented.)
+The Time View tab provides a view of the query variable over time.  It
+uses the same controls on the left panel to select the scenario and
+query to display.  As before, you can display either a single scenario
+or a difference between two scenarios.
+
+Below the plot you will find controls for additional plot options.
+The selector box labeled "Break totals into subcategories by:" allows
+you to change the bar plot into a stacked bar plot, with the elements
+making up the stack coming from the variable you select.  There is
+also a check box for filtering the data to certain regions.  Selecting
+it will cause a list of regions to appear, and you can select the ones
+you want to include in the plot.  Note, however, that if _no_ regions
+are selected, the plot will instead display _all_ regions, the same as
+if the filter regions check box were not selected.
+
