@@ -5,6 +5,12 @@
 
 tag.noscen <- '->No scenarios selected<-'     # placeholder when no scenario selected
 year.regex <- 'X[0-9]{4}'
+year.cols <- function(df) {grep(year.regex, names(df), value=TRUE)}
+strip.xyear <- function(xyear) {as.integer(substr(xyear, 2, 5))}
+
+#### State variables
+last.region.filter <- NULL
+
 
 ## UI helpers
 
@@ -79,13 +85,18 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
 
         is.diff <- !is.null(diffscen)      # We'll do a couple of things differently for a diff plot
 
-        ## name of the year column
-        xyear <- paste('X',year, sep='')
+        mapset <- determineMapset(prjdata, pltscen, query)
+        key <- if(mapset==basin235) 'basin' else 'region'
+        pltdata <- getPlotData(prjdata, query, pltscen, diffscen, key)
 
-        pltdata <- getPlotData(prjdata, query, pltscen, diffscen, year)
+        ## map plot is expecting the column coresponding to the map locations to
+        ## be called "region", so if we're working with water basins, we have to
+        ## rename it.
+        if(mapset==basin235)
+            pltdata$region <- pltdata$basin
+
         mapLimits <- getMapLimits(pltdata, is.diff)
         unitstr <- summarize.unit(pltdata$Units)
-        mapset <- attr(pltdata,'mapset')
         pltdata <- addRegionID(pltdata, lookupfile=mapset, drops=mapset)
         if(mapset==rgn32)
             map.dat <- map.rgn32
@@ -98,6 +109,9 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
 
         pal <- getMapPalette(is.diff)
 
+        ## name of the year column
+        xyear <- paste('X',year, sep='')
+
         plot_GCAM(plt.map, col=xyear,
                   proj=map.params$proj, extent=map.params$ext, orientation=map.params$orientation,
                   colors=pal, legend=TRUE, limits=mapLimits, qtitle=unitstr) +
@@ -106,11 +120,35 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
     }
 }
 
+## Figure out which map to plot the query on.  Right now we assume that if the
+## query table contains a 'basin' column, then we want to plot on the basin map;
+## otherwise we plot on the region map.
+determineMapset <- function(prjdata, pltscen, query)
+{
+    tp <- getQuery(prjdata, query, pltscen)
+    if('basin' %in% names(tp)) {
+        ## mapping the 235 basins
+        mapset <- basin235
+    }
+    else {
+        ## mapping the 32 regions
+        mapset <- rgn32
+    }
+}
 
 ### Data wrangling
 
-getPlotData <- function(prjdata, query, pltscen, diffscen, year)
+getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
+                        filterset=NULL)
 {
+    ## prjdata:  Project data structure
+    ## query:  Query to plot
+    ## pltscen:  Scenario to plot
+    ## diffscen:  Difference scenario, if any
+    ## key: aggregation variable.  (e.g., 'region' or 'sector')
+    ## filtervar:  if not NULL, filter on this variable before aggregating
+    ## filterset:  set of values to include in the filter operation.  Ignored if
+    ##             filtervar is NULL.
     tp <- getQuery(prjdata, query, pltscen)
     if(!is.null(diffscen)) {
         dp <- getQuery(prjdata, query, diffscen)
@@ -119,31 +157,32 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, year)
         dp <- NULL
     }
 
-    ## Try to figure out what type of map we are supposed to be plotting here.
-    if('basin' %in% names(tp)) {
-        ## mapping the 235 basins
-        key <- 'basin'
-        mapset <- basin235
-    }
-    else {
-        ## mapping the 32 regions
-        key <- 'region'
-        mapset <- rgn32
-    }
-
-    xyears <- grep(year.regex, names(tp), value=TRUE)
+    yearcols <- year.cols(tp)
     if(!is.null(dp)) {
         ## we're doing a difference plot, so subtract the difference scenario.
-        tp[xyears] <- as.matrix(tp[xyears]) - as.matrix(dp[xyears])
+        tp[yearcols] <- as.matrix(tp[yearcols]) - as.matrix(dp[yearcols])
     }
+
+    ## If filtering is in effect, do it now
+    if(!is.null(filtervar) &&
+       !is.null(filterset) &&
+       length(filterset) > 0
+       ) {
+        ## This is horrible.  There has got to be a better way to do this.
+        tp <- filter_(tp, paste(fcol,
+                                '%in% c(',
+                                paste(shQuote(filterset), collapse=', '), ')'
+                                ))
+    }
+
     ## select the key and year columns, then sum all values with the same key.  Force the sum
     ## to have the same name as the original column
     outcol <- c(
-        lapply(xyears, function(xyear){interp(~sum(col), col=as.name(xyear))}),
+        lapply(yearcols, function(xyear){interp(~sum(col), col=as.name(xyear))}),
         ~summarize.unit(Units)
     )
-    tp <- select_(tp, .dots=c(key, xyears, 'Units')) %>% group_by_(.dots=key) %>%
-        summarise_(.dots=setNames(outcol, c(xyears, 'Units'))) %>% rename_('region'=key)
+    tp <- select_(tp, .dots=c(key, yearcols, 'Units')) %>% group_by_(.dots=key) %>%
+        summarise_(.dots=setNames(outcol, c(yearcols, 'Units')))
 
     ## Occasionally you get a region with "0.0" for the unit string because most of its entries were zero.
     ## Fix these so that the column all has the same unit.
@@ -194,8 +233,36 @@ summarize.unit <- function(unitcol)
     unitcol[which.max(table(unitcol))]
 }
 
-plotTime <- function(data, query, scen, diffscen, subcatvar, filter, rgns)
+plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filter, rgns)
 {
-    label <- paste(query,scen,diffscen,subcatvar,filter,rgns, sep='\n')
-    default.plot(label.text=label)
+    ## prjdata: a project data structure
+    ## query:  Name of the query to plot
+    ## scen:  Plot scenario
+    ## diffscen:  Difference scenario, or NULL if none
+    ## subcatvar:  Variable to use for subcategories in the plot
+    ## filter:  If TRUE, then filter to regions in the rgns argument
+    ## rgns:  Regions to filter to, if filter is set.
+##    label <- paste(query,scen,diffscen,subcatvar,filter,rgns, sep='\n')
+##    default.plot(label.text=label)
+
+    if(is.null(prjdata)) {
+        default.plot()
+    }
+    else {
+        if(filter)
+            filtervar <- 'region'
+        else
+            filtervar <- NULL
+
+        if(subcatvar=='none')
+            subcatvar <- NULL
+
+        pltdata <- getPlotData(prjdata, query, scen, diffscen, subcatvar,
+                               filtervar, rgns) %>%
+            gather(year, value, matches(year.regex)) %>%
+            mutate(year=strip.xyear(year))
+
+        ggplot(pltdata, aes_string('year','value', fill=subcatvar)) +
+            geom_bar(stat='identity') + theme_minimal() + ylab(pltdata$Units)
+    }
 }

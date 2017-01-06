@@ -59,6 +59,20 @@ shinyServer(function(input, output, session) {
 
     })
 
+    observe({
+        if(input$plotQuery != '') {
+            ## Asumes that a particular query has the same columns in all scenarios
+            scen <- isolate(input$plotScenario)
+            prj <- isolate(rFileinfo()$project.data)
+            querycols <- getQuery(prj, input$plotQuery, scen) %>% names
+            catvars <- grep(year.regex, querycols, invert=TRUE, value=TRUE) %>%
+                grep('scenario|Units', . , invert=TRUE, value=TRUE)
+            updateSelectInput(session, 'tvSubcatVar', choices=c('none',
+                                                      catvars))
+        }
+    })
+
+
 
     output$projFilename <- renderText({
         getProjectName(rFileinfo)
@@ -91,6 +105,7 @@ shinyServer(function(input, output, session) {
         } else {
             NULL
         }
+        last.region.filter <<- input$tvRgns
         plotTime(rFileinfo()$project.data, input$plotQuery, input$plotScenario,
                  diffscen, input$tvSubcatVar, input$tvFilterCheck, input$tvRgns)
     })
@@ -103,7 +118,8 @@ shinyServer(function(input, output, session) {
             query <- input$plotQuery
             tbl <- getQuery(d,query,scen)
             rgns <- unique(tbl$region) %>% sort
-            updateCheckboxGroupInput(session, 'tvRgns', choices = rgns)
+            updateCheckboxGroupInput(session, 'tvRgns', choices = rgns,
+                                     selected = last.region.filter)
         }
     })
 ### Debugging

@@ -53,7 +53,7 @@ shinyUI(fluidPage(
                 checkboxInput('tvFilterCheck', 'Limit plot to selected regions'),
                 conditionalPanel(
                     condition = "input.tvFilterCheck == true",
-                    checkboxGroupInput('tvRgns', 'Regions to display', choices=list())
+                    checkboxGroupInput('tvRgns', 'Regions to display', choices=list(), inline=TRUE)
                 )
             )
 
