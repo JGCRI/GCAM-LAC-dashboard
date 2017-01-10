@@ -169,7 +169,7 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
        length(filterset) > 0
        ) {
         ## This is horrible.  There has got to be a better way to do this.
-        tp <- filter_(tp, paste(fcol,
+        tp <- filter_(tp, paste(filtervar,
                                 '%in% c(',
                                 paste(shQuote(filterset), collapse=', '), ')'
                                 ))
