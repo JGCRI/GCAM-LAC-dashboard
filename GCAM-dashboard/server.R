@@ -5,6 +5,7 @@ library(magrittr)
 server.R <- function() {}              # marker function
 srcdir <- getSrcDirectory(server.R)
 source(file.path(srcdir,'server-helpers.R'))
+options(shiny.maxRequestSize=512*1024^2) # 512 MB max file upload size.
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
