@@ -26,6 +26,8 @@ shinyUI(fluidPage(
                 h2('Project Information'),
                 h3('Project file: '),
                 verbatimTextOutput('projFilename'),
+                h3('Project data size: '),
+                verbatimTextOutput('projectSize'),
                 h3('Scenarios in project file:'),
                 verbatimTextOutput('scenarios'),
                 selectInput('scenarioInput','Select scenarios to see available queries:',

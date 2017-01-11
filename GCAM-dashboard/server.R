@@ -79,6 +79,13 @@ shinyServer(function(input, output, session) {
         getProjectName(rFileinfo)
     })
 
+    output$projectSize <- renderText({
+        if(is.null(rFileinfo()$project.data))
+            0
+        else
+            format(object.size(rFileinfo()$project.data), units='auto')
+    })
+
     output$scenarios <- renderText({
         getProjectScenarios(rFileinfo, concat='\n')
     })
