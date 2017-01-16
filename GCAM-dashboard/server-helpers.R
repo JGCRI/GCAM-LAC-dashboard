@@ -100,31 +100,42 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
         ## map plot is expecting the column coresponding to the map locations to
         ## be called "region", so if we're working with water basins, we have to
         ## rename it.
-        if(mapset==basin235)
+        if(mapset==basin235 && 'basin' %in% names(pltdata))
             pltdata$region <- pltdata$basin
 
         mapLimits <- getMapLimits(pltdata, is.diff)
         unitstr <- summarize.unit(pltdata$Units)
-        pltdata <- addRegionID(pltdata, lookupfile=mapset, drops=mapset)
-        if(mapset==rgn32)
-            map.dat <- map.rgn32
-        else if(mapset==basin235)
-            map.dat <- map.basin235
-        plt.map <- merge(map.dat, pltdata)
 
-        ## get the projection and extent for the map
-        map.params <- getMapParams(projselect)
+        map.params <- getMapParams(projselect) # map projection and extent
+        pal <- getMapPalette(is.diff)   # color palette
+        xyear <- paste('X',year, sep='') # name of the column with the data.
 
-        pal <- getMapPalette(is.diff)
+        if('region' %in% names(pltdata)) {
+            ## This is a table of data by region
+            pltdata <- addRegionID(pltdata, lookupfile=mapset, drops=mapset)
+            if(mapset==rgn32)
+                map.dat <- map.rgn32
+            else if(mapset==basin235)
+                map.dat <- map.basin235
+            plt.map <- merge(map.dat, pltdata)
 
-        ## name of the year column
-        xyear <- paste('X',year, sep='')
-
-        plot_GCAM(plt.map, col=xyear,
-                  proj=map.params$proj, extent=map.params$ext, orientation=map.params$orientation,
-                  colors=pal, legend=TRUE, limits=mapLimits, qtitle=unitstr) +
-            guides(fill=guide_colorbar(title.position='bottom', title.hjust=0.5,
-                                       barwidth=unit(4,'in')))
+            plt <- plot_GCAM(plt.map, col=xyear,
+                             proj=map.params$proj, extent=map.params$ext,
+                             orientation=map.params$orientation, colors=pal,
+                             legend=TRUE, limits=mapLimits, qtitle=unitstr)
+        }
+        else {
+            ## Latitude and longitude grid data
+            map.dat <- map.rgn32        # keep an option open to plot with other
+                                        # base maps
+            plt <- plot_GCAM_grid(pltdata, xyear, map.dat, proj=map.params$proj,
+                                   extent=map.params$ext,
+                                   orientation=map.params$orientation, legend=TRUE) +
+                scale_fill_gradientn(colors=pal, limits=mapLimits, name=unitstr)
+        }
+        ## set up elements that ae common to both kinds of plots here
+        plt + guides(fill=guide_colorbar(title.position='bottom', title.hjust=0.5,
+                     barwidth=unit(4,'in')))
     }
 }
 
