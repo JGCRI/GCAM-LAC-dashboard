@@ -50,6 +50,14 @@ getScenarioQueries <- function(rFileinfo, scenarios, concat=NULL)
     }
 }
 
+uiStateValid <- function(prj, scenario, query)
+{
+    ## indicate whether the UI is in an obviously invalid state.  These
+    ## frequently occur as transients when a new project is being loaded and the
+    ## UI elements are being updated
+    !(is.null(prj) || scenario == '' || query == '' || query==tag.noscen)
+}
+
 
 ### Helpers for making plots
 library('ggplot2')

@@ -61,11 +61,14 @@ shinyServer(function(input, output, session) {
     })
 
     observe({
-        if(input$plotQuery != '') {
+        ## update the subcategory selector on the time value plot.  Only do this
+        ## when the selected plot query changes.
+        scen <- isolate(input$plotScenario)
+        prj <- isolate(rFileinfo()$project.data)
+        query <- input$plotQuery
+        if(uiStateValid(prj, scen, query)) {
             ## Asumes that a particular query has the same columns in all scenarios
-            scen <- isolate(input$plotScenario)
-            prj <- isolate(rFileinfo()$project.data)
-            querycols <- getQuery(prj, input$plotQuery, scen) %>% names
+            querycols <- getQuery(prj, query, scen) %>% names
             catvars <- grep(year.regex, querycols, invert=TRUE, value=TRUE) %>%
                 grep('scenario|Units', . , invert=TRUE, value=TRUE)
             updateSelectInput(session, 'tvSubcatVar', choices=c('none',
@@ -118,13 +121,14 @@ shinyServer(function(input, output, session) {
                  diffscen, input$tvSubcatVar, input$tvFilterCheck, input$tvRgns)
     })
 
-    ## update controls on time view panel
+    ## update regopm controls on time view panel (should be merged with the
+    ## other region control update above?)
     observe({
-        if(!is.null(rFileinfo()$project.data)) {
-            d <- rFileinfo()$project.data
-            scen <- input$plotScenario
-            query <- input$plotQuery
-            tbl <- getQuery(d,query,scen)
+        prj <- rFileinfo()$project.data
+        scen <- input$plotScenario
+        query <- input$plotQuery
+        if(uiStateValid(prj, scen, query)) {
+            tbl <- getQuery(prj,query,scen)
             rgns <- unique(tbl$region) %>% sort
             updateCheckboxGroupInput(session, 'tvRgns', choices = rgns,
                                      selected = last.region.filter)
