@@ -45,7 +45,7 @@ getScenarioQueries <- function(rFileinfo, scenarios, concat=NULL)
     }
     else {
         lapply(scenarios, . %>% listQueries(prj, .)) %>%
-            Reduce(intersect,.) %>%
+            Reduce(intersect,.) %>% sort %>%
             paste(collapse=concat)
     }
 }
