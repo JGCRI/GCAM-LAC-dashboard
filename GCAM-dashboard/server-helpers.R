@@ -58,6 +58,11 @@ uiStateValid <- function(prj, scenario, query)
     !(is.null(prj) || scenario == '' || query == '' || query==tag.noscen)
 }
 
+isGrid <- function(prj, scenario, query)
+{
+    colnames <- names(getQuery(prj, query, scenario))
+    'lat' %in% colnames && 'lon' %in% colnames
+}
 
 ### Helpers for making plots
 library('ggplot2')
@@ -94,7 +99,12 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
         is.diff <- !is.null(diffscen)      # We'll do a couple of things differently for a diff plot
 
         mapset <- determineMapset(prjdata, pltscen, query)
-        key <- if(mapset==basin235) 'basin' else 'region'
+        if(isGrid(prjdata, pltscen, query)) {
+            key <- c('lat', 'lon')
+        }
+        else {
+            key <- if(mapset==basin235) 'basin' else 'region'
+        }
         pltdata <- getPlotData(prjdata, query, pltscen, diffscen, key)
 
         ## map plot is expecting the column coresponding to the map locations to
@@ -194,14 +204,21 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
                                 ))
     }
 
-    ## select the key and year columns, then sum all values with the same key.  Force the sum
-    ## to have the same name as the original column
-    outcol <- c(
-        lapply(yearcols, function(xyear){interp(~sum(col), col=as.name(xyear))}),
-        ~summarize.unit(Units)
-    )
-    tp <- select_(tp, .dots=c(key, yearcols, 'Units')) %>% group_by_(.dots=key) %>%
-        summarise_(.dots=setNames(outcol, c(yearcols, 'Units')))
+    if(!isGrid(prjdata, pltscen, query)) {
+        ## select the key and year columns, then sum all values with the same key.  Force the sum
+        ## to have the same name as the original column.  Skip this step for
+        ## grid data.
+        outcol <- c(
+            lapply(yearcols, function(xyear){interp(~sum(col), col=as.name(xyear))}),
+            ~summarize.unit(Units)
+            )
+        tp <- select_(tp, .dots=c(key, yearcols, 'Units')) %>% group_by_(.dots=key) %>%
+            summarise_(.dots=setNames(outcol, c(yearcols, 'Units')))
+    }
+    else {
+        ## for gridded data, just get the lat, lon, yearly data, and units
+        tp <- select_(tp, .dots=c('lat', 'lon', yearcols, 'Units'))
+    }
 
     ## Occasionally you get a region with "0.0" for the unit string because most of its entries were zero.
     ## Fix these so that the column all has the same unit.
