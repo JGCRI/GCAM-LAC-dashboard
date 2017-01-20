@@ -192,9 +192,9 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
     ## filtervar:  if not NULL, filter on this variable before aggregating
     ## filterset:  set of values to include in the filter operation.  Ignored if
     ##             filtervar is NULL.
-    tp <- getQuery(prjdata, query, pltscen)
+    tp <- getQuery(prjdata, query, pltscen) # 'table plot'
     if(!is.null(diffscen)) {
-        dp <- getQuery(prjdata, query, diffscen)
+        dp <- getQuery(prjdata, query, diffscen) # 'difference plot'
     }
     else {
         dp <- NULL
@@ -203,7 +203,33 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
     yearcols <- year.cols(tp)
     if(!is.null(dp)) {
         ## we're doing a difference plot, so subtract the difference scenario.
-        tp[yearcols] <- as.matrix(tp[yearcols]) - as.matrix(dp[yearcols])
+        ## Join the data sets first so that we can be sure that we have matched
+        ## the rows and columns correctly
+        varnames <- names(tp)
+        mergenames <- varnames[!varnames %in% c('scenario', 'Units') &
+                                   !grepl(year.regex, varnames)]
+        joint.data <- merge(tp, dp, by=mergenames, all=TRUE)
+        if(anyNA(joint.data))
+            joint.data[is.na(joint.data)] <- 0 # zero out missing values
+
+        ## find common years between the data sets
+        years.tp <- grep('^X[0-9]{4}\\.x',
+                         names(joint.data), value=TRUE) %>%
+            substr(1,5)        # get the year columns from tp and strip the '.x'
+        years.dp <- grep('^X[0-9]{4}\\.y',
+                         names(joint.data), value=TRUE) %>%
+            substr(1,5)                 # same for dp
+        yearcols <- intersect(years.tp, years.dp)
+
+        d1 <- as.matrix(joint.data[paste0(yearcols,'.x')])
+        d2 <- as.matrix(joint.data[paste0(yearcols,'.y')])
+        delta <- d1-d2
+        colnames(delta) <- yearcols
+
+        ## Construct the new data frame.  We use the scenario name from the left
+        ## (dp) data frame.
+        tp <- rename(joint.data, scenario=scenario.x, Units=Units.x) %>%
+            select_(.dots=c('scenario', mergenames, 'Units')) %>% cbind(delta)
     }
 
     ## If filtering is in effect, do it now
