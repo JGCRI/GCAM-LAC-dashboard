@@ -52,7 +52,14 @@ shinyServer(function(input, output, session) {
                 qscenarios <- input$plotScenario
             }
             new.queries <- getScenarioQueries(rFileinfo, qscenarios)
-            if(!all(queries == new.queries)) {
+            if(!input$inclSpatial) {
+                ## Filter out grid queries, if requested.
+                nonGrid <- sapply(new.queries,
+                                  function(q) {!isGrid(rFileinfo()$project.data,
+                                                      input$plotScenario, q)})
+                new.queries <- new.queries[nonGrid]
+            }
+            if(!identical(queries,new.queries)) {
                 queries <<- new.queries
                 updateSelectInput(session, 'plotQuery', choices=queries)
             }

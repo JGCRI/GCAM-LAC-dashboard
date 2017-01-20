@@ -282,6 +282,9 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filter, rgns)
     if(is.null(prjdata)) {
         default.plot()
     }
+    else if(isGrid(prjdata, scen, query)) {
+        default.plot("Can't plot time series of spatial grid data.")
+    }
     else {
         if(filter)
             filtervar <- 'region'

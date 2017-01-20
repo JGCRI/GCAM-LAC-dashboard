@@ -10,12 +10,21 @@ shinyUI(fluidPage(
   sidebarLayout(
     sidebarPanel(
         fileInput('projectFile', 'GCAM Project Data File'),
-        selectInput('plotScenario', 'Select Scenario to Plot', choices=list()),
-        selectInput('plotQuery', 'Select Query to Plot', choices=list()),
+        fluidRow(
+            column(8,
+                   selectInput('plotScenario', 'Select Scenario to Plot', choices=list()))),
+        fluidRow(
+            column(8,
+                   selectInput('plotQuery', 'Select Query to Plot',
+                               choices=list())),
+            column(4,
+                   checkboxInput('inclSpatial', 'Include Spatial Queries', value=TRUE))
+            ),
         checkboxInput('diffCheck', 'Plot Difference vs Another Scenario'),
         conditionalPanel(
             condition = "input.diffCheck == true",
-            selectInput('diffScenario', 'Select Difference Scenario', choices=list())
+            fluidRow(column(8,
+                            selectInput('diffScenario', 'Select Difference Scenario', choices=list())))
         )
     ),
 
