@@ -61,8 +61,23 @@ shinyUI(fluidPage(
                 h3('Options'),
                 selectInput('tvSubcatVar', 'Break totals into subcategories by:',
                             choices=c('none','region')),
-                checkboxInput('tvFilterCheck', 'Limit plot to selected regions'),
-                checkboxGroupInput('tvRgns', 'Regions', choices=list(), inline=TRUE)
+                h4('Regions'),
+                fluidRow(
+                checkboxInput('tvFilterCheck',
+                              'Limit plot to selected regions')),
+                fluidRow(
+                    column(1,checkboxGroupInput('tvRgns5', 'Asia-Pacific',
+                                                choices=asiapac.rgns)),
+                    column(1,checkboxGroupInput('tvRgns2',
+                                                'Latin America and Caribbean',
+                                                choices=lac.rgns), offset=2),
+                    column(1,checkboxGroupInput('tvRgns1', 'Africa',
+                                                choices=africa.rgns), offset=2),
+                    column(1,checkboxGroupInput('tvRgns4', 'Europe',
+                                                choices=europe.rgns), offset=2),
+                    column(1,checkboxGroupInput('tvRgns3', 'North America',
+                                       choices=north.america.rgns), offset=2)
+                )
             )
 
         )  # tabset panel

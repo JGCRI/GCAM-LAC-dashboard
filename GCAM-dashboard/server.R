@@ -141,24 +141,28 @@ shinyServer(function(input, output, session) {
         } else {
             NULL
         }
-        last.region.filter <<- input$tvRgns
+        region.filter <- c(input$tvRgns1, input$tvRgns2, input$tvRgns3,
+                           input$tvRgns4, input$tvRgns5)
+        last.region.filter <<- region.filter
         plotTime(rFileinfo()$project.data, input$plotQuery, input$plotScenario,
-                 diffscen, input$tvSubcatVar, input$tvFilterCheck, input$tvRgns)
+                 diffscen, input$tvSubcatVar, input$tvFilterCheck, region.filter)
     })
 
-    ## update regopm controls on time view panel (should be merged with the
-    ## other region control update above?)
-    observe({
-        prj <- rFileinfo()$project.data
-        scen <- input$plotScenario
-        query <- input$plotQuery
-        if(uiStateValid(prj, scen, query)) {
-            tbl <- getQuery(prj,query,scen)
-            rgns <- unique(tbl$region) %>% sort
-            updateCheckboxGroupInput(session, 'tvRgns', choices = rgns,
-                                     selected = last.region.filter)
-        }
-    })
+    ## update region controls on time view panel
+    ## None of this is necessary anymore, since we hardwired the region lists,
+    ## but I'm keeping it around for now in case we want to allow for the
+    ## possibility that a data set has custom regions.
+    ## observe({
+    ##     prj <- rFileinfo()$project.data
+    ##     scen <- input$plotScenario
+    ##     query <- input$plotQuery
+    ##     if(uiStateValid(prj, scen, query)) {
+    ##         tbl <- getQuery(prj,query,scen)
+    ##         rgns <- unique(tbl$region) %>% sort
+    ##         updateCheckboxGroupInput(session, 'tvRgns', choices = rgns,
+    ##                                  selected = last.region.filter)
+    ##     }
+    ##})
 ### Debugging
     ## observe({
     ##             print('****************Change of Input****************')
