@@ -60,8 +60,14 @@ shinyServer(function(input, output, session) {
                 new.queries <- new.queries[nonGrid]
             }
             if(!identical(queries,new.queries)) {
+                ## capture new query list
                 queries <<- new.queries
-                updateSelectInput(session, 'plotQuery', choices=queries)
+                ## preserve selected value if possible
+                sel <- input$plotQuery
+                if(!(sel %in% queries))
+                   sel <- NULL          # allow update to reset selection
+                updateSelectInput(session, 'plotQuery', choices=queries,
+                                  selected=sel)
             }
         }
 
