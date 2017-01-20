@@ -62,10 +62,7 @@ shinyUI(fluidPage(
                 selectInput('tvSubcatVar', 'Break totals into subcategories by:',
                             choices=c('none','region')),
                 checkboxInput('tvFilterCheck', 'Limit plot to selected regions'),
-                conditionalPanel(
-                    condition = "input.tvFilterCheck == true",
-                    checkboxGroupInput('tvRgns', 'Regions to display', choices=list(), inline=TRUE)
-                )
+                checkboxGroupInput('tvRgns', 'Regions', choices=list(), inline=TRUE)
             )
 
         )  # tabset panel
