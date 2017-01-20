@@ -68,8 +68,9 @@ shinyServer(function(input, output, session) {
     })
 
     observe({
-        ## update the subcategory selector on the time value plot.  Only do this
-        ## when the selected plot query changes.
+        ## update the subcategory selector on the time value plot and the limits
+        ## on the time slider on the map plot.  Only do this when the selected
+        ## plot query changes.
         scen <- isolate(input$plotScenario)
         prj <- isolate(rFileinfo()$project.data)
         query <- input$plotQuery
@@ -80,6 +81,17 @@ shinyServer(function(input, output, session) {
                 grep('scenario|Units', . , invert=TRUE, value=TRUE)
             updateSelectInput(session, 'tvSubcatVar', choices=c('none',
                                                       catvars))
+            ## now do the map slider
+            yrlimits <- getQueryYears(prj, scen, query)
+            yrsel <- isolate(input$mapYear)
+            if(yrsel < yrlimits[1])
+                yrsel <- yrlimits[1]
+            else if(yrsel > yrlimits[2])
+                yrsel <- yrlimits[2]
+            else
+                yrsel <- NULL           # NULL means leave it alone
+            updateSliderInput(session, 'mapYear', min=yrlimits[1],
+                              max=yrlimits[2], value=yrsel)
         }
     })
 

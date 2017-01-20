@@ -64,6 +64,20 @@ isGrid <- function(prj, scenario, query)
     'lat' %in% colnames && 'lon' %in% colnames
 }
 
+
+getQueryYears <- function(prj, scenario, query)
+{
+    if(!uiStateValid(prj, scenario, query)) {
+        c(2005, 2100)
+    }
+    else {
+        years <- getQuery(prj, query, scenario) %>%
+            names %>% grep(year.regex, ., value=TRUE) %>% strip.xyear
+        c(min(years), max(years))
+    }
+}
+
+
 ### Helpers for making plots
 library('ggplot2')
 library('dplyr')
