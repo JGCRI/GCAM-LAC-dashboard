@@ -57,7 +57,13 @@ shinyUI(fluidPage(
                 h3('Options'),
                 selectInput('mapProjection', 'Map Type',
                             choices=c(Global='global', `Latin America and Caribbean`='lac'),
-                            selected = 'lac')
+                            selected = 'global'),
+               ## placeholders downward to make room for the map projection
+                     ## selector
+                     br(),
+                     br(),
+                     br(),
+                     br()
             ),
 
             tabPanel('Time View',

@@ -12,3 +12,7 @@ europe.rgns <- c('EU-12', 'EU-15', 'Europe_Eastern', 'Europe_Non_EU',
 asiapac.rgns <- c('Australia_NZ', 'Central Asia', 'China', 'India', 'Indonesia',
                   'Japan', 'Middle East', 'Pakistan', 'Russia', 'South Asia',
                   'South Korea', 'Southeast Asia')
+
+
+## available color schemes
+color.schemes <- c('default', 'region32')

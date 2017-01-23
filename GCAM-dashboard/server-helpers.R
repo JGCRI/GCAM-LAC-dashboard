@@ -11,6 +11,50 @@ strip.xyear <- function(xyear) {as.integer(substr(xyear, 2, 5))}
 #### State variables
 last.region.filter <- NULL
 
+## Color schemes
+rgb255 <- function(r, g, b) {rgb(r,g,b, maxColorValue=255)}
+
+region32 <- c(
+    'Africa_Northern' = rgb255(139,69,19),
+    'Africa_Eastern' = rgb255(139,115,88),
+    'Africa_Southern' = rgb255(255,211,155),
+    'Africa_Western' = rgb255(255,185,15),
+    'South Africa' = rgb255(255,215,0),
+
+    'Canada' = rgb255(224,238,224),
+    'USA' = rgb255(77,77,77),
+
+    'Argentina' = rgb255(0,100,0),
+    'Brazil' = rgb255(154,205,50),
+    'Central America and Caribbean' = rgb255(46,139,87),
+    'Colombia' = rgb255(102,205,170),
+    'Mexico' = rgb255(50,205,50),
+    'South America_Southern' = rgb255(72,209,204),
+    'South America_Northern' = rgb255(0,255,0),
+
+    'EU-12' = rgb255(25,25,112),
+    'EU-15' = rgb255(131,111,255),
+    'Europe_Eastern' = rgb255(173,216,230),
+    'Europe_Non_EU' = rgb255(0,104,139),
+    'European Free Trade Association' = rgb255(58,95,205),
+
+    'Russia' = rgb255(104,34,139),
+    'China' = rgb255(255,0,0),
+    'Middle East' = rgb255(188,143,143),
+    'Australia_NZ' = rgb255(255,193,193),
+    'Central Asia' = rgb255(139,0,0),
+    'India' = rgb255(208,32,144),
+    'Indonesia' = rgb255(139, 28, 98),
+    'Japan' = hsv(0.01, 0.75, 0.65),
+    'Pakistan' = rgb255(205, 181, 205),
+    'South Asia' = rgb255(139, 123, 139),
+    'South Korea' = rgb255(205, 92, 92),
+    'Southeast Asia' = rgb255(240, 128, 128),
+    'Taiwan' = rgb255(150, 150, 150)
+    )
+
+
+
 ## UI helpers
 
 getProjectName <- function(rFileinfo)
@@ -192,8 +236,10 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
     ## filterset:  set of values to include in the filter operation.  Ignored if
     ##             filtervar is NULL.
     tp <- getQuery(prjdata, query, pltscen) # 'table plot'
+    tp$region <- factor(tp$region, levels=c(names(region32), '0'), ordered=TRUE) # convert to ordered factor
     if(!is.null(diffscen)) {
         dp <- getQuery(prjdata, query, diffscen) # 'difference plot'
+        dp$region <- factor(dp$region, levels=c(names(region32), '0'), ordered=TRUE)
     }
     else {
         dp <- NULL
@@ -338,7 +384,26 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filter, rgns)
             gather(year, value, matches(year.regex)) %>%
             mutate(year=strip.xyear(year))
 
-        ggplot(pltdata, aes_string('year','value', fill=subcatvar)) +
+        plt <- ggplot(pltdata, aes_string('year','value', fill=subcatvar)) +
             geom_bar(stat='identity') + theme_minimal() + ylab(pltdata$Units)
+
+        if(is.null(subcatvar)) {
+            plt
+        }
+        else {
+            if(subcatvar=='region')
+                fillpal <- region32
+            else {
+                n <- length(unique(pltdata[[subcatvar]]))
+                if(n<=12) {
+                    fillpal <- brewer.pal(n,'Set3')
+                }
+                else {
+                    fillpal <- rainbow(n, 0.8, 0.9)
+                }
+            }
+
+            plt + scale_fill_manual(values=fillpal)
+        }
     }
 }
