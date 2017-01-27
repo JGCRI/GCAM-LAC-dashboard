@@ -123,29 +123,42 @@ shinyServer(function(input, output, session) {
     })
 
     output$mapPlot <- renderPlot({
-        diffscen <- if(input$diffCheck) {
-            input$diffScenario
-        } else {
-            NULL
+        if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
+                        input$plotQuery )) {
+            diffscen <- if(input$diffCheck) {
+                input$diffScenario
+            } else {
+                  NULL
+              }
+            year <- input$mapYear
+            plotMap(rFileinfo()$project.data, input$plotQuery,
+                    input$plotScenario, diffscen, input$mapProjection, year)
         }
-        year <- input$mapYear
-        plotMap(rFileinfo()$project.data, input$plotQuery,
-                input$plotScenario, diffscen, input$mapProjection, year)
+        else {
+            default.plot('Updating')
+        }
     })
 
     output$mapName <- renderText({input$plotQuery})
 
     output$timePlot <- renderPlot({
-        diffscen <- if(input$diffCheck) {
-            input$diffScenario
-        } else {
-            NULL
+        if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
+                        input$plotQuery )) {
+               diffscen <- if(input$diffCheck) {
+                   input$diffScenario
+               } else {
+                     NULL
+                 }
+               region.filter <- c(input$tvRgns1, input$tvRgns2, input$tvRgns3,
+                                  input$tvRgns4, input$tvRgns5)
+               last.region.filter <<- region.filter
+               plotTime(rFileinfo()$project.data, input$plotQuery,
+                        input$plotScenario, diffscen, input$tvSubcatVar,
+                        input$tvFilterCheck, region.filter)
+           }
+        else {                          # UI state is invalid
+            default.plot('Updating')
         }
-        region.filter <- c(input$tvRgns1, input$tvRgns2, input$tvRgns3,
-                           input$tvRgns4, input$tvRgns5)
-        last.region.filter <<- region.filter
-        plotTime(rFileinfo()$project.data, input$plotQuery, input$plotScenario,
-                 diffscen, input$tvSubcatVar, input$tvFilterCheck, region.filter)
     })
 
     ## update region controls on time view panel

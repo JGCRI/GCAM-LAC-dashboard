@@ -81,15 +81,28 @@ getScenarioQueries <- function(rFileinfo, scenarios, concat=NULL)
 {
     prj <- rFileinfo()$project.data
     if(is.null(prj)) {
-        '->none<-'
+        if(is.null(concat))
+            ''                          # probably not intended for display
+        else
+            '->none<-'                  # probably intended for display
     }
     else if(length(scenarios) == 0 || all(scenarios=='')) {
-        tag.noscen
+        if(is.null(concat))
+            ''                          # probably not intended for display
+        else
+            tag.noscen                  # probably intended for display
     }
     else {
-        lapply(scenarios, . %>% listQueries(prj, .)) %>%
-            Reduce(intersect,.) %>% sort %>%
-            paste(collapse=concat)
+        tryCatch(
+            lapply(scenarios, . %>% listQueries(prj, .)) %>%
+                Reduce(intersect,.) %>% sort %>%
+                    paste(collapse=concat),
+            ## errors in the pipeline above are caused by selecting a new data
+            ## set that doesn't contain the current scenario.  The problem will
+            ## clear up once the scenario selector is repopulated.
+            error = function(e) {
+                if(is.null(concat)) '' else tag.noscen
+            })
     }
 }
 
@@ -98,7 +111,24 @@ uiStateValid <- function(prj, scenario, query)
     ## indicate whether the UI is in an obviously invalid state.  These
     ## frequently occur as transients when a new project is being loaded and the
     ## UI elements are being updated
-    !(is.null(prj) || scenario == '' || query == '' || query==tag.noscen)
+    valid.values <- !(is.null(prj) || scenario == '' || query == '' ||
+                          query==tag.noscen)
+    if(valid.values) {
+        prjscens <- listScenarios(prj)
+        valid.scen <- all(scenario %in% prjscens)
+    }
+    else {
+        valid.scen <- FALSE
+    }
+
+    ## This if block is the return value
+    if(valid.scen) {
+        scenqueries <- listQueries(prj, scenario)
+        all(query %in% scenqueries)
+    }
+    else {
+        FALSE
+    }
 }
 
 isGrid <- function(prj, scenario, query)
