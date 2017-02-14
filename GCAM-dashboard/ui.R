@@ -56,7 +56,11 @@ shinyUI(fluidPage(
                             sep='', animate = TRUE),
                 h3('Options'),
                 selectInput('mapProjection', 'Map Type',
-                            choices=c(Global='global', `Latin America and Caribbean`='lac'),
+                            choices=c(Global='global',
+                            USA='usa',
+                            China='china',
+                            Africa='africa',
+                            `Latin America and Caribbean`='lac'),
                             selected = 'global'),
                ## placeholders downward to make room for the map projection
                      ## selector

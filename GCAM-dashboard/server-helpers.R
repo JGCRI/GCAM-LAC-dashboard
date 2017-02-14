@@ -350,6 +350,15 @@ getMapParams <- function(projselect)
     if(projselect == 'global') {
         list(proj=eck3, ext=EXTENT_WORLD, orientation=NULL)
     }
+    else if(projselect == 'usa') {
+        list(proj=na_aea, ext=EXTENT_USA, orientation=NULL)
+    }
+    else if(projselect == 'china') {
+        list(proj=ch_aea, ext=EXTENT_CHINA, orientation=NULL)
+    }
+    else if(projselect == 'africa') {
+        list(proj=ortho, ext=EXTENT_AFRICA, orientation=ORIENTATION_AFRICA)
+    }
     else if(projselect == 'lac') {
         list(proj=ortho, ext=EXTENT_LA, orientation=ORIENTATION_LA)
     }
