@@ -266,7 +266,10 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
     ## filterset:  set of values to include in the filter operation.  Ignored if
     ##             filtervar is NULL.
     tp <- getQuery(prjdata, query, pltscen) # 'table plot'
-    tp$region <- factor(tp$region, levels=c(names(region32), '0'), ordered=TRUE) # convert to ordered factor
+    if('region' %in% names(tp)) {
+        ## If the data has a region column, put it in the canoncial order given above.
+        tp$region <- factor(tp$region, levels=c(names(region32), '0'), ordered=TRUE) # convert to ordered factor
+    }
     if(!is.null(diffscen)) {
         dp <- getQuery(prjdata, query, diffscen) # 'difference plot'
         dp$region <- factor(dp$region, levels=c(names(region32), '0'), ordered=TRUE)
