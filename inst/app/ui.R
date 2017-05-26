@@ -1,9 +1,6 @@
 
 library(shiny)
-
-ui.R <- function() {}                   # marker function
-srcdir <- getSrcDirectory(ui.R)
-source(file.path(srcdir, 'ui-helpers.R'))
+library(GCAMdashboard)
 
 # Define UI for application that draws a histogram
 shinyUI(fluidPage(

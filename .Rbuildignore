@@ -1,0 +1,5 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+rsconnect
+to-do.md
+

@@ -4,7 +4,9 @@
 ###    rFileinfo:  The reactive fileinfo structure returned by the file browser
 
 tag.noscen <- '->No scenarios selected<-'     # placeholder when no scenario selected
-year.regex <- 'X[0-9]{4}'
+#' Regular expression for year columns
+#' @export
+year.regex <- '^X?[0-9]{4}$'
 year.cols <- function(df) {grep(year.regex, names(df), value=TRUE)}
 strip.xyear <- function(xyear) {as.integer(substr(xyear, 2, 5))}
 
@@ -55,8 +57,12 @@ region32 <- c(
 
 
 
-## UI helpers
 
+#' Get the name of the project for display
+#'
+#' Returns a place holder string if no project has been loaded yet.
+#' @param rFileinfo Reactive fileinfo object returned by the file browser in the UI
+#' @export
 getProjectName <- function(rFileinfo)
 {
     fn <- rFileinfo()$project.filename
@@ -67,16 +73,30 @@ getProjectName <- function(rFileinfo)
     }
 }
 
+#' Get the scenarios in the project for display
+#'
+#' Returns a place holder string if no project has been loaded yet.
+#' @param rFileinfo Reactive fileinfo object returned by file browser in the UI.
+#' @param concat Separator string to use when concatenating scenario names.
+#' @importFrom magrittr "%>%"
+#' @export
 getProjectScenarios <- function(rFileinfo, concat=NULL)
 {
     pd <- rFileinfo()$project.data
     if(is.null(pd)) {
         '->none<-'
     } else {
-        listScenarios(rFileinfo()$project.data) %>% paste(collapse=concat)
+        rgcam::listScenarios(rFileinfo()$project.data) %>% paste(collapse=concat)
     }
 }
 
+#' Get the queries for a project and scenario(s) for display
+#'
+#' @param rFileinfo Reactive fileinfo object returned by file browser in the UI.
+#' @param scenarios List of scenarios.
+#' @param concat Separator string for concatenating query names.
+#' @importFrom magrittr "%>%"
+#' @export
 getScenarioQueries <- function(rFileinfo, scenarios, concat=NULL)
 {
     prj <- rFileinfo()$project.data
@@ -94,7 +114,7 @@ getScenarioQueries <- function(rFileinfo, scenarios, concat=NULL)
     }
     else {
         tryCatch(
-            lapply(scenarios, . %>% listQueries(prj, .)) %>%
+            lapply(scenarios, . %>% rgcam::listQueries(prj, .)) %>%
                 Reduce(intersect,.) %>% sort %>%
                     paste(collapse=concat),
             ## errors in the pipeline above are caused by selecting a new data
@@ -106,11 +126,18 @@ getScenarioQueries <- function(rFileinfo, scenarios, concat=NULL)
     }
 }
 
+#' Indicate whether the UI is in an obviously invalid state.
+#'
+#' Invalid states frequently occur as transients when a new project is being
+#' loaded and the UI elements are being updated.
+#'
+#' @param prj Project data structure
+#' @param scenario Scenario name
+#' @param query Query name
+#' @return Boolean indicating whether the UI state appears to be valid.
+#' @export
 uiStateValid <- function(prj, scenario, query)
 {
-    ## indicate whether the UI is in an obviously invalid state.  These
-    ## frequently occur as transients when a new project is being loaded and the
-    ## UI elements are being updated
     valid.values <- !(is.null(prj) || scenario == '' || query == '' ||
                           query==tag.noscen)
     if(valid.values) {
@@ -131,6 +158,12 @@ uiStateValid <- function(prj, scenario, query)
     }
 }
 
+#' Indicate whether a query is a gridded data set
+#'
+#' @param prj Project data structure
+#' @param scenario Name of the scenario
+#' @param query Name of the query
+#' @export
 isGrid <- function(prj, scenario, query)
 {
     colnames <- names(getQuery(prj, query, scenario))
@@ -138,6 +171,12 @@ isGrid <- function(prj, scenario, query)
 }
 
 
+#' Get the years for which a query is defined
+#'
+#' @param prj Project data structure
+#' @param scenario Name of the scenario
+#' @param query Name of the query
+#' @export
 getQueryYears <- function(prj, scenario, query)
 {
     if(!uiStateValid(prj, scenario, query)) {
@@ -152,22 +191,31 @@ getQueryYears <- function(prj, scenario, query)
 
 
 ### Helpers for making plots
-library('ggplot2')
-library('dplyr')
-library('tidyr')
-library('lazyeval')
-library('RColorBrewer')
-library('gcammaptools')
 
-data(map.rgn32)
-data(map.basin235)
-
+#' Plot a default panel
+#'
+#' Mainly intended for use when no data has been loaded.
+#'
+#' @param label.text Text to display in the middle of the panel
+#' @importFrom ggplot2 ggplot geom_label theme_minimal
+#' @export
 default.plot <- function(label.text='No data selected')
 {
     ggplot(mapping=aes(x=0,y=0)) + geom_label(aes_(label=label.text), size=10) +
         theme_minimal()
 }
 
+#' Plot GCAM data on a global or regional map
+#'
+#' @param prjdata Project data file
+#' @param query Name of the query to plot
+#' @param pltscen Name of the scenario to plot
+#' @param diffscen Name of the scenario to difference against pltscen, or NULL if none
+#' @param projselect Projection to use for the map
+#' @param year Year to plot data for
+#' @importFrom ggplot2 scale_fill_gradientn guides
+#' @importFrom gcammaptools plot_GCAM addRegionID plot_GCAM_grid
+#' @export
 plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
 {
     if(is.null(prjdata)) {
@@ -178,7 +226,7 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
             (!is.null(diffscen) && pltscen==diffscen) ||
             query==tag.noscen) {
         ## These condition(s) all indicate a transitional state, so don't do anything.
-        last_plot()
+        ggplot2::last_plot()
     }
     else {
         scens <- paste(c(pltscen, diffscen), collapse=', ')
@@ -190,14 +238,14 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
             key <- c('lat', 'lon')
         }
         else {
-            key <- if(mapset==basin235) 'basin' else 'region'
+            key <- if(mapset==gcammaptools::basin235) 'basin' else 'region'
         }
         pltdata <- getPlotData(prjdata, query, pltscen, diffscen, key)
 
         ## map plot is expecting the column coresponding to the map locations to
         ## be called "region", so if we're working with water basins, we have to
         ## rename it.
-        if(mapset==basin235 && 'basin' %in% names(pltdata))
+        if(mapset==gcammaptools::basin235 && 'basin' %in% names(pltdata))
             pltdata$region <- pltdata$basin
 
         mapLimits <- getMapLimits(pltdata, is.diff)
@@ -210,10 +258,10 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
         if('region' %in% names(pltdata)) {
             ## This is a table of data by region
             pltdata <- addRegionID(pltdata, lookupfile=mapset, drops=mapset)
-            if(mapset==rgn32)
-                map.dat <- map.rgn32
-            else if(mapset==basin235)
-                map.dat <- map.basin235
+            if(mapset==gcammaptools::rgn32)
+                map.dat <- gcammaptools::map.rgn32
+            else if(mapset==gcammaptools::basin235)
+                map.dat <- gcammaptools::map.basin235
             plt.map <- merge(map.dat, pltdata)
 
             plt <- plot_GCAM(plt.map, col=xyear,
@@ -223,48 +271,56 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
         }
         else {
             ## Latitude and longitude grid data
-            map.dat <- map.rgn32        # keep an option open to plot with other
-                                        # base maps
+            map.dat <- gcammaptools::map.rgn32        # keep an option open to plot with other
+                                                      # base maps
             plt <- plot_GCAM_grid(pltdata, xyear, map.dat, proj=map.params$proj,
                                    extent=map.params$ext,
                                    orientation=map.params$orientation, legend=TRUE) +
                 scale_fill_gradientn(colors=pal, limits=mapLimits, name=unitstr)
         }
         ## set up elements that ae common to both kinds of plots here
-        plt + guides(fill=guide_colorbar(title.position='bottom', title.hjust=0.5,
-                     barwidth=unit(4,'in')))
+        plt + guides(fill=ggplot2::guide_colorbar(title.position='bottom', title.hjust=0.5,
+                     barwidth=ggplot2::unit(4,'in')))
     }
 }
 
-## Figure out which map to plot the query on.  Right now we assume that if the
-## query table contains a 'basin' column, then we want to plot on the basin map;
-## otherwise we plot on the region map.
+#' Figure out which map to plot a query on.
+#'
+#' Right now we assume that if the query table contains a 'basin' column, then
+#' we want to plot on the basin map; otherwise we plot on the region map.
+#' @param prjdata Project data structure
+#' @param pltscen Name of the scenario to plot
+#' @param query Name of the GCAM query to plot
+#' @return Base map suitable for plotting this data
 determineMapset <- function(prjdata, pltscen, query)
 {
-    tp <- getQuery(prjdata, query, pltscen)
+    tp <- rgcam::getQuery(prjdata, query, pltscen)
     if('basin' %in% names(tp)) {
         ## mapping the 235 basins
-        mapset <- basin235
+        mapset <- rgcam::basin235
     }
     else {
         ## mapping the 32 regions
-        mapset <- rgn32
+        mapset <- gcammaptools::rgn32
     }
 }
 
 ### Data wrangling
 
+#' Extract and format data for a plot
+#'
+#' @param prjdata Project data structure
+#' @param query Name of the query to plot
+#' @param pltscen Name of the scenario to plot
+#' @param diffscenDifference scenario, if any
+#' @param key Aggregation variable.  (e.g., 'region' or 'sector')
+#' @param filtervar If not NULL, filter on this variable before aggregating
+#' @param filterset:  Set of values to include in the filter operation.  Ignored
+#'   if filtervar is NULL.
+#' @keywords internal
 getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
                         filterset=NULL)
 {
-    ## prjdata:  Project data structure
-    ## query:  Query to plot
-    ## pltscen:  Scenario to plot
-    ## diffscen:  Difference scenario, if any
-    ## key: aggregation variable.  (e.g., 'region' or 'sector')
-    ## filtervar:  if not NULL, filter on this variable before aggregating
-    ## filterset:  set of values to include in the filter operation.  Ignored if
-    ##             filtervar is NULL.
     tp <- getQuery(prjdata, query, pltscen) # 'table plot'
     if('region' %in% names(tp)) {
         ## If the data has a region column, put it in the canoncial order given above.
@@ -306,8 +362,8 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
 
         ## Construct the new data frame.  We use the scenario name from the left
         ## (dp) data frame.
-        tp <- rename(joint.data, scenario=scenario.x, Units=Units.x) %>%
-            select_(.dots=c('scenario', mergenames, 'Units')) %>% cbind(delta)
+        tp <- dplyr::rename(joint.data, scenario=scenario.x, Units=Units.x) %>%
+            dplyr::select_(.dots=c('scenario', mergenames, 'Units')) %>% cbind(delta)
     }
 
     ## If filtering is in effect, do it now
@@ -316,7 +372,7 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
        length(filterset) > 0
        ) {
         ## This is horrible.  There has got to be a better way to do this.
-        tp <- filter_(tp, paste(filtervar,
+        tp <- dplyr::filter_(tp, paste(filtervar,
                                 '%in% c(',
                                 paste(shQuote(filterset), collapse=', '), ')'
                                 ))
@@ -327,15 +383,15 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
         ## to have the same name as the original column.  Skip this step for
         ## grid data.
         outcol <- c(
-            lapply(yearcols, function(xyear){interp(~sum(col), col=as.name(xyear))}),
+            lapply(yearcols, function(xyear){lazyeval::interp(~sum(col), col=as.name(xyear))}),
             ~summarize.unit(Units)
             )
-        tp <- select_(tp, .dots=c(key, yearcols, 'Units')) %>% group_by_(.dots=key) %>%
-            summarise_(.dots=setNames(outcol, c(yearcols, 'Units')))
+        tp <- dplyr::select_(tp, .dots=c(key, yearcols, 'Units')) %>% dplyr::group_by_(.dots=key) %>%
+            dplyr::summarise_(.dots=setNames(outcol, c(yearcols, 'Units')))
     }
     else {
         ## for gridded data, just get the lat, lon, yearly data, and units
-        tp <- select_(tp, .dots=c('lat', 'lon', yearcols, 'Units'))
+        tp <- dplyr::select_(tp, .dots=c('lat', 'lon', yearcols, 'Units'))
     }
 
     ## Occasionally you get a region with "0.0" for the unit string because most of its entries were zero.
@@ -344,38 +400,53 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
     tp
 }
 
+#' Get projection parameters for the pre-defined projections
+#'
+#' Valid inputs are "global", "lac" (Latin America and Caribbean), "usa",
+#' "china", and "africa".
+#'
+#' @param projselect Name of the predefined projection
+#' @keywords internal
 getMapParams <- function(projselect)
 {
     ## currently valid values are 'global' and 'lac'
     if(projselect == 'global') {
-        list(proj=eck3, ext=EXTENT_WORLD, orientation=NULL)
+        list(proj=gcammaptools::eck3, ext=gcammaptools::EXTENT_WORLD, orientation=NULL)
     }
     else if(projselect == 'usa') {
-        list(proj=na_aea, ext=EXTENT_USA, orientation=NULL)
+        list(proj=gcammaptools::na_aea, ext=gcammaptools::EXTENT_USA, orientation=NULL)
     }
     else if(projselect == 'china') {
-        list(proj=ch_aea, ext=EXTENT_CHINA, orientation=NULL)
+        list(proj=gcammaptools::ch_aea, ext=gcammaptools::EXTENT_CHINA, orientation=NULL)
     }
     else if(projselect == 'africa') {
-        list(proj=ortho, ext=EXTENT_AFRICA, orientation=ORIENTATION_AFRICA)
+        list(proj=gcammaptools::ortho, ext=gcammaptools::EXTENT_AFRICA, orientation=gcammaptools::ORIENTATION_AFRICA)
     }
     else if(projselect == 'lac') {
-        list(proj=ortho, ext=EXTENT_LA, orientation=ORIENTATION_LA)
+        list(proj=gcammaptools::ortho, ext=gcammaptools::EXTENT_LA, orientation=gcammaptools::ORIENTATION_LA)
     }
 }
 
+#' Select a suitable color palette
+#' @param is.diff Boolean indicating whether the plot is a difference plot
+#' @keywords internal
 getMapPalette <- function(is.diff)
 {
     if(is.diff) {
-        brewer.pal(9, 'RdBu')
+        RColorBrewer::brewer.pal(9, 'RdBu')
     } else {
-        brewer.pal(9,'Blues')
+        RColorBrewer::brewer.pal(9,'Blues')
     }
 }
 
+#' Select suitable scale limits for a plot
+#'
+#' @param pltdata The data being plotted
+#' @param is.diff Boolean indicating whether the plot is a difference plot
+#' @keywords internal
 getMapLimits <- function(pltdata, is.diff)
 {
-    pltdata <- select(pltdata, matches(year.regex))
+    pltdata <- dplyr::select(pltdata, dplyr::matches(year.regex))
     limits <- c(min(pltdata, na.rm=TRUE), max(pltdata, na.rm=TRUE))
     if(is.diff) {
         ## For a difference plot, force the limits to be balanced on either side of zero
@@ -387,25 +458,31 @@ getMapLimits <- function(pltdata, is.diff)
     }
 }
 
+#' Summarize the unit column of a GCAM data frame by taking the most common
+#' entry.
+#'
+#' In theory the unit should have a single, common value, but in practice GCAM
+#' isn't always great about getting its unit strings consistent.
+#' @param unitcol Character vector of unit names.
+#' @keywords internal
 summarize.unit <- function(unitcol)
 {
-    ## Summarize the unit column of a GCAM data frame by taking the most common entry.  (GCAM isn't always great about
-    ## setting its unit tag)
     unitcol[which.max(table(unitcol))]
 }
 
+#' Plot values over time as a bar chart
+#' @param prjdata A project data structure
+#' @param query  Name of the query to plot
+#' @param scen  Name of the scenario to plot
+#' @param diffscen  Name of the difference scenario, or NULL if none
+#' @param subcatvar  Variable to use for subcategories in the plot
+#' @param filter  If TRUE, then filter to regions in the rgns argument
+#' @param rgns  Regions to filter to, if filter is TRUE.
+#' @importFrom magrittr "%>%"
+#' @importFrom ggplot2 ggplot aes_string geom_bar theme_minimal ylab scale_fill_manual
+#' @export
 plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filter, rgns)
 {
-    ## prjdata: a project data structure
-    ## query:  Name of the query to plot
-    ## scen:  Plot scenario
-    ## diffscen:  Difference scenario, or NULL if none
-    ## subcatvar:  Variable to use for subcategories in the plot
-    ## filter:  If TRUE, then filter to regions in the rgns argument
-    ## rgns:  Regions to filter to, if filter is set.
-##    label <- paste(query,scen,diffscen,subcatvar,filter,rgns, sep='\n')
-##    default.plot(label.text=label)
-
     if(is.null(prjdata)) {
         default.plot()
     }
@@ -423,8 +500,8 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filter, rgns)
 
         pltdata <- getPlotData(prjdata, query, scen, diffscen, subcatvar,
                                filtervar, rgns) %>%
-            gather(year, value, matches(year.regex)) %>%
-            mutate(year=strip.xyear(year))
+            tidyr::gather(year, value, dplyr::matches(year.regex)) %>%
+            dplyr::mutate(year=strip.xyear(year))
 
         plt <- ggplot(pltdata, aes_string('year','value', fill=subcatvar)) +
             geom_bar(stat='identity') + theme_minimal() + ylab(pltdata$Units)
@@ -438,10 +515,10 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filter, rgns)
             else {
                 n <- length(unique(pltdata[[subcatvar]]))
                 if(n<=12) {
-                    fillpal <- brewer.pal(n,'Set3')
+                    fillpal <- RColorBrewer::brewer.pal(n,'Set3')
                 }
                 else {
-                    fillpal <- rainbow(n, 0.8, 0.9)
+                    fillpal <- grDevices::rainbow(n, 0.8, 0.9)
                 }
             }
 
