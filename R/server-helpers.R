@@ -297,7 +297,7 @@ determineMapset <- function(prjdata, pltscen, query)
     tp <- rgcam::getQuery(prjdata, query, pltscen)
     if('basin' %in% names(tp)) {
         ## mapping the 235 basins
-        mapset <- rgcam::basin235
+        mapset <- gcammaptools::basin235
     }
     else {
         ## mapping the 32 regions

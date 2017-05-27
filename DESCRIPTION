@@ -1,15 +1,22 @@
 Package: GCAMdashboard
-Title: Provide an Interactive Dashboard for Viewing GCAM Data
-Version: 0.1.0
+Title: An Interactive Dashboard for Exploring GCAM Scenario Data
+Version: 0.2.0
 Authors@R: person("Robert", "Link", email = "robert.link@pnnl.gov", role = c("aut", "cre"))
 Description: This package provides a Shiny app for getting a quick and easy look at GCAM data.
 Depends: R (>= 3.3.3)
 Imports: 
-    ggplot2 (>= 2.2.1),
     rgcam (>= 0.4.0),
     gcammaptools (>= 0.3.1),
-    dplyr(>= 0.5.0),
-    tidyr(>= 0.6.0)
+    ggplot2 (>= 2.2.1),
+    dplyr (>= 0.5.0),
+    magrittr (>= 1.5),
+    tidyr (>= 0.6.0),
+    lazyeval (>= 0.2.0),
+    RColorBrewer (>= 1.1.2),
+    shiny (>= 1.0.0)
+Remotes:
+    JGCRI/rgcam,
+    JGCRI/gcammaptools
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
