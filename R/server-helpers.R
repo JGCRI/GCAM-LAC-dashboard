@@ -183,9 +183,7 @@ getQueryYears <- function(prj, scenario, query)
         c(2005, 2100)
     }
     else {
-        years <- getQuery(prj, query, scenario) %>%
-            names %>% grep(year.regex, ., value=TRUE) %>% strip.xyear
-        c(min(years), max(years))
+        range(getQuery(prj, query, scenario)["year"])
     }
 }
 
@@ -322,6 +320,7 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
                         filterset=NULL)
 {
     tp <- getQuery(prjdata, query, pltscen) # 'table plot'
+
     if('region' %in% names(tp)) {
         ## If the data has a region column, put it in the canoncial order given above.
         tp$region <- factor(tp$region, levels=c(names(region32), '0'), ordered=TRUE) # convert to ordered factor
@@ -376,18 +375,15 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
                                 '%in% c(',
                                 paste(shQuote(filterset), collapse=', '), ')'
                                 ))
+        if(nrow(tp) == 0) {
+          return(tp)
+        }
     }
 
     if(!isGrid(prjdata, pltscen, query)) {
         ## select the key and year columns, then sum all values with the same key.  Force the sum
-        ## to have the same name as the original column.  Skip this step for
-        ## grid data.
-        outcol <- c(
-            lapply(yearcols, function(xyear){lazyeval::interp(~sum(col), col=as.name(xyear))}),
-            ~summarize.unit(Units)
-            )
-        tp <- dplyr::select_(tp, .dots=c(key, yearcols, 'Units')) %>% dplyr::group_by_(.dots=key) %>%
-            dplyr::summarise_(.dots=setNames(outcol, c(yearcols, 'Units')))
+        ## to have the name 'value'.  Skip this step for grid data.
+        tp <- aggregate(tp['value'], by=list(Units=tp$Units, scenario=tp$scenario, year=tp$year), sum)
     }
     else {
         ## for gridded data, just get the lat, lon, yearly data, and units
@@ -499,9 +495,10 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filter, rgns)
             subcatvar <- NULL
 
         pltdata <- getPlotData(prjdata, query, scen, diffscen, subcatvar,
-                               filtervar, rgns) %>%
-            tidyr::gather(year, value, dplyr::matches(year.regex)) %>%
-            dplyr::mutate(year=strip.xyear(year))
+                               filtervar, rgns)
+            #%>%
+            #tidyr::gather(year, value, dplyr::matches(year.regex)) %>%
+            #dplyr::mutate(year=strip.xyear(year))
 
         plt <- ggplot(pltdata, aes_string('year','value', fill=subcatvar)) +
             geom_bar(stat='identity') + theme_minimal() + ylab(pltdata$Units)
