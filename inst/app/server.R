@@ -43,7 +43,11 @@ shinyServer(function(input, output, session) {
         }
 
         if(!is.null(rFileinfo()$project.data)) {
-            if(input$diffCheck) {
+            if(input$plotScenario == "") {
+                # When first loading a dataset, no scenario is selected
+                qscenarios <- scenarios
+            }
+            else if(input$diffCheck) {
                 qscenarios <- c(input$plotScenario, input$diffScenario)
             }
             else {
