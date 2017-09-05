@@ -244,6 +244,9 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
         mapLimits <- getMapLimits(pltdata, is.diff)
         unitstr <- summarize.unit(pltdata$Units)
 
+        # Filter the data to only the selected year
+        pltdata <- dplyr::filter_(pltdata, paste("year ==", year))
+
         map.params <- getMapParams(projselect) # map projection and extent
         pal <- getMapPalette(is.diff)   # color palette
         datacol <- 'value' # name of the column with the data.
@@ -378,7 +381,7 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
     }
     else {
         ## for gridded data, just get the lat, lon, yearly data, and units
-        tp <- dplyr::select_(tp, .dots=c('lat', 'lon', yearcols, 'Units'))
+        tp <- dplyr::select_(tp, .dots=c('lat', 'lon', 'year', 'Units'))
     }
 
     ## Occasionally you get a region with "0.0" for the unit string because most of its entries were zero.
