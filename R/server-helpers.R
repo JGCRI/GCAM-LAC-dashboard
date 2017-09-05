@@ -4,11 +4,6 @@
 ###    rFileinfo:  The reactive fileinfo structure returned by the file browser
 
 tag.noscen <- '->No scenarios selected<-'     # placeholder when no scenario selected
-#' Regular expression for year columns
-#' @export
-year.regex <- '^X?[0-9]{4}$'
-year.cols <- function(df) {grep(year.regex, names(df), value=TRUE)}
-strip.xyear <- function(xyear) {as.integer(substr(xyear, 2, 5))}
 
 #### State variables
 last.region.filter <- NULL
@@ -251,7 +246,7 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
 
         map.params <- getMapParams(projselect) # map projection and extent
         pal <- getMapPalette(is.diff)   # color palette
-        xyear <- 'value' # name of the column with the data.
+        datacol <- 'value' # name of the column with the data.
 
         if('region' %in% names(pltdata)) {
             ## This is a table of data by region
@@ -262,7 +257,7 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
                 map.dat <- gcammaptools::map.basin235
             plt.map <- merge(map.dat, pltdata)
 
-            plt <- plot_GCAM(plt.map, col='value',
+            plt <- plot_GCAM(plt.map, col=datacol,
                              proj=map.params$proj, extent=map.params$ext,
                              orientation=map.params$orientation, colors=pal,
                              legend=TRUE, limits=mapLimits, qtitle=unitstr)
@@ -270,8 +265,8 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
         else {
             ## Latitude and longitude grid data
             map.dat <- gcammaptools::map.rgn32        # keep an option open to plot with other
-                                                      # base maps
-            plt <- plot_GCAM_grid(pltdata, xyear, map.dat, proj=map.params$proj,
+
+            plt <- plot_GCAM_grid(pltdata, datacol, map.dat, proj=map.params$proj,
                                    extent=map.params$ext,
                                    orientation=map.params$orientation, legend=TRUE) +
                 scale_fill_gradientn(colors=pal, limits=mapLimits, name=unitstr)
@@ -327,7 +322,9 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
     }
     if(!is.null(diffscen)) {
         dp <- getQuery(prjdata, query, diffscen) # 'difference plot'
-        dp$region <- factor(dp$region, levels=c(names(region32), '0'), ordered=TRUE)
+        if('region' %in% names(dp)) {
+            dp$region <- factor(dp$region, levels=c(names(region32), '0'), ordered=TRUE)
+        }
     }
     else {
         dp <- NULL
@@ -335,34 +332,22 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
 
     yearcols <- year.cols(tp)
     if(!is.null(dp)) {
-        ## we're doing a difference plot, so subtract the difference scenario.
+        ## We're doing a difference plot, so subtract the difference scenario.
         ## Join the data sets first so that we can be sure that we have matched
         ## the rows and columns correctly
         varnames <- names(tp)
-        mergenames <- varnames[!varnames %in% c('scenario', 'Units') &
-                                   !grepl(year.regex, varnames)]
+        mergenames <- varnames[!varnames %in% c('scenario', 'Units', 'value')]
+
         joint.data <- merge(tp, dp, by=mergenames, all=TRUE)
         if(anyNA(joint.data))
             joint.data[is.na(joint.data)] <- 0 # zero out missing values
 
-        ## find common years between the data sets
-        years.tp <- grep('^X[0-9]{4}\\.x',
-                         names(joint.data), value=TRUE) %>%
-            substr(1,5)        # get the year columns from tp and strip the '.x'
-        years.dp <- grep('^X[0-9]{4}\\.y',
-                         names(joint.data), value=TRUE) %>%
-            substr(1,5)                 # same for dp
-        yearcols <- intersect(years.tp, years.dp)
+        value <- joint.data$value.x - joint.data$value.y
 
-        d1 <- as.matrix(joint.data[paste0(yearcols,'.x')])
-        d2 <- as.matrix(joint.data[paste0(yearcols,'.y')])
-        delta <- d1-d2
-        colnames(delta) <- yearcols
-
-        ## Construct the new data frame.  We use the scenario name from the left
-        ## (dp) data frame.
+        # Construct the new data frame.  We use the scenario name from the left
+        # (dp) data frame.
         tp <- dplyr::rename(joint.data, scenario=scenario.x, Units=Units.x) %>%
-            dplyr::select_(.dots=c('scenario', mergenames, 'Units')) %>% cbind(delta)
+           dplyr::select_(.dots=c('scenario', mergenames, 'Units')) %>% cbind(value)
     }
 
     ## If filtering is in effect, do it now
@@ -449,8 +434,6 @@ getMapPalette <- function(is.diff)
 #' @keywords internal
 getMapLimits <- function(pltdata, is.diff)
 {
-    #pltdata <- dplyr::select(pltdata, dplyr::matches(year.regex))
-    #limits <- c(min(pltdata, na.rm=TRUE), max(pltdata, na.rm=TRUE))
     limits <- range(pltdata['value'], na.rm=TRUE)
     if(is.diff) {
         ## For a difference plot, force the limits to be balanced on either side of zero
@@ -504,9 +487,6 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filter, rgns)
 
         pltdata <- getPlotData(prjdata, query, scen, diffscen, subcatvar,
                                filtervar, rgns)
-            #%>%
-            #tidyr::gather(year, value, dplyr::matches(year.regex)) %>%
-            #dplyr::mutate(year=strip.xyear(year))
 
         plt <- ggplot(pltdata, aes_string('year','value', fill=subcatvar)) +
             geom_bar(stat='identity') + theme_minimal() + ylab(pltdata$Units)
@@ -519,7 +499,10 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filter, rgns)
                 fillpal <- region32
             else {
                 n <- length(unique(pltdata[[subcatvar]]))
-                if(n<=12) {
+                if(n<3) {
+                    fillpal <- RColorBrewer::brewer.pal(3,'Set3')
+                }
+                else if(n<=12) {
                     fillpal <- RColorBrewer::brewer.pal(n,'Set3')
                 }
                 else {
