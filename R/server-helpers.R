@@ -251,7 +251,7 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
 
         map.params <- getMapParams(projselect) # map projection and extent
         pal <- getMapPalette(is.diff)   # color palette
-        xyear <- paste('X',year, sep='') # name of the column with the data.
+        xyear <- 'value' # name of the column with the data.
 
         if('region' %in% names(pltdata)) {
             ## This is a table of data by region
@@ -262,7 +262,7 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
                 map.dat <- gcammaptools::map.basin235
             plt.map <- merge(map.dat, pltdata)
 
-            plt <- plot_GCAM(plt.map, col=xyear,
+            plt <- plot_GCAM(plt.map, col='value',
                              proj=map.params$proj, extent=map.params$ext,
                              orientation=map.params$orientation, colors=pal,
                              legend=TRUE, limits=mapLimits, qtitle=unitstr)
@@ -276,7 +276,7 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
                                    orientation=map.params$orientation, legend=TRUE) +
                 scale_fill_gradientn(colors=pal, limits=mapLimits, name=unitstr)
         }
-        ## set up elements that ae common to both kinds of plots here
+        ## set up elements that are common to both kinds of plots here
         plt + guides(fill=ggplot2::guide_colorbar(title.position='bottom', title.hjust=0.5,
                      barwidth=ggplot2::unit(4,'in')))
     }
@@ -370,20 +370,27 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
        !is.null(filterset) &&
        length(filterset) > 0
        ) {
-        ## This is horrible.  There has got to be a better way to do this.
-        tp <- dplyr::filter_(tp, paste(filtervar,
-                                '%in% c(',
-                                paste(shQuote(filterset), collapse=', '), ')'
-                                ))
-        if(nrow(tp) == 0) {
-          return(tp)
-        }
+
+        tp <- dplyr::filter_(tp, lazyeval::interp(~y %in% x, y = as.name(filtervar), x = filterset))
+
+        #if(nrow(tp) == 0) {
+        #  return(tp)
+        #}
     }
 
     if(!isGrid(prjdata, pltscen, query)) {
         ## select the key and year columns, then sum all values with the same key.  Force the sum
         ## to have the name 'value'.  Skip this step for grid data.
-        tp <- aggregate(tp['value'], by=list(Units=tp$Units, scenario=tp$scenario, year=tp$year), sum)
+        if(!is.null(key) &&
+           key %in% (tp %>% names %>% setdiff(c('year', 'Units')))
+           ) {
+          tp <- dplyr::group_by_(tp, key, 'year', 'Units') %>%
+                dplyr::summarise(value = sum(value))
+        }
+        else {
+          tp <- dplyr::group_by_(tp, 'year', 'Units') %>%
+                dplyr::summarise(value = sum(value))
+        }
     }
     else {
         ## for gridded data, just get the lat, lon, yearly data, and units
@@ -442,8 +449,9 @@ getMapPalette <- function(is.diff)
 #' @keywords internal
 getMapLimits <- function(pltdata, is.diff)
 {
-    pltdata <- dplyr::select(pltdata, dplyr::matches(year.regex))
-    limits <- c(min(pltdata, na.rm=TRUE), max(pltdata, na.rm=TRUE))
+    #pltdata <- dplyr::select(pltdata, dplyr::matches(year.regex))
+    #limits <- c(min(pltdata, na.rm=TRUE), max(pltdata, na.rm=TRUE))
+    limits <- range(pltdata['value'], na.rm=TRUE)
     if(is.diff) {
         ## For a difference plot, force the limits to be balanced on either side of zero
         mag <- max(abs(limits))

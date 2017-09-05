@@ -79,7 +79,7 @@ shinyServer(function(input, output, session) {
         prj <- isolate(rFileinfo()$project.data)
         query <- input$plotQuery
         if(uiStateValid(prj, scen, query)) {
-            ## Asumes that a particular query has the same columns in all scenarios
+            ## Assumes that a particular query has the same columns in all scenarios
             querycols <- getQuery(prj, query, scen) %>% names
             catvars <- grep(year.regex, querycols, invert=TRUE, value=TRUE) %>%
                 grep('scenario|Units', . , invert=TRUE, value=TRUE)
