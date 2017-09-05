@@ -190,7 +190,7 @@ getQueryYears <- function(prj, scenario, query)
 #' Mainly intended for use when no data has been loaded.
 #'
 #' @param label.text Text to display in the middle of the panel
-#' @importFrom ggplot2 ggplot geom_label theme_minimal
+#' @importFrom ggplot2 ggplot geom_label theme_minimal aes aes_
 #' @export
 default.plot <- function(label.text='No data selected')
 {
@@ -330,7 +330,6 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
         dp <- NULL
     }
 
-    yearcols <- year.cols(tp)
     if(!is.null(dp)) {
         ## We're doing a difference plot, so subtract the difference scenario.
         ## Join the data sets first so that we can be sure that we have matched

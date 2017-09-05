@@ -81,8 +81,7 @@ shinyServer(function(input, output, session) {
         if(uiStateValid(prj, scen, query)) {
             ## Assumes that a particular query has the same columns in all scenarios
             querycols <- getQuery(prj, query, scen) %>% names
-            catvars <- grep(year.regex, querycols, invert=TRUE, value=TRUE) %>%
-                grep('scenario|Units', . , invert=TRUE, value=TRUE)
+            catvars <- querycols[!querycols %in% c('scenario', 'Units', 'year', 'value')]
             updateSelectInput(session, 'tvSubcatVar', choices=c('none',
                                                       catvars))
             ## now do the map slider
