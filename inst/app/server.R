@@ -143,18 +143,28 @@ shinyServer(function(input, output, session) {
     output$mapName <- renderText({input$plotQuery})
 
     output$timePlot <- renderPlot({
-        if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
-                        input$plotQuery )) {
+        prj <- rFileinfo()$project.data
+        scen <- input$plotScenario
+        query <- input$plotQuery
+        if(uiStateValid(prj, scen, query)) {
                diffscen <- if(input$diffCheck) {
                    input$diffScenario
                } else {
-                     NULL
-                 }
+                   NULL
+               }
+               tvSubcatVar <- input$tvSubcatVar
+
                region.filter <- c(input$tvRgns1, input$tvRgns2, input$tvRgns3,
                                   input$tvRgns4, input$tvRgns5)
                last.region.filter <<- region.filter
-               plotTime(rFileinfo()$project.data, input$plotQuery,
-                        input$plotScenario, diffscen, input$tvSubcatVar,
+
+               # If the query has changed, the value of the subcategory selector
+               # may not be valid anymore. Change it to none.
+               if(!tvSubcatVar %in% names(getQuery(prj, query, scen))) {
+                  tvSubcatVar <- 'none'
+               }
+
+               plotTime(prj, query, scen, diffscen, tvSubcatVar,
                         input$tvFilterCheck, region.filter)
            }
         else {                          # UI state is invalid

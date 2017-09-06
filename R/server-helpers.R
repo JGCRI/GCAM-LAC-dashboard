@@ -346,6 +346,8 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
 
         value <- joint.data$value.x - joint.data$value.y
 
+        mergenames <- sapply(mergenames, as.name) # Don't eval hyphenated col names
+
         # Construct the new data frame.  We use the scenario name from the left
         # (dp) data frame.
         tp <- dplyr::rename(joint.data, scenario=scenario.x, Units=Units.x) %>%
@@ -355,7 +357,8 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
     ## If filtering is in effect, do it now
     if(!is.null(filtervar) &&
        !is.null(filterset) &&
-       length(filterset) > 0
+       length(filterset) > 0 &&
+       filtervar %in% names(tp)
        ) {
 
         tp <- dplyr::filter_(tp, lazyeval::interp(~y %in% x, y = as.name(filtervar), x = filterset))
@@ -369,9 +372,8 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
         ## select the key and year columns, then sum all values with the same key.  Force the sum
         ## to have the name 'value'.  Skip this step for grid data.
         if(!is.null(key) &&
-           key %in% (tp %>% names %>% setdiff(c('year', 'Units')))
+           toString(key) %in% (tp %>% names %>% setdiff(c('year', 'Units')))
            ) {
-          key <- as.name(key)
           tp <- dplyr::group_by_(tp, key, 'year', 'Units') %>%
                 dplyr::summarise(value = sum(value))
         }
@@ -487,25 +489,20 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filter, rgns)
 
         if(subcatvar=='none')
             subcatvar <- NULL
+        else
+            subcatvar <- as.name(subcatvar)
 
         pltdata <- getPlotData(prjdata, query, scen, diffscen, subcatvar,
                                filtervar, rgns)
 
-        if(!is.null(subcatvar)) {
-           subcatvarName <- as.name(subcatvar)
-        }
-        else {
-          subcatvarName <- subcatvar
-        }
-
-
         plt <- ggplot(pltdata, aes_string('year','value', fill=subcatvar)) +
-            geom_bar(stat='identity') + theme_minimal() + ylab(pltdata$Units)
+          geom_bar(stat='identity') + theme_minimal() + ylab(pltdata$Units)
 
         if(is.null(subcatvar)) {
             plt
         }
         else {
+            subcatvar <- toString(subcatvar)
             if(subcatvar=='region')
                 fillpal <- region32
             else {
