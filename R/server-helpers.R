@@ -371,6 +371,7 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
         if(!is.null(key) &&
            key %in% (tp %>% names %>% setdiff(c('year', 'Units')))
            ) {
+          key <- as.name(key)
           tp <- dplyr::group_by_(tp, key, 'year', 'Units') %>%
                 dplyr::summarise(value = sum(value))
         }
@@ -489,6 +490,14 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filter, rgns)
 
         pltdata <- getPlotData(prjdata, query, scen, diffscen, subcatvar,
                                filtervar, rgns)
+
+        if(!is.null(subcatvar)) {
+           subcatvarName <- as.name(subcatvar)
+        }
+        else {
+          subcatvarName <- subcatvar
+        }
+
 
         plt <- ggplot(pltdata, aes_string('year','value', fill=subcatvar)) +
             geom_bar(stat='identity') + theme_minimal() + ylab(pltdata$Units)
