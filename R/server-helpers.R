@@ -383,8 +383,8 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
         }
     }
     else {
-        ## for gridded data, just get the lat, lon, yearly data, and units
-        tp <- dplyr::select_(tp, .dots=c('lat', 'lon', 'year', 'Units'))
+        ## for gridded data, just get the lat, lon, year, data, and units
+        tp <- dplyr::select_(tp, .dots=c('lat', 'lon', 'value', 'year', 'Units'))
     }
 
     ## Occasionally you get a region with "0.0" for the unit string because most of its entries were zero.

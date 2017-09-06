@@ -86,8 +86,10 @@ shinyServer(function(input, output, session) {
             ## Assumes that a particular query has the same columns in all scenarios
             querycols <- getQuery(prj, query, scen) %>% names
             catvars <- querycols[!querycols %in% c('scenario', 'Units', 'year', 'value')]
-            updateSelectInput(session, 'tvSubcatVar', choices=c('none',
-                                                      catvars))
+            prevSubcat <- if(input$tvSubcatVar %in% catvars) input$tvSubcatVar else 'none'
+            updateSelectInput(session, 'tvSubcatVar', choices=c('none', catvars),
+                              selected=prevSubcat)
+
             ## now do the map slider
             yrlimits <- getQueryYears(prj, scen, query)
             yrsel <- isolate(input$mapYear)
