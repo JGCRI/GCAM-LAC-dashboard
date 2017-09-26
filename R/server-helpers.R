@@ -207,10 +207,11 @@ default.plot <- function(label.text='No data selected')
 #' @param projselect Projection to use for the map
 #' @param year Year to plot data for
 #' @importFrom ggplot2 scale_fill_gradientn guides
-#' @importFrom gcammaptools plot_GCAM addRegionID plot_GCAM_grid
+#' @importFrom gcammaptools plot_GCAM add_region_ID plot_GCAM_grid
 #' @export
 plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
 {
+
     if(is.null(prjdata)) {
         default.plot()
     }
@@ -253,25 +254,27 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
 
         if('region' %in% names(pltdata)) {
             ## This is a table of data by region
-            pltdata <- addRegionID(pltdata, lookupfile=mapset, drops=mapset)
-            if(mapset==gcammaptools::rgn32)
-                map.dat <- gcammaptools::map.rgn32
-            else if(mapset==gcammaptools::basin235)
-                map.dat <- gcammaptools::map.basin235
-            plt.map <- merge(map.dat, pltdata)
+            # pltdata <- add_region_ID(pltdata, lookupfile=mapset, drops=mapset)
+            # if(mapset==gcammaptools::rgn32) {
+            #     # map.dat <- gcammaptools::map.rgn32
+            #     map.dat <- "../../../gcammaptools/inst/extdata/rgn32/reg32_spart.shp"
+            #     map.dat <- gcammaptools::import_mapdata(map.dat)
+            #     map.dat <- sf::st_simplify(map.dat, preserveTopology=TRUE, dTolerance=2.0)
+            # }
+            # else if(mapset==gcammaptools::basin235)
+            #     map.dat <- gcammaptools::map.basin235
 
-            plt <- plot_GCAM(plt.map, col=datacol,
-                             proj=map.params$proj, extent=map.params$ext,
-                             orientation=map.params$orientation, colors=pal,
-                             legend=TRUE, limits=mapLimits, qtitle=unitstr)
+            plt <- plot_GCAM(map.dat, col=datacol, proj=map.params$proj,
+                             extent=map.params$ext, legend=TRUE, colors=pal,
+                             qtitle=unitstr, limits=mapLimits, gcam_df=pltdata, gcam_key='id',
+                             mapdata_key='region_id')
+
+
         }
         else {
-            ## Latitude and longitude grid data
-            map.dat <- gcammaptools::map.rgn32        # keep an option open to plot with other
 
-            plt <- plot_GCAM_grid(pltdata, datacol, map.dat, proj=map.params$proj,
-                                   extent=map.params$ext,
-                                   orientation=map.params$orientation, legend=TRUE) +
+            plt <- plot_GCAM_grid(pltdata, col=datacol, proj=map.params$proj,
+                                  extent=map.params$ext, legend=TRUE) +
                 scale_fill_gradientn(colors=pal, limits=mapLimits, name=unitstr)
         }
         ## set up elements that are common to both kinds of plots here
