@@ -207,7 +207,7 @@ default.plot <- function(label.text='No data selected')
 #' @param projselect Projection to use for the map
 #' @param year Year to plot data for
 #' @importFrom ggplot2 scale_fill_gradientn guides
-#' @importFrom gcammaptools plot_GCAM add_region_ID plot_GCAM_grid
+#' @importFrom gcammaptools add_region_ID plot_GCAM plot_GCAM_grid
 #' @export
 plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
 {
@@ -228,6 +228,7 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
         is.diff <- !is.null(diffscen)      # We'll do a couple of things differently for a diff plot
 
         mapset <- determineMapset(prjdata, pltscen, query)
+
         if(isGrid(prjdata, pltscen, query)) {
             key <- c('lat', 'lon')
         }
@@ -252,30 +253,35 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
         pal <- getMapPalette(is.diff)   # color palette
         datacol <- 'value' # name of the column with the data.
 
+        # Determine whether to use basin or region map, and which level of detail
+        simplify_map <- isTRUE(all.equal(map.params$ext, gcammaptools::EXTENT_WORLD))
+        if(mapset==gcammaptools::rgn32 && simplify_map)
+            map.dat <- gcammaptools::map.rgn32.simple    # rgn32 and world extent
+        else if(mapset==gcammaptools::rgn32)
+            map.dat <- gcammaptools::map.rgn32           # rgn32 and smaller extent
+        else if(simplify_map)
+            map.dat <- gcammaptools::map.basin235.simple # basin235 and world extent
+        else
+            map.dat <- gcammaptools::map.basin235        # basin235 and smaller extent
+
+
         if('region' %in% names(pltdata)) {
-            ## This is a table of data by region
-            # pltdata <- add_region_ID(pltdata, lookupfile=mapset, drops=mapset)
-            # if(mapset==gcammaptools::rgn32) {
-            #     # map.dat <- gcammaptools::map.rgn32
-            #     map.dat <- "../../../gcammaptools/inst/extdata/rgn32/reg32_spart.shp"
-            #     map.dat <- gcammaptools::import_mapdata(map.dat)
-            #     map.dat <- sf::st_simplify(map.dat, preserveTopology=TRUE, dTolerance=2.0)
-            # }
-            # else if(mapset==gcammaptools::basin235)
-            #     map.dat <- gcammaptools::map.basin235
+            # This is a table of data by region
+            pltdata <- add_region_ID(pltdata, lookupfile = mapset, drops = mapset)
 
-            plt <- plot_GCAM(map.dat, col=datacol, proj=map.params$proj,
-                             extent=map.params$ext, legend=TRUE, colors=pal,
-                             qtitle=unitstr, limits=mapLimits, gcam_df=pltdata, gcam_key='id',
-                             mapdata_key='region_id')
-
+            plt <- plot_GCAM(map.dat, col = datacol, proj = map.params$proj,
+                             proj_type = map.params$proj_type, extent = map.params$ext,
+                             legend = TRUE, gcam_df = pltdata, gcam_key = 'id',
+                             mapdata_key='region_id', zoom = map.params$zoom)
 
         }
         else {
 
-            plt <- plot_GCAM_grid(pltdata, col=datacol, proj=map.params$proj,
-                                  extent=map.params$ext, legend=TRUE) +
-                scale_fill_gradientn(colors=pal, limits=mapLimits, name=unitstr)
+            plt <- plot_GCAM_grid(pltdata, datacol, map = map.dat,
+                                  proj_type = map.params$proj_type,
+                                  proj = map.params$proj, extent = map.params$ext,
+                                  zoom = map.params$zoom, legend = TRUE) +
+                scale_fill_gradientn(colors = pal, limits = mapLimits, name = unitstr)
         }
         ## set up elements that are common to both kinds of plots here
         plt + guides(fill=ggplot2::guide_colorbar(title.position='bottom', title.hjust=0.5,
@@ -416,10 +422,10 @@ getMapParams <- function(projselect)
         list(proj=gcammaptools::ch_aea, ext=gcammaptools::EXTENT_CHINA, orientation=NULL)
     }
     else if(projselect == 'africa') {
-        list(proj=gcammaptools::ortho, ext=gcammaptools::EXTENT_AFRICA, orientation=gcammaptools::ORIENTATION_AFRICA)
+        list(proj=gcammaptools::af_ortho, ext=gcammaptools::EXTENT_AFRICA, orientation=gcammaptools::ORIENTATION_AFRICA, zoom=10)
     }
     else if(projselect == 'lac') {
-        list(proj=gcammaptools::ortho, ext=gcammaptools::EXTENT_LA, orientation=gcammaptools::ORIENTATION_LA)
+        list(proj=7567, proj_type='SR-ORG', ext=gcammaptools::EXTENT_LA, orientation=gcammaptools::ORIENTATION_LA, zoom=8)
     }
 }
 
