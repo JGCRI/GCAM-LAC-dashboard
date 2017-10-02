@@ -415,19 +415,19 @@ getMapParams <- function(projselect)
 {
     ## currently valid values are 'global' and 'lac'
     if(projselect == 'global') {
-        list(proj=gcammaptools::eck3, ext=gcammaptools::EXTENT_WORLD, orientation=NULL)
+        list(proj=gcammaptools::eck3, ext=gcammaptools::EXTENT_WORLD)
     }
     else if(projselect == 'usa') {
-        list(proj=gcammaptools::na_aea, ext=gcammaptools::EXTENT_USA, orientation=NULL)
+        list(proj=gcammaptools::na_aea, ext=gcammaptools::EXTENT_USA)
     }
     else if(projselect == 'china') {
-        list(proj=gcammaptools::ch_aea, ext=gcammaptools::EXTENT_CHINA, orientation=NULL)
+        list(proj=gcammaptools::ch_aea, ext=gcammaptools::EXTENT_CHINA)
     }
     else if(projselect == 'africa') {
-        list(proj=gcammaptools::af_ortho, ext=gcammaptools::EXTENT_AFRICA, orientation=gcammaptools::ORIENTATION_AFRICA, zoom=10)
+        list(proj=gcammaptools::af_ortho, ext=gcammaptools::EXTENT_AFRICA, zoom=10)
     }
     else if(projselect == 'lac') {
-        list(proj=7567, proj_type='SR-ORG', ext=gcammaptools::EXTENT_LA, orientation=gcammaptools::ORIENTATION_LA, zoom=8)
+        list(proj=7567, proj_type='SR-ORG', ext=gcammaptools::EXTENT_LA, zoom=8)
     }
 }
 
