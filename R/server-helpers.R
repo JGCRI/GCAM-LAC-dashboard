@@ -275,13 +275,15 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
                              mapdata_key='region_id', zoom = map.params$zoom)
 
         }
-        else {
+        else if(isGrid(prjdata, pltscen, query)) {
 
             plt <- plot_GCAM_grid(pltdata, datacol, map = map.dat,
                                   proj_type = map.params$proj_type,
                                   proj = map.params$proj, extent = map.params$ext,
                                   zoom = map.params$zoom, legend = TRUE) +
                 scale_fill_gradientn(colors = pal, limits = mapLimits, name = unitstr)
+        } else {
+            plt <- default.plot(label.text = "No geographic data available for this query")
         }
         ## set up elements that are common to both kinds of plots here
         plt + guides(fill=ggplot2::guide_colorbar(title.position='bottom', title.hjust=0.5,
