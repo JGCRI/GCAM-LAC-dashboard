@@ -332,15 +332,12 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
        ) {
 
         tp <- dplyr::filter_(tp, lazyeval::interp(~y %in% x, y = as.name(filtervar), x = filterset))
-
-        #if(nrow(tp) == 0) {
-        #  return(tp)
-        #}
     }
 
     if(!isGrid(prjdata, pltscen, query)) {
-        ## select the key and year columns, then sum all values with the same key.  Force the sum
-        ## to have the name 'value'.  Skip this step for grid data.
+        ## Select the key and year columns, then sum all values with the same
+        ## key.  Force the sum to have the name 'value'. Skip this step for
+        ## grid data.
         if(!is.null(key) &&
            toString(key) %in% (tp %>% names %>% setdiff(c('year', 'Units')))
            ) {
@@ -357,8 +354,9 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
         tp <- dplyr::select_(tp, .dots=c('lat', 'lon', 'value', 'year', 'Units'))
     }
 
-    ## Occasionally you get a region with "0.0" for the unit string because most of its entries were zero.
-    ## Fix these so that the column all has the same unit.
+    ## Occasionally you get a region with "0.0" for the unit string because
+    ## most of its entries were zero. Fix these so that the column all has the
+    ## same unit.
     tp$Units <- summarize.unit(tp$Units)
     tp
 }
@@ -372,7 +370,6 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
 #' @keywords internal
 getMapParams <- function(projselect)
 {
-    ## currently valid values are 'global' and 'lac'
     if(projselect == 'global') {
         list(proj=gcammaptools::eck3, ext=gcammaptools::EXTENT_WORLD)
     }
