@@ -8,51 +8,6 @@ tag.noscen <- '->No scenarios selected<-'     # placeholder when no scenario sel
 #### State variables
 last.region.filter <- NULL
 
-## Color schemes
-rgb255 <- function(r, g, b) {rgb(r,g,b, maxColorValue=255)}
-
-region32 <- c(
-    'Africa_Northern' = rgb255(139,69,19),
-    'Africa_Eastern' = rgb255(139,115,88),
-    'Africa_Southern' = rgb255(255,211,155),
-    'Africa_Western' = rgb255(255,185,15),
-    'South Africa' = rgb255(255,215,0),
-
-    'Canada' = rgb255(224,238,224),
-    'USA' = rgb255(77,77,77),
-
-    'Argentina' = rgb255(0,100,0),
-    'Brazil' = rgb255(154,205,50),
-    'Central America and Caribbean' = rgb255(46,139,87),
-    'Colombia' = rgb255(102,205,170),
-    'Mexico' = rgb255(50,205,50),
-    'South America_Southern' = rgb255(72,209,204),
-    'South America_Northern' = rgb255(0,255,0),
-
-    'EU-12' = rgb255(25,25,112),
-    'EU-15' = rgb255(131,111,255),
-    'Europe_Eastern' = rgb255(173,216,230),
-    'Europe_Non_EU' = rgb255(0,104,139),
-    'European Free Trade Association' = rgb255(58,95,205),
-
-    'Russia' = rgb255(104,34,139),
-    'China' = rgb255(255,0,0),
-    'Middle East' = rgb255(188,143,143),
-    'Australia_NZ' = rgb255(255,193,193),
-    'Central Asia' = rgb255(139,0,0),
-    'India' = rgb255(208,32,144),
-    'Indonesia' = rgb255(139, 28, 98),
-    'Japan' = hsv(0.01, 0.75, 0.65),
-    'Pakistan' = rgb255(205, 181, 205),
-    'South Asia' = rgb255(139, 123, 139),
-    'South Korea' = rgb255(205, 92, 92),
-    'Southeast Asia' = rgb255(240, 128, 128),
-    'Taiwan' = rgb255(150, 150, 150)
-    )
-
-
-
-
 #' Get the name of the project for display
 #'
 #' Returns a place holder string if no project has been loaded yet.
@@ -332,12 +287,16 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
 
     if('region' %in% names(tp)) {
         ## If the data has a region column, put it in the canoncial order given above.
-        tp$region <- factor(tp$region, levels=c(names(region32), '0'), ordered=TRUE) # convert to ordered factor
+        tp$region <- factor(tp$region,
+                            levels=c(names(gcammaptools::gcam32_colors), '0'),
+                            ordered=TRUE) # convert to ordered factor
     }
     if(!is.null(diffscen)) {
         dp <- getQuery(prjdata, query, diffscen) # 'difference plot'
         if('region' %in% names(dp)) {
-            dp$region <- factor(dp$region, levels=c(names(region32), '0'), ordered=TRUE)
+            dp$region <- factor(dp$region,
+                                levels=c(names(gcammaptools::gcam32_colors), '0'),
+                                ordered=TRUE)
         }
     }
     else {
@@ -515,7 +474,7 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filter, rgns)
         else {
             subcatvar <- toString(subcatvar)
             if(subcatvar=='region')
-                fillpal <- region32
+                fillpal <- gcammaptools::gcam32_colors
             else {
                 n <- length(unique(pltdata[[subcatvar]]))
                 if(n<3) {
