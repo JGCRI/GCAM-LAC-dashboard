@@ -158,7 +158,7 @@ shinyServer(function(input, output, session) {
                     input$plotScenario, diffscen, input$mapProjection, year)
         }
         else {
-            default.plot('Updating')
+            default.plot('No Data')
         }
     })
 
@@ -190,7 +190,7 @@ shinyServer(function(input, output, session) {
                plotTime(prj, query, scen, diffscen, tvSubcatVar, region.filter)
            }
         else {                          # UI state is invalid
-            default.plot('Updating')
+            default.plot('No Data')
         }
     })
 
@@ -199,10 +199,10 @@ shinyServer(function(input, output, session) {
                        input$plotQuery )) {
         query <- "Hydrogen production by technology"
         plotTime(rFileinfo()$project.data, query, input$plotScenario, NULL,
-                 "technology", TRUE, lac.rgns)
+                 "technology", lac.rgns)
       }
       else {
-        default.plot('Updating')
+        default.plot('No Data')
       }
     })
 
@@ -211,10 +211,10 @@ shinyServer(function(input, output, session) {
                        input$plotQuery )) {
         query <- "Population by region"
         plotTime(rFileinfo()$project.data, query, input$plotScenario, NULL,
-                 "region", TRUE, lac.rgns)
+                 "region", lac.rgns)
       }
       else {
-        default.plot('Updating')
+        default.plot('No Data')
       }
     })
 
@@ -226,7 +226,7 @@ shinyServer(function(input, output, session) {
                  "lac", 2050)
       }
       else {
-        default.plot('Updating')
+        default.plot('No Data')
       }
     })
 
@@ -238,7 +238,7 @@ shinyServer(function(input, output, session) {
                  "lac", 2050)
       }
       else {
-        default.plot('Updating')
+        default.plot('No Data')
       }
     })
 

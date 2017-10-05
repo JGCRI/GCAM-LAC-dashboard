@@ -12,9 +12,9 @@ shinyUI(fluidPage(theme="style.css",
     dashboardSidebar(
       sidebarMenu(
         menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
-        menuItem("File Upload", tabName = "file", icon = icon("tint", lib = "font-awesome")),
         menuItem("Water", tabName = "water", icon = icon("tint", lib = "font-awesome")),
-        menuItem("Energy", tabName = "energy", icon = icon("bolt", lib = "font-awesome"))
+        menuItem("Energy", tabName = "energy", icon = icon("bolt", lib = "font-awesome")),
+        menuItem("File Manager", tabName = "file", icon = icon("file", lib = "font-awesome"))
       ),
       fileInput('projectFile', 'GCAM Project Data File'),
       sidebarMenu(
@@ -69,18 +69,30 @@ shinyUI(fluidPage(theme="style.css",
         ),
         tabItem(tabName = "water",
           fluidRow(
-            h3(textOutput('mapName', inline=TRUE),align='center'),
-            plotOutput('mapPlot',height='600px'),
-            sliderInput('mapYear', 'Year', width='80%', min=2005, max=2100, step=5, value=2050,
-                        sep='', animate = TRUE),
-            h3('Options'),
-            selectInput('mapProjection', 'Map Type',
-                        choices=c(Global='global',
-                                  USA='usa',
-                                  China='china',
-                                  Africa='africa',
-                                  `Latin America and Caribbean`='lac'),
-                        selected = 'global')
+            column(6,
+              box(title = "Map Type", width = NULL, status = "warning",
+                  selectInput('mapProjection', label = NULL,
+                              choices=c(Global='global', USA='usa', China='china',
+                                        Africa='africa', `Latin America and Caribbean`='lac'),
+                              selected = 'lac')
+              ),
+              box(width = NULL, height = '450px',
+                 status = "primary",
+                 h3(textOutput('mapName', inline=TRUE),align='center'),
+                 plotOutput('mapPlot')
+              ),
+              box(width = NULL,
+                 sliderInput('mapYear', NULL, min=2005, max=2100, step=5, value=2050,
+                             sep='', animate = TRUE)
+              )
+            ),
+
+            column(6,
+              box(title = "Water withdrawals for irrigation", width = NULL,
+                 solidHeader = TRUE, status = "success", height = '350px'),
+              box(title = "Water withdrawals for electricity", width = NULL,
+                 solidHeader = TRUE, status = "success", height = '350px')
+            )
           )
         ),
         tabItem(tabName = "energy",
