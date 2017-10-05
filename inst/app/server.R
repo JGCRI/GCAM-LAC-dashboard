@@ -102,6 +102,34 @@ shinyServer(function(input, output, session) {
         }
     })
 
+    # Update checkboxes when select or deselect checkbox is pressed
+    observeEvent(input$rgns1All, {
+      updateRegionFilter(session, 'rgns1All', 'tvRgns1', input$rgns1All%%2 == 0, africa.rgns)
+    })
+    observeEvent(input$rgns2All, {
+      updateRegionFilter(session, 'rgns2All', 'tvRgns2', input$rgns2All%%2 == 1, lac.rgns) # starts with all checked
+    })
+    observeEvent(input$rgns3All, {
+      updateRegionFilter(session, 'rgns3All', 'tvRgns3', input$rgns3All%%2 == 0, north.america.rgns)
+    })
+    observeEvent(input$rgns4All, {
+      updateRegionFilter(session, 'rgns4All', 'tvRgns4', input$rgns4All%%2 == 0, europe.rgns)
+    })
+    observeEvent(input$rgns5All, {
+      updateRegionFilter(session, 'rgns5All', 'tvRgns5', input$rgns5All%%2 == 0, asiapac.rgns)
+    })
+    observeEvent(input$rgnSelectAll, {
+      # Select all
+      sAll <- input$rgnSelectAll%%2 == 0
+      updateRegionFilter(session, 'rgnSelectAll', 'tvRgns1', sAll, africa.rgns)
+      updateRegionFilter(session, 'rgnSelectAll', 'tvRgns2', sAll, lac.rgns)
+      updateRegionFilter(session, 'rgnSelectAll', 'tvRgns3', sAll, north.america.rgns)
+      updateRegionFilter(session, 'rgnSelectAll', 'tvRgns4', sAll, europe.rgns)
+      updateRegionFilter(session, 'rgnSelectAll', 'tvRgns5', sAll, asiapac.rgns)
+      # Update button text
+      # updateCheckboxInput(session, 'rgnSelectAll', label = paste0(ifelse(sAll, "Des", "S"), "elect all"))
+    })
+
     output$projectSize <- renderText({
         if(is.null(rFileinfo()$project.data))
             0
@@ -147,6 +175,7 @@ shinyServer(function(input, output, session) {
                    NULL
                }
                tvSubcatVar <- input$tvSubcatVar
+               a <- input$tvRgns2
 
                region.filter <- c(input$tvRgns1, input$tvRgns2, input$tvRgns3,
                                   input$tvRgns4, input$tvRgns5)
@@ -158,8 +187,7 @@ shinyServer(function(input, output, session) {
                   tvSubcatVar <- 'none'
                }
 
-               plotTime(prj, query, scen, diffscen, tvSubcatVar,
-                        input$tvFilterCheck, region.filter)
+               plotTime(prj, query, scen, diffscen, tvSubcatVar, region.filter)
            }
         else {                          # UI state is invalid
             default.plot('Updating')

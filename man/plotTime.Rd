@@ -4,7 +4,7 @@
 \alias{plotTime}
 \title{Plot values over time as a bar chart}
 \usage{
-plotTime(prjdata, query, scen, diffscen, subcatvar, filter, rgns)
+plotTime(prjdata, query, scen, diffscen, subcatvar, rgns)
 }
 \arguments{
 \item{prjdata}{A project data structure}
@@ -16,8 +16,6 @@ plotTime(prjdata, query, scen, diffscen, subcatvar, filter, rgns)
 \item{diffscen}{Name of the difference scenario, or NULL if none}
 
 \item{subcatvar}{Variable to use for subcategories in the plot}
-
-\item{filter}{If TRUE, then filter to regions in the rgns argument}
 
 \item{rgns}{Regions to filter to, if filter is TRUE.}
 }

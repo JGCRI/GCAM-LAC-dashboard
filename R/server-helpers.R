@@ -123,6 +123,27 @@ getQueryYears <- function(prj, scenario, query)
 }
 
 
+#' Update the checkbox filters when select/deselect all button is pressed
+#'
+#' @param session The main session.
+#' @param btnId The id of the actionButton that was pressed.
+#' @param groupId The id of the checkboxGroupInput to act on.
+#' @param selectAll If TRUE, select all checkboxes in the group defined by
+#'   groupId. If not TRUE then deselect.
+#' @param choices The labels of the checkboxes.
+updateRegionFilter <- function(session, btnId, groupId, selectAll, choices) {
+  if(selectAll) {
+    updateCheckboxGroupInput(session, groupId, choices = choices)
+    newText <- "Select all"
+  }
+  else {
+    updateCheckboxGroupInput(session, groupId, choices = choices, selected = choices)
+    newText <- "Deselect all"
+  }
+
+  updateCheckboxInput(session, btnId, label = newText)
+}
+
 ### Helpers for making plots
 
 #' Plot a default panel
@@ -424,12 +445,11 @@ summarize.unit <- function(unitcol)
 #' @param scen  Name of the scenario to plot
 #' @param diffscen  Name of the difference scenario, or NULL if none
 #' @param subcatvar  Variable to use for subcategories in the plot
-#' @param filter  If TRUE, then filter to regions in the rgns argument
 #' @param rgns  Regions to filter to, if filter is TRUE.
 #' @importFrom magrittr "%>%"
 #' @importFrom ggplot2 ggplot aes_string geom_bar theme_minimal ylab scale_fill_manual
 #' @export
-plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filter, rgns)
+plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
 {
     if(is.null(prjdata)) {
         default.plot()
@@ -437,11 +457,11 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filter, rgns)
     else if(isGrid(prjdata, scen, query)) {
         default.plot("Can't plot time series of spatial grid data.")
     }
+    else if(length(rgns) == 0) {
+        default.plot("No regions selected.")
+    }
     else {
-        if(filter)
-            filtervar <- 'region'
-        else
-            filtervar <- NULL
+        filtervar <- 'region'
 
         if(subcatvar=='none')
             subcatvar <- NULL

@@ -37,7 +37,7 @@ h4.panel-title {
   font-size: 14px;
 }
 
-#rgns2All {
+#rgns1All, #rgns2All, #rgns3All, #rgns4All, #rgns5All, #rgnSelectAll {
   padding: 1px 7px;
   font-size: 12px;
 }

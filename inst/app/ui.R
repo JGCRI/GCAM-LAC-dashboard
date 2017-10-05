@@ -99,20 +99,29 @@ shinyUI(fluidPage(theme="style.css",
               box(title = "Filter by Region", status = "primary", solidHeader = TRUE,
                 width = NULL, height = '420px',
                 tableOutput("regionFilter"),
-                checkboxInput('tvFilterCheck', 'Deselect all regions'),
+                actionButton('rgnSelectAll', 'Select all regions'),
+
                 bsCollapse(open="Latin America and Caribbean",
                   bsCollapsePanel(title='Latin America and Caribbean', style="success",
-                     actionButton('rgns2All', 'Deselect All'),
-                     checkboxGroupInput('tvRgns2', NULL, choices=lac.rgns, selected = lac.rgns)
+                    actionButton('rgns2All', 'Deselect All'),
+                    checkboxGroupInput('tvRgns2', NULL, choices=lac.rgns, selected = lac.rgns)
                   ),
-                  bsCollapsePanel(title="Africa", checkboxGroupInput('tvRgns1', NULL,
-                                                                     choices=africa.rgns)),
-                  bsCollapsePanel(title="Asia-Europe", checkboxGroupInput('tvRgns4', NULL,
-                                                                          choices=europe.rgns)),
-                  bsCollapsePanel(title="Asia-Pacific", checkboxGroupInput('tvRgns5', NULL,
-                                                                           choices=asiapac.rgns)),
-                  bsCollapsePanel(title="North America", checkboxGroupInput('tvRgns3', NULL,
-                                                                                     choices=north.america.rgns))
+                  bsCollapsePanel(title="Africa",
+                    actionButton('rgns1All', 'Select All'),
+                    checkboxGroupInput('tvRgns1', NULL, choices=africa.rgns)
+                  ),
+                  bsCollapsePanel(title="Asia-Europe",
+                    actionButton('rgns4All', 'Select All'),
+                    checkboxGroupInput('tvRgns4', NULL, choices=europe.rgns)
+                  ),
+                  bsCollapsePanel(title="Asia-Pacific",
+                    actionButton('rgns5All', 'Select All'),
+                    checkboxGroupInput('tvRgns5', NULL, choices=asiapac.rgns)
+                  ),
+                  bsCollapsePanel(title="North America",
+                    actionButton('rgns3All', 'Select All'),
+                    checkboxGroupInput('tvRgns3', NULL, choices=north.america.rgns)
+                  )
                 )
               )
             )
