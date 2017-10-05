@@ -227,7 +227,9 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
             plt <- plot_GCAM(map.dat, col = datacol, proj = map.params$proj,
                              proj_type = map.params$proj_type, extent = map.params$ext,
                              legend = TRUE, gcam_df = pltdata, gcam_key = 'id',
-                             mapdata_key='region_id', zoom = map.params$zoom)
+                             mapdata_key = 'region_id', zoom = map.params$zoom) +
+              scale_fill_gradientn(colors = pal, na.value = gray(0.75),
+                                   name = query)
 
         }
         else if(isGrid(prjdata, pltscen, query)) {
@@ -241,8 +243,9 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
             plt <- default.plot(label.text = "No geographic data available for this query")
         }
         ## set up elements that are common to both kinds of plots here
-        plt + guides(fill=ggplot2::guide_colorbar(title.position='bottom', title.hjust=0.5,
-                     barwidth=ggplot2::unit(4,'in')))
+        plt + guides(fill=ggplot2::guide_colorbar(title="",
+                                                  barwidth=ggplot2::unit(0.1,'in'))) +
+          ggplot2::theme(legend.position="right")
     }
 }
 
@@ -283,7 +286,8 @@ determineMapset <- function(prjdata, pltscen, query)
 getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
                         filterset=NULL)
 {
-    tp <- getQuery(prjdata, query, pltscen) # 'table plot'
+    tp <- getQuery(prjdata, query, pltscen) # table plot
+    tp <- dplyr::filter(tp, year >= 2005 & year <= 2050) # only select relevant years
 
     if('region' %in% names(tp)) {
         ## If the data has a region column, put it in the canoncial order given above.

@@ -1,0 +1,20 @@
+@import url("https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,700italic,400,300,700");
+
+
+/*Default skin is skin-blue, so overwrite with our own style*/
+.skin-blue .main-header .navbar {
+    background-color: #fff;
+}
+
+.skin-blue .main-header .logo {
+    font-family: "Open Sans", Times, "Times New Roman", serif;
+    font-weight: bold;
+    font-size: 20px;
+    background-color: #fff;
+    color: #555;
+    text-align: left;
+}
+
+.skin-blue .main-header .logo:hover {
+    background-color: #fff;
+}

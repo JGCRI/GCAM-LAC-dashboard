@@ -174,6 +174,54 @@ shinyServer(function(input, output, session) {
         }
     })
 
+    output$landingPlot <- renderPlot({
+      if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
+                       input$plotQuery )) {
+        query <- "Hydrogen production by technology"
+        plotTime(rFileinfo()$project.data, query, input$plotScenario, NULL,
+                 "technology", TRUE, lac.rgns)
+      }
+      else {
+        default.plot('Updating')
+      }
+    })
+
+    output$landingPlot2 <- renderPlot({
+      if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
+                       input$plotQuery )) {
+        query <- "Population by region"
+        plotTime(rFileinfo()$project.data, query, input$plotScenario, NULL,
+                 "region", TRUE, lac.rgns)
+      }
+      else {
+        default.plot('Updating')
+      }
+    })
+
+    output$landingPlot3 <- renderPlot({
+      if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
+                       input$plotQuery )) {
+        query <- "Cooling Degree Days"
+        plotMap(rFileinfo()$project.data, query, input$plotScenario, NULL,
+                 "lac", 2050)
+      }
+      else {
+        default.plot('Updating')
+      }
+    })
+
+    output$landingPlot4 <- renderPlot({
+      if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
+                       input$plotQuery )) {
+        query <- "CO2 emissions by region"
+        plotMap(rFileinfo()$project.data, query, input$plotScenario, NULL,
+                 "lac", 2050)
+      }
+      else {
+        default.plot('Updating')
+      }
+    })
+
     ## update region controls on time view panel
     ## None of this is necessary anymore, since we hardwired the region lists,
     ## but I'm keeping it around for now in case we want to allow for the
