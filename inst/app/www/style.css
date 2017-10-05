@@ -18,3 +18,26 @@
 .skin-blue .main-header .logo:hover {
     background-color: #fff;
 }
+
+.nav-tabs-custom {
+    color: white;
+    border: 1px solid #f39c12;
+    background-color: #f39c12;
+}
+
+.nav-tabs-custom>.nav-tabs>li.header {
+  color: white;
+}
+
+.box.box-solid.box-primary {
+  overflow-y: auto;
+}
+
+h4.panel-title {
+  font-size: 14px;
+}
+
+#rgns2All {
+  padding: 1px 7px;
+  font-size: 12px;
+}

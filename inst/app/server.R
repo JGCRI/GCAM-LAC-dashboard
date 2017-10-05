@@ -16,15 +16,13 @@ shinyServer(function(input, output, session) {
     rFileinfo <- reactive({
         fileinfo <- input$projectFile
         if(is.null(fileinfo)) {
-            project.filename <- NULL
             project.data <- NULL
         }
         else {
             project.data <- loadProject(fileinfo$datapath)   # should be only one file
-            project.filename <- fileinfo$name
             updateSelectInput(session, 'scenarioInput', choices=listScenarios(project.data))
         }
-        list(project.filename=project.filename, project.data=project.data)
+        list(project.data=project.data)
     })
 
     ## Update controls on sidebar in response to user selections
@@ -102,12 +100,6 @@ shinyServer(function(input, output, session) {
             updateSliderInput(session, 'mapYear', min=yrlimits[1],
                               max=yrlimits[2], value=yrsel)
         }
-    })
-
-
-
-    output$projFilename <- renderText({
-        getProjectName(rFileinfo)
     })
 
     output$projectSize <- renderText({

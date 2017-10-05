@@ -8,21 +8,6 @@ tag.noscen <- '->No scenarios selected<-'     # placeholder when no scenario sel
 #### State variables
 last.region.filter <- NULL
 
-#' Get the name of the project for display
-#'
-#' Returns a place holder string if no project has been loaded yet.
-#' @param rFileinfo Reactive fileinfo object returned by the file browser in the UI
-#' @export
-getProjectName <- function(rFileinfo)
-{
-    fn <- rFileinfo()$project.filename
-    if(is.null(fn)) {
-        '->none<-'
-    } else {
-        rFileinfo()$project.filename
-    }
-}
-
 #' Get the scenarios in the project for display
 #'
 #' Returns a place holder string if no project has been loaded yet.
