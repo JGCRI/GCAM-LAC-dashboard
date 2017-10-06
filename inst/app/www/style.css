@@ -3,20 +3,29 @@
 
 /*Default skin is skin-blue, so overwrite with our own style*/
 .skin-blue .main-header .navbar {
-    background-color: #fff;
+    background-color: #ecf0f5;
 }
 
 .skin-blue .main-header .logo {
     font-family: "Open Sans", Times, "Times New Roman", serif;
-    font-weight: bold;
+    font-weight: lighter;
     font-size: 20px;
-    background-color: #fff;
-    color: #555;
-    text-align: left;
+    background-color: #ecf0f5;
+    color: #000;
+    text-align: center;
 }
 
 .skin-blue .main-header .logo:hover {
-    background-color: #fff;
+    background-color: #d9dee4;
+}
+
+.skin-blue .main-header .navbar .sidebar-toggle {
+    color: rgb(60, 60, 60)
+}
+
+.skin-blue .main-header .navbar .sidebar-toggle:hover {
+    background-color: #d9dee4;
+    color: rgb(60, 60, 60)
 }
 
 .nav-tabs-custom {
