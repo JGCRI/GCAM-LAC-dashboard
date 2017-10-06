@@ -8,15 +8,16 @@ library(GCAMdashboard)
 
 shinyUI(fluidPage(theme="style.css",
   dashboardPage(
-    dashboardHeader(title = 'Latin America GCAM Dashboard', titleWidth = 450),
+    dashboardHeader(title = 'GCAM Latin America'),
     dashboardSidebar(
       sidebarMenu(
         menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
         menuItem("Water", tabName = "water", icon = icon("tint", lib = "font-awesome")),
         menuItem("Energy", tabName = "energy", icon = icon("bolt", lib = "font-awesome")),
+        menuItem("Scenarios", tabName = "scenarios", icon = icon("line-chart", lib = "font-awesome")),
         menuItem("File Manager", tabName = "file", icon = icon("file", lib = "font-awesome"))
       ),
-      fileInput('projectFile', 'GCAM Project Data File'),
+      fileInput('projectFile', 'Upload Project Data File'),
       sidebarMenu(
         menuItem("File Info", icon = icon("dashboard"),
            p(" File size: ", textOutput('projectSize', inline = TRUE)),
@@ -53,20 +54,6 @@ shinyUI(fluidPage(theme="style.css",
                   plotOutput('landingPlot4', height='250px'))
           )
         ),
-        # upload
-        tabItem(tabName = "file",
-          fluidRow(
-            column(1, selectInput('plotScenario', 'Select Scenario to Plot', choices=list())),
-            column(1, selectInput('plotQuery', 'Select Query to Plot', choices=list())),
-            column(3, checkboxInput('inclSpatial', 'Include Spatial Queries', value=TRUE))
-          ),
-          checkboxInput('diffCheck', 'Plot Difference vs Another Scenario'),
-          conditionalPanel(
-            condition = "input.diffCheck == true",
-            fluidRow(column(8,
-                            selectInput('diffScenario', 'Select Difference Scenario', choices=list())))
-          )
-        ),
         tabItem(tabName = "water",
           fluidRow(
             column(6,
@@ -82,8 +69,8 @@ shinyUI(fluidPage(theme="style.css",
                  plotOutput('mapPlot')
               ),
               box(width = NULL,
-                 sliderInput('mapYear', NULL, min=2005, max=2100, step=5, value=2050,
-                             sep='', animate = TRUE)
+                 sliderInput('mapYear', NULL, min=2005, max=2100, step=5,
+                             value=2050, sep='', animate = TRUE)
               )
             ),
 
@@ -102,8 +89,8 @@ shinyUI(fluidPage(theme="style.css",
                 plotOutput('timePlot', height='400px')
               ),
               box(title="Options", status = "primary", width = NULL,
-                  selectInput('tvSubcatVar', 'Break totals into subcategories by:',
-                              choices=c('none','region'))
+                selectInput('tvSubcatVar', 'Break totals into subcategories by:',
+                            choices=c('none','region'))
               )
             ),
 
@@ -138,7 +125,37 @@ shinyUI(fluidPage(theme="style.css",
               )
             )
           )
-        ) #tabItem
+        ), #tabItem
+        # upload
+        tabItem(tabName = "scenarios",
+                fluidRow(
+                  column(2, offset=1,
+                            box(title='SSP1', width=NULL, height='80vh',
+                                status = 'info', background = 'black', "Plot here")),
+                  column(2, box(title='SSP2', width=NULL, height='80vh',
+                                status = 'info', background = 'black', "Plot here")),
+                  column(2, box(title='SSP3', width=NULL, height='80vh',
+                                status = 'info', background = 'black', "Plot here")),
+                  column(2, box(title='SSP4', width=NULL, height='80vh',
+                                status = 'info', background = 'black', "Plot here")),
+                  column(2, box(title='SSP5', width=NULL, height='80vh',
+                                status = 'info', background = 'black', "Plot here"))
+                )
+        ),
+        # upload
+        tabItem(tabName = "file",
+                fluidRow(
+                  column(1, selectInput('plotScenario', 'Select Scenario to Plot', choices=list())),
+                  column(1, selectInput('plotQuery', 'Select Query to Plot', choices=list())),
+                  column(3, checkboxInput('inclSpatial', 'Include Spatial Queries', value=TRUE))
+                ),
+                checkboxInput('diffCheck', 'Plot Difference vs Another Scenario'),
+                conditionalPanel(
+                  condition = "input.diffCheck == true",
+                  fluidRow(column(8,
+                                  selectInput('diffScenario', 'Select Difference Scenario', choices=list())))
+                )
+        )
       ) # tabItems
     ) # dashboardBody
   ) #dashboardPage
