@@ -3,14 +3,14 @@
 
 /*Default skin is skin-blue, so overwrite with our own style*/
 .skin-blue .main-header .navbar {
-    background-color: #ecf0f5;
+    background-color: #ffffff;
 }
 
 .skin-blue .main-header .logo {
     font-family: "Open Sans", Times, "Times New Roman", serif;
     font-weight: lighter;
     font-size: 20px;
-    background-color: #ecf0f5;
+    background-color: #ffffff;
     color: #000;
     text-align: center;
 }
@@ -28,14 +28,27 @@
     color: rgb(60, 60, 60)
 }
 
+.skin-blue .main-header .navbar .nav>li>a {
+  color: rgb(60, 60, 60)
+}
+
+.skin-blue .main-header .navbar .nav>li>a:hover {
+  background-color: #d9dee4;
+  color: rgb(60, 60, 60)
+}
+
+.skin-blue .main-sidebar {
+  box-shadow: 7px 20px 12px rgba(0, 0, 0, 0.15);
+}
+
 .nav-tabs-custom {
-    color: white;
-    border: 1px solid #f39c12;
-    background-color: #f39c12;
+    color: black;
+    border: 1px solid #99d4e7;
+    background-color: #99d4e7;
 }
 
 .nav-tabs-custom>.nav-tabs>li.header {
-  color: white;
+  color: black;
 }
 
 .box.box-solid.box-primary {
@@ -44,6 +57,16 @@
 
 h4.panel-title {
   font-size: 14px;
+}
+
+.hoverPanel {
+  /*position:absolute;*/
+  /*z-index:100;*/
+  background-color: rgba(0, 0, 0, 0.7);
+  color: rgb(222, 222, 222);
+  padding: 8px 8px 0px 8px;
+  border-radius: 3px;
+  line-height: 10px;
 }
 
 #rgns1All, #rgns2All, #rgns3All, #rgns4All, #rgns5All, #rgnSelectAll {

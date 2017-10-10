@@ -155,7 +155,7 @@ shinyServer(function(input, output, session) {
               }
             year <- input$mapYear
             plotMap(rFileinfo()$project.data, input$plotQuery,
-                    input$plotScenario, diffscen, input$mapProjection, year)
+                    input$plotScenario, diffscen, input$mapExtent, year)
         }
         else {
             default.plot('No Data')
@@ -175,7 +175,6 @@ shinyServer(function(input, output, session) {
                    NULL
                }
                tvSubcatVar <- input$tvSubcatVar
-               a <- input$tvRgns2
 
                region.filter <- c(input$tvRgns1, input$tvRgns2, input$tvRgns3,
                                   input$tvRgns4, input$tvRgns5)
@@ -194,9 +193,71 @@ shinyServer(function(input, output, session) {
         }
     })
 
+    output$hoverInfo <- renderUI({
+      hover <- input$energyHover
+      if (is.null(hover)) return(NULL)
+      prj <- isolate(rFileinfo()$project.data)
+      scen <- isolate(input$plotScenario)
+      query <- isolate(input$plotQuery)
+      tvSubcatVar <- isolate(input$tvSubcatVar)
+      region.filter <- c(input$tvRgns1, input$tvRgns2, input$tvRgns3,
+                         input$tvRgns4, input$tvRgns5)
+      last.region.filter <<- region.filter
+
+      df <- getPlotData(prj, query, scen, NULL, tvSubcatVar, 'region', region.filter)
+
+      # Detect the year of the bar that is being hovered over
+      hoverYear <- df[which.min(abs(df$year - hover$x)), 'year'][[1]]
+      df <- dplyr::filter(df, year==hoverYear)
+
+      # If there's a subcategory, we also need to find which category is being
+      # hovered over
+      if (tvSubcatVar == 'region') {
+        # Return NULL if the hover is above the top of the bar
+        if (hover$y > sum(df$value)) return(NULL)
+
+        # Find which segment of the stacked bar the hover is closest to
+        stackedSum <- rev(cumsum(df$value))
+        index <- which.min(abs(stackedSum - hover$y))
+
+        # Make sure we are choosing the segment the hover is actually over
+        if (df[index,]$value < hover$y)
+          index <- index - 1
+        val <- paste(df[index,]$region, round(df[index,]$value, digits=1), sep=': ')
+
+      } else {
+        val <- df[which.min(abs(df$year - hover$x)), 'value'] %>%
+               round(digits=1)
+        if (hover$y > val) return(NULL)
+        val <- as.character(val)
+      }
+
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+
+      # actual tooltip created as wellPanel
+      absolutePanel(
+        class = 'hoverPanel',
+        top = paste0(round(top_px) - 30, "px"),
+        left = paste0(round(left_px) - 30, "px"),
+        # style = style,
+        p(HTML(val)))
+
+    })
+
     output$landingPlot <- renderPlot({
       if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
-                       input$plotQuery )) {
+                       isolate(input$plotQuery) )) {
         query <- "Hydrogen production by technology"
         plotTime(rFileinfo()$project.data, query, input$plotScenario, NULL,
                  "technology", lac.rgns)
@@ -209,9 +270,8 @@ shinyServer(function(input, output, session) {
     output$landingPlot2 <- renderPlot({
       if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
                        input$plotQuery )) {
-        query <- "Population by region"
-        plotTime(rFileinfo()$project.data, query, input$plotScenario, NULL,
-                 "region", lac.rgns)
+        plotTime(rFileinfo()$project.data, input$plotQuery, input$plotScenario,
+                 NULL, "region", lac.rgns)
       }
       else {
         default.plot('No Data')
@@ -219,11 +279,12 @@ shinyServer(function(input, output, session) {
     })
 
     output$landingPlot3 <- renderPlot({
-      if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
-                       input$plotQuery )) {
+      pdata <- rFileinfo()$project.data
+      pscen <- input$plotScenario
+      pquer <- isolate(input$plotQuery)
+      if(uiStateValid( pdata, pscen, pquer )) {
         query <- "Cooling Degree Days"
-        plotMap(rFileinfo()$project.data, query, input$plotScenario, NULL,
-                 "lac", 2050)
+        plotMap(pdata, query, pscen, NULL, "lac", 2050)
       }
       else {
         default.plot('No Data')
@@ -232,7 +293,7 @@ shinyServer(function(input, output, session) {
 
     output$landingPlot4 <- renderPlot({
       if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
-                       input$plotQuery )) {
+                       isolate(input$plotQuery) )) {
         query <- "CO2 emissions by region"
         plotMap(rFileinfo()$project.data, query, input$plotScenario, NULL,
                  "lac", 2050)
@@ -242,6 +303,17 @@ shinyServer(function(input, output, session) {
       }
     })
 
+    output$landingPlot5 <- renderPlot({
+      if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
+                       isolate(input$plotQuery) )) {
+        query <- "Cooling Degree Days"
+        plotMap(rFileinfo()$project.data, query, input$plotScenario, NULL,
+                 "lac", 2050)
+      }
+      else {
+        default.plot('No Data')
+      }
+    })
     ## update region controls on time view panel
     ## None of this is necessary anymore, since we hardwired the region lists,
     ## but I'm keeping it around for now in case we want to allow for the

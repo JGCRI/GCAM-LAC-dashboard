@@ -283,7 +283,7 @@ determineMapset <- function(prjdata, pltscen, query)
 #' @param prjdata Project data structure
 #' @param query Name of the query to plot
 #' @param pltscen Name of the scenario to plot
-#' @param diffscenDifference scenario, if any
+#' @param diffscen Difference scenario, if any
 #' @param key Aggregation variable.  (e.g., 'region' or 'sector')
 #' @param filtervar If not NULL, filter on this variable before aggregating
 #' @param filterset:  Set of values to include in the filter operation.  Ignored

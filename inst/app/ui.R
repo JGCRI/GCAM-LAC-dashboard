@@ -8,7 +8,14 @@ library(GCAMdashboard)
 
 shinyUI(fluidPage(theme="style.css",
   dashboardPage(
-    dashboardHeader(title = 'GCAM Latin America'),
+    dashboardHeader(title = 'GCAM Latin America',
+                    # by making an li element with class dropdown we can trick
+                    # it into accepting our link
+                    tags$li(a(href = '#',
+                              icon("cog", lib = "font-awesome"),
+                              title = "Settings"),
+                              class = "dropdown")),
+
     dashboardSidebar(
       sidebarMenu(
         menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
@@ -33,11 +40,13 @@ shinyUI(fluidPage(theme="style.css",
         tabItem(tabName = "dashboard",
           fluidRow(
             box(title = 'Hydrogen production by technology',
-                solidHeader = TRUE, status = "primary",
+                solidHeader = TRUE, status = "warning",
                 plotOutput('landingPlot', height='250px')),
-            box(title = 'Population by Region',
-                solidHeader = TRUE, status = "primary",
+            box(selectInput('plotQuery', label=NULL, choices=list()),
                 plotOutput('landingPlot2', height='250px'))
+            # box(title = 'Population by Region',
+            #     solidHeader = TRUE, status = "primary",
+            #     plotOutput('landingPlot2', height='250px'))
           ),
           fluidRow(
               tabBox(title = 'Water', side = 'right',
@@ -57,11 +66,17 @@ shinyUI(fluidPage(theme="style.css",
         tabItem(tabName = "water",
           fluidRow(
             column(6,
-              box(title = "Map Type", width = NULL, status = "warning",
-                  selectInput('mapProjection', label = NULL,
+              box(title = "Map Extent", width = NULL, status = "primary",
+                  div(style="display:inline-block",
+                  selectInput('mapExtent', label = NULL, width = '45%',
+                              choices=c(Global='global', USA='usa', China='china',
+                                        Africa='africa', `Latin America`='lac'),
+                              selected = 'lac'),
+                  selectInput('mapProjection', label = NULL, width = '45%',
                               choices=c(Global='global', USA='usa', China='china',
                                         Africa='africa', `Latin America and Caribbean`='lac'),
                               selected = 'lac')
+                  )
               ),
               box(width = NULL, height = '450px',
                  status = "primary",
@@ -86,7 +101,9 @@ shinyUI(fluidPage(theme="style.css",
           fluidRow(
             column(width = 8,
               box(status = "primary", width = NULL,
-                plotOutput('timePlot', height='400px')
+                plotOutput('timePlot', height='400px',
+                           hover = hoverOpts("energyHover", delay = 50, delayType = 'throttle')),
+                uiOutput('hoverInfo')
               ),
               box(title="Options", status = "primary", width = NULL,
                 selectInput('tvSubcatVar', 'Break totals into subcategories by:',
@@ -128,10 +145,18 @@ shinyUI(fluidPage(theme="style.css",
         ), #tabItem
         # upload
         tabItem(tabName = "scenarios",
+                h3("Compare Scenarios"),
                 fluidRow(
                   column(2, offset=1,
-                            box(title='SSP1', width=NULL, height='80vh',
-                                status = 'info', background = 'black', "Plot here")),
+                            box(width=NULL, collapsible = TRUE,
+                                status = 'info', background = 'black',
+                                br(),
+                                tags$div(class='box-tools pull-right',
+                                  actionButton(inputId='someid', label=NULL,
+                                               class='btn btn-box-tool',
+                                               icon=icon("times"))),
+                                selectInput('plotScenario', width='80%', label=NULL, choices=list()),
+                                "Plot here", br(), br())),
                   column(2, box(title='SSP2', width=NULL, height='80vh',
                                 status = 'info', background = 'black', "Plot here")),
                   column(2, box(title='SSP3', width=NULL, height='80vh',
@@ -146,7 +171,6 @@ shinyUI(fluidPage(theme="style.css",
         tabItem(tabName = "file",
                 fluidRow(
                   column(1, selectInput('plotScenario', 'Select Scenario to Plot', choices=list())),
-                  column(1, selectInput('plotQuery', 'Select Query to Plot', choices=list())),
                   column(3, checkboxInput('inclSpatial', 'Include Spatial Queries', value=TRUE))
                 ),
                 checkboxInput('diffCheck', 'Plot Difference vs Another Scenario'),
