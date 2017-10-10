@@ -154,8 +154,14 @@ shinyServer(function(input, output, session) {
                   NULL
               }
             year <- input$mapYear
+            map <- switch(input$mapType,
+                          regions =   gcammaptools::map.rgn32.simple,
+                          china =     gcammaptools::map.chn.simple,
+                          countries = gcammaptools::map.rgn32,
+                          basins =    gcammaptools::map.basin235,
+                          none =      gcammaptools::map.basin235.simple)
             plotMap(rFileinfo()$project.data, input$plotQuery,
-                    input$plotScenario, diffscen, input$mapExtent, year)
+                    input$plotScenario, diffscen, input$mapExtent, year, map)
         }
         else {
             default.plot('No Data')

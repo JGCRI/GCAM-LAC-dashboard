@@ -66,17 +66,22 @@ shinyUI(fluidPage(theme="style.css",
         tabItem(tabName = "water",
           fluidRow(
             column(6,
-              box(title = "Map Extent", width = NULL, status = "primary",
-                  div(style="display:inline-block",
-                  selectInput('mapExtent', label = NULL, width = '45%',
-                              choices=c(Global='global', USA='usa', China='china',
+              box(width = NULL, status = "primary",
+                  fluidRow(column(6,
+                    selectInput('mapExtent', label = "Map Extent", width = NULL,
+                                choices=c(Global='global', USA='usa', China='china',
                                         Africa='africa', `Latin America`='lac'),
-                              selected = 'lac'),
-                  selectInput('mapProjection', label = NULL, width = '45%',
-                              choices=c(Global='global', USA='usa', China='china',
-                                        Africa='africa', `Latin America and Caribbean`='lac'),
-                              selected = 'lac')
-                  )
+                                selected = 'lac')
+                    ),
+                    column(6,
+                      selectInput('mapType', label = "Map Type", width = NULL,
+                                  choices=c(`GCAM Regions`='regions',
+                                            China='china',
+                                            Countries='countries',
+                                            Basins='basins',
+                                            `No Borders`='none'),
+                                  selected = 'lac')
+                  ))
               ),
               box(width = NULL, height = '450px',
                  status = "primary",

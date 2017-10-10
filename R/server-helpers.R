@@ -167,10 +167,11 @@ default.plot <- function(label.text='No data selected')
 #' @param diffscen Name of the scenario to difference against pltscen, or NULL if none
 #' @param projselect Projection to use for the map
 #' @param year Year to plot data for
+#' @param map Base map to plot on (for gridded data only)
 #' @importFrom ggplot2 scale_fill_gradientn guides
 #' @importFrom gcammaptools add_region_ID plot_GCAM plot_GCAM_grid
 #' @export
-plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
+plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map=NULL)
 {
 
     if(is.null(prjdata)) {
@@ -239,7 +240,7 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year)
 
         }
         else if(isGrid(prjdata, pltscen, query)) {
-
+            if (!is.null(map)) map.dat <- map
             plt <- plot_GCAM_grid(pltdata, datacol, map = map.dat,
                                   proj_type = map.params$proj_type,
                                   proj = map.params$proj, extent = map.params$ext,
