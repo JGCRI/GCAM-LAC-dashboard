@@ -118,7 +118,7 @@ shinyServer(function(input, output, session) {
     observeEvent(input$rgns5All, {
       updateRegionFilter(session, 'rgns5All', 'tvRgns5', input$rgns5All%%2 == 0, asiapac.rgns)
     })
-    observeEvent(input$rgnSelectAll, {
+    observeEvent(input$rgn , {
       # Select all
       sAll <- input$rgnSelectAll%%2 == 0
       updateRegionFilter(session, 'rgnSelectAll', 'tvRgns1', sAll, africa.rgns)
@@ -285,19 +285,6 @@ shinyServer(function(input, output, session) {
     })
 
     output$landingPlot3 <- renderPlot({
-      pdata <- rFileinfo()$project.data
-      pscen <- input$plotScenario
-      pquer <- isolate(input$plotQuery)
-      if(uiStateValid( pdata, pscen, pquer )) {
-        query <- "Cooling Degree Days"
-        plotMap(pdata, query, pscen, NULL, "lac", 2050)
-      }
-      else {
-        default.plot('No Data')
-      }
-    })
-
-    output$landingPlot4 <- renderPlot({
       if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
                        isolate(input$plotQuery) )) {
         query <- "CO2 emissions by region"
@@ -309,16 +296,55 @@ shinyServer(function(input, output, session) {
       }
     })
 
-    output$landingPlot5 <- renderPlot({
-      if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
-                       isolate(input$plotQuery) )) {
-        query <- "Cooling Degree Days"
-        plotMap(rFileinfo()$project.data, query, input$plotScenario, NULL,
-                 "lac", 2050)
-      }
-      else {
-        default.plot('No Data')
-      }
+
+    waterData <- loadProject(system.file('hydro.dat', package = "GCAMdashboard"))
+    output$waterScarcityPlot <- renderPlot({
+      query <- "Water Scarcity"
+      pscen <- "Reference"
+      plotMap(waterData, query, pscen, NULL, "lac", 2050)
+    })
+
+    output$waterSupplyPlot <- renderPlot({
+      query <- "Water Supply"
+      pscen <- "Reference"
+      plotMap(waterData, query, pscen, NULL, "lac", 2050)
+    })
+
+    output$waterDemandPlot <- renderPlot({
+      query <- "Water Demand"
+      pscen <- "Reference"
+      plotMap(waterData, query, pscen, NULL, "lac", 2050)
+    })
+
+    sspData <- loadProject(system.file('ssp.dat', package = "GCAMdashboard"))
+    output$ssp1 <- renderPlot({
+      query <- "population"
+      pscen <- "SSP1"
+      plotTime(sspData, query, pscen, NULL, "region", lac.rgns)
+    })
+
+    output$ssp2 <- renderPlot({
+      query <- "population"
+      pscen <- "SSP2"
+      plotTime(sspData, query, pscen, NULL, "region", lac.rgns)
+    })
+
+    output$ssp3 <- renderPlot({
+      query <- "population"
+      pscen <- "SSP3"
+      plotTime(sspData, query, pscen, NULL, "region", lac.rgns)
+    })
+
+    output$ssp4 <- renderPlot({
+      query <- "population"
+      pscen <- "SSP4"
+      plotTime(sspData, query, pscen, NULL, "region", lac.rgns)
+    })
+
+    output$ssp5 <- renderPlot({
+      query <- "population"
+      pscen <- "SSP5"
+      plotTime(sspData, query, pscen, NULL, "region", lac.rgns)
     })
     ## update region controls on time view panel
     ## None of this is necessary anymore, since we hardwired the region lists,

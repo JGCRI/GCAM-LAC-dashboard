@@ -197,7 +197,9 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map=NUL
         else {
             key <- if(mapset==gcammaptools::basin235) 'basin' else 'region'
         }
+
         pltdata <- getPlotData(prjdata, query, pltscen, diffscen, key)
+        if (is.null(pltdata)) return(default.plot())
 
         ## map plot is expecting the column coresponding to the map locations to
         ## be called "region", so if we're working with water basins, we have to
@@ -295,6 +297,7 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
 {
     tp <- getQuery(prjdata, query, pltscen) # table plot
     tp <- dplyr::filter(tp, year >= 2005 & year <= 2050) # only select relevant years
+    if (nrow(tp) == 0) return(NULL)
 
     if('region' %in% names(tp)) {
         ## If the data has a region column, put it in the canoncial order given above.

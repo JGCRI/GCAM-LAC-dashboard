@@ -49,18 +49,18 @@ shinyUI(fluidPage(theme="style.css",
             #     plotOutput('landingPlot2', height='250px'))
           ),
           fluidRow(
-              tabBox(title = 'Water', side = 'right',
+              tabBox(title = 'Water', side = 'left',
                   id = "waterTabset",
                   tabPanel("Supply",
-                    plotOutput('landingPlot3', height='250px')),
+                    plotOutput('waterSupplyPlot', height='250px')),
                   tabPanel("Demand",
-                    plotOutput('landingPlot5', height='250px')),
+                    plotOutput('waterDemandPlot', height='250px')),
                   tabPanel("Scarcity",
-                    plotOutput('landingPlot6', height='250px'))
+                    plotOutput('waterScarcityPlot', height='250px'))
               ),
               box(title = 'Crop Production by AEZ',align='center',
                   solidHeader = TRUE, status = "success",
-                  plotOutput('landingPlot4', height='250px'))
+                  plotOutput('landingPlot3', height='250px'))
           )
         ),
         tabItem(tabName = "water",
@@ -152,25 +152,50 @@ shinyUI(fluidPage(theme="style.css",
         tabItem(tabName = "scenarios",
                 h3("Compare Scenarios"),
                 fluidRow(
-                  column(2, offset=1,
-                            box(width=NULL, collapsible = TRUE,
-                                status = 'info', background = 'black',
-                                br(),
-                                tags$div(class='box-tools pull-right',
-                                  actionButton(inputId='someid', label=NULL,
-                                               class='btn btn-box-tool',
-                                               icon=icon("times"))),
-                                selectInput('plotScenario', width='80%', label=NULL, choices=list()),
-                                "Plot here", br(), br())),
-                  column(2, box(title='SSP2', width=NULL, height='80vh',
-                                status = 'info', background = 'black', "Plot here")),
-                  column(2, box(title='SSP3', width=NULL, height='80vh',
-                                status = 'info', background = 'black', "Plot here")),
-                  column(2, box(title='SSP4', width=NULL, height='80vh',
-                                status = 'info', background = 'black', "Plot here")),
-                  column(2, box(title='SSP5', width=NULL, height='80vh',
-                                status = 'info', background = 'black', "Plot here"))
-                )
+                  conditionalPanel(condition = "$.map(document.getElementById('sspChoices').options, function(opt){return opt.value;}).includes('SSP1')",
+                    column(6,
+                      box(width=NULL, collapsible = TRUE,
+                          status = 'info', background = 'black', "SSP1",
+                          plotOutput('ssp1')
+                      )
+                    )
+                  ),
+                  conditionalPanel(condition = "$.map(document.getElementById('sspChoices').options, function(opt){return opt.value;}).includes('SSP2')",
+                    column(6,
+                      box(width=NULL, collapsible = TRUE,
+                          status = 'info', background = 'black', "SSP2",
+                          plotOutput('ssp2')
+                      )
+                    )
+                  ),
+                  conditionalPanel(condition = "$.map(document.getElementById('sspChoices').options, function(opt){return opt.value;}).includes('SSP3')",
+                    column(6,
+                      box(width=NULL, collapsible = TRUE,
+                          status = 'info', background = 'black', "SSP3",
+                          plotOutput('ssp3')
+                      )
+                    )
+                  ),
+                  conditionalPanel(condition = "$.map(document.getElementById('sspChoices').options, function(opt){return opt.value;}).includes('SSP4')",
+                    column(6,
+                      box(width=NULL, collapsible = TRUE,
+                          status = 'info', background = 'black', "SSP4",
+                          plotOutput('ssp4')
+                      )
+                    )
+                  ),
+                  conditionalPanel(condition = "$.map(document.getElementById('sspChoices').options, function(opt){return opt.value;}).includes('SSP5')",
+                    column(6,
+                      box(width=NULL, collapsible = TRUE,
+                          status = 'info', background = 'black', "SSP5",
+                          plotOutput('ssp5')
+                      )
+                    )
+                  )
+                ),
+                selectInput('sspChoices', "Which scenarios?",
+                            c("SSP1", "SSP2", "SSP3", "SSP4", "SSP5"),
+                            selected = c("SSP1", "SSP2"), multiple = TRUE)
         ),
         # upload
         tabItem(tabName = "file",
