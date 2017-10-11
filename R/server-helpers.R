@@ -502,3 +502,23 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
         }
     }
 }
+
+#' Plot values over time as a bar chart
+#' @param scens List of scenario names to plot
+#' @inheritParams plotTime
+#' @importFrom ggplot2 ggplot aes_string geom_bar theme_minimal ylab
+#' @export
+plotScenComparison <- function(prjdata, query, scens, diffscen, subcatvar, rgns)
+{
+  filtervar <- "region"
+  plt <- ggplot(data = NULL, aes_string('year','value', fill="region")) +
+         facet_grid(.~panel, scales="free_y")
+
+  for (scen in scens) {
+    pltdata <- getPlotData(prjdata, query, scen, diffscen, subcatvar, filtervar, rgns)
+    pltdata$panel <- scen
+    plt <- plt + geom_bar(data = pltdata, stat = "identity")
+  }
+
+  plt + theme_minimal(legend.position="bottom")
+}

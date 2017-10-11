@@ -151,51 +151,50 @@ shinyUI(fluidPage(theme="style.css",
         # upload
         tabItem(tabName = "scenarios",
                 h3("Compare Scenarios"),
+                selectInput('sspChoices', "Which scenarios?",
+                            c("SSP1", "SSP2", "SSP3", "SSP4", "SSP5"),
+                            selected = c("SSP1", "SSP2"), multiple = TRUE),
                 fluidRow(
                   conditionalPanel(condition = "$.map(document.getElementById('sspChoices').options, function(opt){return opt.value;}).includes('SSP1')",
                     column(6,
-                      box(width=NULL, collapsible = TRUE,
-                          status = 'info', background = 'black', "SSP1",
-                          plotOutput('ssp1')
+                      box(width=NULL, collapsible = TRUE, title = "SSP1",
+                          status = 'info', plotOutput('ssp1')
                       )
                     )
                   ),
                   conditionalPanel(condition = "$.map(document.getElementById('sspChoices').options, function(opt){return opt.value;}).includes('SSP2')",
                     column(6,
-                      box(width=NULL, collapsible = TRUE,
-                          status = 'info', background = 'black', "SSP2",
+                      box(width=NULL, collapsible = TRUE, title = "SSP2",
+                          status = 'info', background = 'black',
                           plotOutput('ssp2')
                       )
                     )
                   ),
                   conditionalPanel(condition = "$.map(document.getElementById('sspChoices').options, function(opt){return opt.value;}).includes('SSP3')",
                     column(6,
-                      box(width=NULL, collapsible = TRUE,
-                          status = 'info', background = 'black', "SSP3",
+                      box(width=NULL, collapsible = TRUE, title = "SSP3",
+                          status = 'info', background = 'black',
                           plotOutput('ssp3')
                       )
                     )
                   ),
                   conditionalPanel(condition = "$.map(document.getElementById('sspChoices').options, function(opt){return opt.value;}).includes('SSP4')",
                     column(6,
-                      box(width=NULL, collapsible = TRUE,
-                          status = 'info', background = 'black', "SSP4",
+                      box(width=NULL, collapsible = TRUE, title = "SSP4",
+                          status = 'info', background = 'black',
                           plotOutput('ssp4')
                       )
                     )
                   ),
                   conditionalPanel(condition = "$.map(document.getElementById('sspChoices').options, function(opt){return opt.value;}).includes('SSP5')",
                     column(6,
-                      box(width=NULL, collapsible = TRUE,
-                          status = 'info', background = 'black', "SSP5",
+                      box(width=NULL, collapsible = TRUE, title = "SSP5",
+                          status = 'info', background = 'black',
                           plotOutput('ssp5')
                       )
                     )
                   )
-                ),
-                selectInput('sspChoices', "Which scenarios?",
-                            c("SSP1", "SSP2", "SSP3", "SSP4", "SSP5"),
-                            selected = c("SSP1", "SSP2"), multiple = TRUE)
+                )
         ),
         # upload
         tabItem(tabName = "file",
