@@ -154,47 +154,9 @@ shinyUI(fluidPage(theme="style.css",
                 selectInput('sspChoices', "Which scenarios?",
                             c("SSP1", "SSP2", "SSP3", "SSP4", "SSP5"),
                             selected = c("SSP1", "SSP2"), multiple = TRUE),
-                fluidRow(
-                  conditionalPanel(condition = "$.map(document.getElementById('sspChoices').options, function(opt){return opt.value;}).includes('SSP1')",
-                    column(6,
-                      box(width=NULL, collapsible = TRUE, title = "SSP1",
-                          status = 'info', plotOutput('ssp1')
-                      )
-                    )
-                  ),
-                  conditionalPanel(condition = "$.map(document.getElementById('sspChoices').options, function(opt){return opt.value;}).includes('SSP2')",
-                    column(6,
-                      box(width=NULL, collapsible = TRUE, title = "SSP2",
-                          status = 'info', background = 'black',
-                          plotOutput('ssp2')
-                      )
-                    )
-                  ),
-                  conditionalPanel(condition = "$.map(document.getElementById('sspChoices').options, function(opt){return opt.value;}).includes('SSP3')",
-                    column(6,
-                      box(width=NULL, collapsible = TRUE, title = "SSP3",
-                          status = 'info', background = 'black',
-                          plotOutput('ssp3')
-                      )
-                    )
-                  ),
-                  conditionalPanel(condition = "$.map(document.getElementById('sspChoices').options, function(opt){return opt.value;}).includes('SSP4')",
-                    column(6,
-                      box(width=NULL, collapsible = TRUE, title = "SSP4",
-                          status = 'info', background = 'black',
-                          plotOutput('ssp4')
-                      )
-                    )
-                  ),
-                  conditionalPanel(condition = "$.map(document.getElementById('sspChoices').options, function(opt){return opt.value;}).includes('SSP5')",
-                    column(6,
-                      box(width=NULL, collapsible = TRUE, title = "SSP5",
-                          status = 'info', background = 'black',
-                          plotOutput('ssp5')
-                      )
-                    )
-                  )
-                )
+                box(title = "Population",
+                    solidHeader = F, width = 12,
+                    plotOutput('sspComparison', height = "520px", width = "100%"))
         ),
         # upload
         tabItem(tabName = "file",

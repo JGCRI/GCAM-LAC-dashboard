@@ -317,6 +317,13 @@ shinyServer(function(input, output, session) {
     })
 
     sspData <- loadProject(system.file('ssp.dat', package = "GCAMdashboard"))
+
+    output$sspComparison <- renderPlot({
+      query <- "population"
+      scens <- input$sspChoices
+      plotScenComparison(sspData, query, scens, NULL, "region", lac.rgns)
+    })
+
     output$ssp1 <- renderPlot({
       query <- "population"
       pscen <- "SSP1"

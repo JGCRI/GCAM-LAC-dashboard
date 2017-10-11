@@ -512,7 +512,7 @@ plotScenComparison <- function(prjdata, query, scens, diffscen, subcatvar, rgns)
 {
   filtervar <- "region"
   plt <- ggplot(data = NULL, aes_string('year','value', fill="region")) +
-         facet_grid(.~panel, scales="free_y")
+         facet_grid(.~panel, scales="free")
 
   for (scen in scens) {
     pltdata <- getPlotData(prjdata, query, scen, diffscen, subcatvar, filtervar, rgns)
@@ -520,5 +520,5 @@ plotScenComparison <- function(prjdata, query, scens, diffscen, subcatvar, rgns)
     plt <- plt + geom_bar(data = pltdata, stat = "identity")
   }
 
-  plt + theme_minimal(legend.position="bottom")
+  plt + theme(legend.position="bottom")
 }
