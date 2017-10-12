@@ -12,6 +12,9 @@ shinyServer(function(input, output, session) {
     scenarios <- ""
     queries <- ""
 
+    ## Data that should show on load
+    exampleData <- loadProject(system.file('idb.dat', package = "GCAMdashboard"))
+
     ## Get the new data file on upload
     rFileinfo <- reactive({
         fileinfo <- input$projectFile
@@ -82,8 +85,7 @@ shinyServer(function(input, output, session) {
         query <- input$plotQuery
         if(uiStateValid(prj, scen, query)) {
             ## Assumes that a particular query has the same columns in all scenarios
-            querycols <- getQuery(prj, query, scen) %>% names
-            catvars <- querycols[!querycols %in% c('scenario', 'Units', 'year', 'value')]
+            catvars <- getQuerySubcategories(prj, scen, query)
             prevSubcat <- if(input$tvSubcatVar %in% catvars) input$tvSubcatVar else 'none'
             updateSelectInput(session, 'tvSubcatVar', choices=c('none', catvars),
                               selected=prevSubcat)
@@ -118,7 +120,7 @@ shinyServer(function(input, output, session) {
     observeEvent(input$rgns5All, {
       updateRegionFilter(session, 'rgns5All', 'tvRgns5', input$rgns5All%%2 == 0, asiapac.rgns)
     })
-    observeEvent(input$rgn , {
+    observeEvent(input$rgnSelectAll, {
       # Select all
       sAll <- input$rgnSelectAll%%2 == 0
       updateRegionFilter(session, 'rgnSelectAll', 'tvRgns1', sAll, africa.rgns)
@@ -201,10 +203,13 @@ shinyServer(function(input, output, session) {
 
     output$hoverInfo <- renderUI({
       hover <- input$energyHover
-      if (is.null(hover)) return(NULL)
       prj <- isolate(rFileinfo()$project.data)
       scen <- isolate(input$plotScenario)
       query <- isolate(input$plotQuery)
+
+      if (is.null(hover)) return(NULL)
+      if (is.null(prj)) return(NULL)
+
       tvSubcatVar <- isolate(input$tvSubcatVar)
       region.filter <- c(input$tvRgns1, input$tvRgns2, input$tvRgns3,
                          input$tvRgns4, input$tvRgns5)
@@ -261,27 +266,14 @@ shinyServer(function(input, output, session) {
 
     })
 
-    output$landingPlot <- renderPlot({
-      if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
-                       isolate(input$plotQuery) )) {
-        query <- "Hydrogen production by technology"
-        plotTime(rFileinfo()$project.data, query, input$plotScenario, NULL,
-                 "technology", lac.rgns)
-      }
-      else {
-        default.plot('No Data')
-      }
+    output$landingPlot1 <- renderPlot({
+      plotTime(exampleData, "Primary Energy Consumption by Fuel [EJ]",
+               "REFlu_e6_mex", NULL, "fuel", lac.rgns)
     })
 
     output$landingPlot2 <- renderPlot({
-      if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
-                       input$plotQuery )) {
-        plotTime(rFileinfo()$project.data, input$plotQuery, input$plotScenario,
-                 NULL, "region", lac.rgns)
-      }
-      else {
-        default.plot('No Data')
-      }
+      plotTime(exampleData, "Greenhouse gas emissions [MtCO2-eq]",
+               "REFlu_e6_mex", NULL, "ghg", lac.rgns)
     })
 
     output$landingPlot3 <- renderPlot({
@@ -316,43 +308,21 @@ shinyServer(function(input, output, session) {
       plotMap(waterData, query, pscen, NULL, "lac", 2050)
     })
 
+
+    output$sspTitle <- renderUI({
+      h3(input$sspCategory, align = "center")
+    })
+
     sspData <- loadProject(system.file('ssp.dat', package = "GCAMdashboard"))
+    updateSelectInput(session, 'sspCategory', choices=listQueries(sspData), selected = "Population")
 
     output$sspComparison <- renderPlot({
-      query <- "population"
+      query <- input$sspCategory
       scens <- input$sspChoices
-      plotScenComparison(sspData, query, scens, NULL, "region", lac.rgns)
+      subcatvar <- tail(getQuerySubcategories(sspData, scens[1], query), n=1)
+      plotScenComparison(sspData, query, scens, NULL, subcatvar, lac.rgns)
     })
 
-    output$ssp1 <- renderPlot({
-      query <- "population"
-      pscen <- "SSP1"
-      plotTime(sspData, query, pscen, NULL, "region", lac.rgns)
-    })
-
-    output$ssp2 <- renderPlot({
-      query <- "population"
-      pscen <- "SSP2"
-      plotTime(sspData, query, pscen, NULL, "region", lac.rgns)
-    })
-
-    output$ssp3 <- renderPlot({
-      query <- "population"
-      pscen <- "SSP3"
-      plotTime(sspData, query, pscen, NULL, "region", lac.rgns)
-    })
-
-    output$ssp4 <- renderPlot({
-      query <- "population"
-      pscen <- "SSP4"
-      plotTime(sspData, query, pscen, NULL, "region", lac.rgns)
-    })
-
-    output$ssp5 <- renderPlot({
-      query <- "population"
-      pscen <- "SSP5"
-      plotTime(sspData, query, pscen, NULL, "region", lac.rgns)
-    })
     ## update region controls on time view panel
     ## None of this is necessary anymore, since we hardwired the region lists,
     ## but I'm keeping it around for now in case we want to allow for the

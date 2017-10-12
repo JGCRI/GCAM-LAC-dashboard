@@ -39,14 +39,12 @@ shinyUI(fluidPage(theme="style.css",
       tabItems(
         tabItem(tabName = "dashboard",
           fluidRow(
-            box(title = 'Hydrogen production by technology',
-                solidHeader = TRUE, status = "warning",
-                plotOutput('landingPlot', height='250px')),
-            box(selectInput('plotQuery', label=NULL, choices=list()),
+            box(title = 'Primary Energy Consumption by Fuel',
+                solidHeader = TRUE, status = "primary",
+                plotOutput('landingPlot1', height='250px')),
+            box(title = 'Greenhouse Gas Emissions',
+                solidHeader = TRUE, status = "primary",
                 plotOutput('landingPlot2', height='250px'))
-            # box(title = 'Population by Region',
-            #     solidHeader = TRUE, status = "primary",
-            #     plotOutput('landingPlot2', height='250px'))
           ),
           fluidRow(
               tabBox(title = 'Water', side = 'left',
@@ -59,7 +57,7 @@ shinyUI(fluidPage(theme="style.css",
                     plotOutput('waterScarcityPlot', height='250px'))
               ),
               box(title = 'Crop Production by AEZ',align='center',
-                  solidHeader = TRUE, status = "success",
+                  solidHeader = TRUE, status = "primary",
                   plotOutput('landingPlot3', height='250px'))
           )
         ),
@@ -96,9 +94,9 @@ shinyUI(fluidPage(theme="style.css",
 
             column(6,
               box(title = "Water withdrawals for irrigation", width = NULL,
-                 solidHeader = TRUE, status = "success", height = '350px'),
+                 solidHeader = TRUE, status = "primary", height = '350px'),
               box(title = "Water withdrawals for electricity", width = NULL,
-                 solidHeader = TRUE, status = "success", height = '350px')
+                 solidHeader = TRUE, status = "primary", height = '350px')
             )
           )
         ),
@@ -121,9 +119,10 @@ shinyUI(fluidPage(theme="style.css",
                 width = NULL, height = '420px',
                 tableOutput("regionFilter"),
                 actionButton('rgnSelectAll', 'Select all regions'),
+                br(),
 
                 bsCollapse(open="Latin America and Caribbean",
-                  bsCollapsePanel(title='Latin America and Caribbean', style="success",
+                  bsCollapsePanel(title='Latin America and Caribbean', style="primary",
                     actionButton('rgns2All', 'Deselect All'),
                     checkboxGroupInput('tvRgns2', NULL, choices=lac.rgns, selected = lac.rgns)
                   ),
@@ -144,18 +143,26 @@ shinyUI(fluidPage(theme="style.css",
                     checkboxGroupInput('tvRgns3', NULL, choices=north.america.rgns)
                   )
                 )
+              ),
+              box(status = "primary", width = NULL,
+                  selectInput('plotQuery', label="Plot Variable", choices=list())
               )
             )
           )
-        ), #tabItem
-        # upload
+        ),
         tabItem(tabName = "scenarios",
                 h3("Compare Scenarios"),
-                selectInput('sspChoices', "Which scenarios?",
-                            c("SSP1", "SSP2", "SSP3", "SSP4", "SSP5"),
-                            selected = c("SSP1", "SSP2"), multiple = TRUE),
-                box(title = "Population",
-                    solidHeader = F, width = 12,
+                fluidRow(
+                  column(3, selectInput('sspCategory', label = NULL,
+                                        choices = c("Population"), selected = "Population")),
+                  column(2, h5("Selected Scenarios:", align = "right")),
+                  column(3, selectInput('sspChoices', label = NULL,
+                                        c("SSP1", "SSP2", "SSP3", "SSP4", "SSP5"),
+                                        selected = c("SSP1", "SSP2"), multiple = TRUE))
+                ),
+
+                box(solidHeader = F, width = 12,
+                    htmlOutput('sspTitle'),
                     plotOutput('sspComparison', height = "520px", width = "100%"))
         ),
         # upload

@@ -122,6 +122,25 @@ getQueryYears <- function(prj, scenario, query)
     }
 }
 
+#' Get the subcategories for a query
+#'
+#' A subcategory is defined as column that doesn't define the scenario, year,
+#' units, or value
+#'
+#' @param prj Project data structure
+#' @param scenario Name of the scenario
+#' @param query Name of the query
+#' @export
+getQuerySubcategories <- function(prj, scenario, query)
+{
+    if(!uiStateValid(prj, scenario, query)) {
+      NULL
+    }
+    else {
+      querycols <- getQuery(prj, query, scenario) %>% names
+      catvars <- querycols[!querycols %in% c('scenario', 'Units', 'year', 'value')]
+    }
+}
 
 #' Update the checkbox filters when select/deselect all button is pressed
 #'
@@ -292,11 +311,13 @@ determineMapset <- function(prjdata, pltscen, query)
 #' @param filterset:  Set of values to include in the filter operation.  Ignored
 #'   if filtervar is NULL.
 #' @keywords internal
+#' @export
 getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
                         filterset=NULL)
 {
     tp <- getQuery(prjdata, query, pltscen) # table plot
     tp <- dplyr::filter(tp, year >= 2005 & year <= 2050) # only select relevant years
+
     if (nrow(tp) == 0) return(NULL)
 
     if('region' %in% names(tp)) {
@@ -449,7 +470,7 @@ summarize.unit <- function(unitcol)
 #' @param scen  Name of the scenario to plot
 #' @param diffscen  Name of the difference scenario, or NULL if none
 #' @param subcatvar  Variable to use for subcategories in the plot
-#' @param rgns  Regions to filter to, if filter is TRUE.
+#' @param rgns  Regions to filter to
 #' @importFrom magrittr "%>%"
 #' @importFrom ggplot2 ggplot aes_string geom_bar theme_minimal ylab scale_fill_manual
 #' @export
@@ -506,12 +527,12 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
 #' Plot values over time as a bar chart
 #' @param scens List of scenario names to plot
 #' @inheritParams plotTime
-#' @importFrom ggplot2 ggplot aes_string geom_bar theme_minimal ylab
+#' @importFrom ggplot2 ggplot aes_string geom_bar theme_minimal ylab facet_grid
 #' @export
 plotScenComparison <- function(prjdata, query, scens, diffscen, subcatvar, rgns)
 {
   filtervar <- "region"
-  plt <- ggplot(data = NULL, aes_string('year','value', fill="region")) +
+  plt <- ggplot(data = NULL, aes_string('year','value', fill=subcatvar)) +
          facet_grid(.~panel, scales="free")
 
   for (scen in scens) {
