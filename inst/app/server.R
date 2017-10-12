@@ -14,7 +14,7 @@ shinyServer(function(input, output, session) {
 
     ## Data that should show on load
     exampleData <- loadProject(system.file('idb.dat', package = "GCAMdashboard"))
-    energyData <- loadProject(system.file('energy.dat', package = "GCAMdashboard"))
+    exampleData2 <- loadProject(system.file('idb_ndc_long.dat', package = "GCAMdashboard"))
 
     ## Get the new data file on upload
     rFileinfo <- reactive({
@@ -80,8 +80,8 @@ shinyServer(function(input, output, session) {
     observe({
         ## update the subcategory selector on the energy plot.
         ## Only do this when the selected plot query changes.
-        scen <- isolate(input$plotScenario)
-        prj <- energyData
+        scen <- "Reference"
+        prj <- exampleData2
         query <- input$plotQuery
 
         ## Assumes that a particular query has the same columns in all scenarios
@@ -156,7 +156,7 @@ shinyServer(function(input, output, session) {
         getScenarioQueries(rFileinfo, input$scenarioInput, concat='\n')
     })
 
-    output$mapPlot <- renderPlot({
+    output$mapPlot <- renderPlot(height = '100%',{
         if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
                         input$plotQuery )) {
             diffscen <- if(input$diffCheck) {
@@ -181,10 +181,12 @@ shinyServer(function(input, output, session) {
 
     output$mapName <- renderText({input$plotQuery})
 
+    updateSelectInput(session, 'plotQuery', choices=listQueries(exampleData2), selected = "GDP by region")
     output$timePlot <- renderPlot({
-        prj <- energyData
-        scen <- "REFlu_e6_mex"
+        prj <- exampleData2
+        scen <- "Reference"
         query <- input$plotQuery
+        if(query=="") return(default.plot('Select a query to plot'))
 
         tvSubcatVar <- input$tvSubcatVar
 

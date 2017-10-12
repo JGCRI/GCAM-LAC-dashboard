@@ -266,14 +266,16 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map=NUL
                                   proj_type = map.params$proj_type,
                                   proj = map.params$proj, extent = map.params$ext,
                                   zoom = map.params$zoom, legend = TRUE) +
-                scale_fill_gradientn(colors = pal, limits = mapLimits, name = unitstr)
+                scale_fill_gradientn(colors = pal, name = unitstr)
         } else {
             plt <- default.plot(label.text = "No geographic data available for this query")
         }
         ## set up elements that are common to both kinds of plots here
-        plt + guides(fill=ggplot2::guide_colorbar(title="",
-                                                  barwidth=ggplot2::unit(3.1,'in'))) +
-          ggplot2::theme(legend.position="bottom")
+        plt + guides(fill=ggplot2::guide_colorbar(title=unitstr,
+                                                  barwidth=ggplot2::unit(3.1,'in'),
+                                                  title.position="bottom")) +
+          ggplot2::theme(legend.position="bottom",
+                         legend.title.align = 0.5)
     }
 }
 

@@ -19,20 +19,10 @@ shinyUI(fluidPage(theme="style.css",
     dashboardSidebar(
       sidebarMenu(
         menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
-        menuItem("Water", tabName = "water", icon = icon("tint", lib = "font-awesome")),
-        menuItem("Energy", tabName = "energy", icon = icon("bolt", lib = "font-awesome")),
-        menuItem("Scenarios", tabName = "scenarios", icon = icon("line-chart", lib = "font-awesome")),
-        menuItem("File Manager", tabName = "file", icon = icon("file", lib = "font-awesome"))
-      ),
-      fileInput('projectFile', 'Upload Project Data File'),
-      sidebarMenu(
-        menuItem("File Info", icon = icon("dashboard"),
-           p(" File size: ", textOutput('projectSize', inline = TRUE)),
-           p(" Scenarios: ", textOutput('scenarios', inline = TRUE)),
-            selectInput('scenarioInput','Select scenarios to see available queries:',
-                        choices=list(), multiple=TRUE),
-           p(" Queries present in ALL selected scenarios: ", textOutput('queries'))
-        )
+        # menuItem("Water", tabName = "water", icon = icon("tint", lib = "font-awesome")),
+        menuItem("Explore", tabName = "energy", icon = icon("bolt", lib = "font-awesome")),
+        menuItem("Scenarios", tabName = "scenarios", icon = icon("line-chart", lib = "font-awesome"))
+        # menuItem("File Explorer", tabName = "file", icon = icon("file", lib = "font-awesome"))
       )
     ),
     dashboardBody(
@@ -149,7 +139,7 @@ shinyUI(fluidPage(theme="style.css",
                 )
               ),
               box(status = "primary", width = NULL,
-                  selectInput('plotQuery', label="Plot Variable", choices=c("Regional primary energy costs", "Resource production"))
+                  selectInput('plotQuery', label="Plot Variable", choices=list())
               )
             )
           )
@@ -171,6 +161,12 @@ shinyUI(fluidPage(theme="style.css",
         ),
         # upload
         tabItem(tabName = "file",
+                fileInput('projectFile', 'Upload Project Data File'),
+                p(" File size: ", textOutput('projectSize', inline = TRUE)),
+                p(" Scenarios: ", textOutput('scenarios', inline = TRUE)),
+                selectInput('scenarioInput','Select scenarios to see available queries:',
+                            choices=list(), multiple=TRUE),
+                p(" Queries present in ALL selected scenarios: ", textOutput('queries')),
                 fluidRow(
                   column(1, selectInput('plotScenario', 'Select Scenario to Plot', choices=list())),
                   column(3, checkboxInput('inclSpatial', 'Include Spatial Queries', value=TRUE))
