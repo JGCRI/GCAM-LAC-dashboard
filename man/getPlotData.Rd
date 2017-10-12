@@ -14,11 +14,11 @@ getPlotData(prjdata, query, pltscen, diffscen, key, filtervar = NULL,
 
 \item{pltscen}{Name of the scenario to plot}
 
+\item{diffscen}{Difference scenario, if any}
+
 \item{key}{Aggregation variable.  (e.g., 'region' or 'sector')}
 
 \item{filtervar}{If not NULL, filter on this variable before aggregating}
-
-\item{diffscenDifference}{scenario, if any}
 
 \item{filterset:}{Set of values to include in the filter operation.  Ignored
 if filtervar is NULL.}

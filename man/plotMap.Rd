@@ -4,7 +4,7 @@
 \alias{plotMap}
 \title{Plot GCAM data on a global or regional map}
 \usage{
-plotMap(prjdata, query, pltscen, diffscen, projselect, year)
+plotMap(prjdata, query, pltscen, diffscen, projselect, year, map = NULL)
 }
 \arguments{
 \item{prjdata}{Project data file}
@@ -18,6 +18,8 @@ plotMap(prjdata, query, pltscen, diffscen, projselect, year)
 \item{projselect}{Projection to use for the map}
 
 \item{year}{Year to plot data for}
+
+\item{map}{Base map to plot on (for gridded data only)}
 }
 \description{
 Plot GCAM data on a global or regional map

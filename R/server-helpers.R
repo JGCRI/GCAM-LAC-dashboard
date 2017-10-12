@@ -527,7 +527,7 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
 #' Plot values over time as a bar chart
 #' @param scens List of scenario names to plot
 #' @inheritParams plotTime
-#' @importFrom ggplot2 ggplot aes_string geom_bar theme_minimal ylab facet_grid
+#' @importFrom ggplot2 ggplot aes_string geom_bar theme ylab facet_grid
 #' @export
 plotScenComparison <- function(prjdata, query, scens, diffscen, subcatvar, rgns)
 {
