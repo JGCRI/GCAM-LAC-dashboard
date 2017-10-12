@@ -39,26 +39,30 @@ shinyUI(fluidPage(theme="style.css",
       tabItems(
         tabItem(tabName = "dashboard",
           fluidRow(
-            box(title = 'Primary Energy Consumption by Fuel',
-                solidHeader = TRUE, status = "primary",
-                plotOutput('landingPlot1', height='250px')),
-            box(title = 'Greenhouse Gas Emissions',
-                solidHeader = TRUE, status = "primary",
-                plotOutput('landingPlot2', height='250px'))
-          ),
-          fluidRow(
-              tabBox(title = 'Water', side = 'left',
-                  id = "waterTabset",
-                  tabPanel("Supply",
-                    plotOutput('waterSupplyPlot', height='250px')),
-                  tabPanel("Demand",
-                    plotOutput('waterDemandPlot', height='250px')),
-                  tabPanel("Scarcity",
-                    plotOutput('waterScarcityPlot', height='250px'))
-              ),
-              box(title = 'Crop Production by AEZ',align='center',
+            column(3,
+              tabBox(title = NULL, side = 'left', width = NULL,
+                     id = "waterTabset",
+                     tabPanel("Supply",
+                              plotOutput('waterSupplyPlot', height='580px')),
+                     tabPanel("Demand",
+                              plotOutput('waterDemandPlot', height='580px')),
+                     tabPanel("Scarcity",
+                              plotOutput('waterScarcityPlot', height='580px'))
+              )
+            ),
+            column(3,
+              box(title = 'Agriculture Production',align='center', width = NULL,
                   solidHeader = TRUE, status = "primary",
-                  plotOutput('landingPlot3', height='250px'))
+                  plotOutput('landingPlot3', height='583px'))
+            ),
+            column(6,
+              box(title = 'Primary Energy Consumption by Fuel', width = NULL,
+                  solidHeader = TRUE, status = "primary",
+                  plotOutput('landingPlot1', height='250px')),
+              box(title = 'CO2 Equivalent Emissions', width = NULL,
+                  solidHeader = TRUE, status = "primary",
+                  plotOutput('landingPlot2', height='250px'))
+            )
           )
         ),
         tabItem(tabName = "water",
@@ -108,7 +112,7 @@ shinyUI(fluidPage(theme="style.css",
                            hover = hoverOpts("energyHover", delay = 50, delayType = 'throttle')),
                 uiOutput('hoverInfo')
               ),
-              box(title="Options", status = "primary", width = NULL,
+              box(title=NULL, status = "primary", width = NULL,
                 selectInput('tvSubcatVar', 'Break totals into subcategories by:',
                             choices=c('none','region'))
               )
@@ -145,7 +149,7 @@ shinyUI(fluidPage(theme="style.css",
                 )
               ),
               box(status = "primary", width = NULL,
-                  selectInput('plotQuery', label="Plot Variable", choices=list())
+                  selectInput('plotQuery', label="Plot Variable", choices=c("Regional primary energy costs", "Resource production"))
               )
             )
           )

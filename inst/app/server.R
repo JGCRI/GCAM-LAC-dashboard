@@ -14,6 +14,7 @@ shinyServer(function(input, output, session) {
 
     ## Data that should show on load
     exampleData <- loadProject(system.file('idb.dat', package = "GCAMdashboard"))
+    energyData <- loadProject(system.file('energy.dat', package = "GCAMdashboard"))
 
     ## Get the new data file on upload
     rFileinfo <- reactive({
@@ -77,19 +78,27 @@ shinyServer(function(input, output, session) {
     })
 
     observe({
+        ## update the subcategory selector on the energy plot.
+        ## Only do this when the selected plot query changes.
+        scen <- isolate(input$plotScenario)
+        prj <- energyData
+        query <- input$plotQuery
+
+        ## Assumes that a particular query has the same columns in all scenarios
+        catvars <- getQuerySubcategories(prj, scen, query)
+        prevSubcat <- if(input$tvSubcatVar %in% catvars) input$tvSubcatVar else 'none'
+        updateSelectInput(session, 'tvSubcatVar', choices=c('none', catvars),
+                          selected=prevSubcat)
+    })
+
+    observe({
         ## update the subcategory selector on the time value plot and the limits
         ## on the time slider on the map plot.  Only do this when the selected
         ## plot query changes.
         scen <- isolate(input$plotScenario)
-        prj <- isolate(rFileinfo()$project.data)
+        prj <- rFileinfo()$project.data
         query <- input$plotQuery
         if(uiStateValid(prj, scen, query)) {
-            ## Assumes that a particular query has the same columns in all scenarios
-            catvars <- getQuerySubcategories(prj, scen, query)
-            prevSubcat <- if(input$tvSubcatVar %in% catvars) input$tvSubcatVar else 'none'
-            updateSelectInput(session, 'tvSubcatVar', choices=c('none', catvars),
-                              selected=prevSubcat)
-
             ## now do the map slider
             yrlimits <- getQueryYears(prj, scen, query)
             yrsel <- isolate(input$mapYear)
@@ -173,32 +182,23 @@ shinyServer(function(input, output, session) {
     output$mapName <- renderText({input$plotQuery})
 
     output$timePlot <- renderPlot({
-        prj <- rFileinfo()$project.data
-        scen <- input$plotScenario
+        prj <- energyData
+        scen <- "REFlu_e6_mex"
         query <- input$plotQuery
-        if(uiStateValid(prj, scen, query)) {
-               diffscen <- if(input$diffCheck) {
-                   input$diffScenario
-               } else {
-                   NULL
-               }
-               tvSubcatVar <- input$tvSubcatVar
 
-               region.filter <- c(input$tvRgns1, input$tvRgns2, input$tvRgns3,
-                                  input$tvRgns4, input$tvRgns5)
-               last.region.filter <<- region.filter
+        tvSubcatVar <- input$tvSubcatVar
 
-               # If the query has changed, the value of the subcategory selector
-               # may not be valid anymore. Change it to none.
-               if(!tvSubcatVar %in% names(getQuery(prj, query, scen))) {
-                  tvSubcatVar <- 'none'
-               }
+        region.filter <- c(input$tvRgns1, input$tvRgns2, input$tvRgns3,
+                           input$tvRgns4, input$tvRgns5)
+        last.region.filter <<- region.filter
 
-               plotTime(prj, query, scen, diffscen, tvSubcatVar, region.filter)
-           }
-        else {                          # UI state is invalid
-            default.plot('No Data')
+        # If the query has changed, the value of the subcategory selector
+        # may not be valid anymore. Change it to none.
+        if(!tvSubcatVar %in% names(getQuery(prj, query, scen))) {
+           tvSubcatVar <- 'none'
         }
+
+        plotTime(prj, query, scen, NULL, tvSubcatVar, region.filter)
     })
 
     output$hoverInfo <- renderUI({
@@ -272,20 +272,14 @@ shinyServer(function(input, output, session) {
     })
 
     output$landingPlot2 <- renderPlot({
-      plotTime(exampleData, "Greenhouse gas emissions [MtCO2-eq]",
-               "REFlu_e6_mex", NULL, "ghg", lac.rgns)
+      plotTime(exampleData, "CO2 Emissions",
+               "REFlu_e6_mex", NULL, "sector", lac.rgns)
     })
 
     output$landingPlot3 <- renderPlot({
-      if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
-                       isolate(input$plotQuery) )) {
-        query <- "CO2 emissions by region"
-        plotMap(rFileinfo()$project.data, query, input$plotScenario, NULL,
+        query <- "Agriculture production"
+        plotMap(exampleData, query, "REFlu_e6_mex", NULL,
                  "lac", 2050)
-      }
-      else {
-        default.plot('No Data')
-      }
     })
 
 

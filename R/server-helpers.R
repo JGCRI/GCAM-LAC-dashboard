@@ -226,11 +226,11 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map=NUL
         if(mapset==gcammaptools::basin235 && 'basin' %in% names(pltdata))
             pltdata$region <- pltdata$basin
 
-        mapLimits <- getMapLimits(pltdata, is.diff)
-        unitstr <- summarize.unit(pltdata$Units)
-
         # Filter the data to only the selected year
         pltdata <- dplyr::filter_(pltdata, paste("year ==", year))
+
+        mapLimits <- getMapLimits(pltdata, is.diff)
+        unitstr <- summarize.unit(pltdata$Units)
 
         map.params <- getMapParams(projselect) # map projection and extent
         pal <- getMapPalette(is.diff)   # color palette
@@ -272,8 +272,8 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map=NUL
         }
         ## set up elements that are common to both kinds of plots here
         plt + guides(fill=ggplot2::guide_colorbar(title="",
-                                                  barwidth=ggplot2::unit(0.1,'in'))) +
-          ggplot2::theme(legend.position="right")
+                                                  barwidth=ggplot2::unit(3.1,'in'))) +
+          ggplot2::theme(legend.position="bottom")
     }
 }
 
