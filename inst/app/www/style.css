@@ -45,6 +45,11 @@
   border-top-color: #548687;
 }
 
+.box.box-warning {
+  border-top-color: #FCAA67;
+  border-top-color: #B0413E;
+}
+
 .box.box-solid.box-primary {
   border: 1px solid #473335;
 }
@@ -103,4 +108,14 @@ h4.panel-title {
 
 #rgnSelectAll {
   margin-bottom: 5px;
+}
+
+#fileSelect>span>.form-group, #triggerUploadModal {
+  margin: 6px 0px 0px 10px;
+}
+
+.dropdown.fileSelectLabel {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 13px 10px;
 }

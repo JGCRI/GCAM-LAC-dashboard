@@ -11,16 +11,19 @@ shinyUI(fluidPage(theme="style.css",
     dashboardHeader(title = 'GCAM Latin America',
                     # by making an li element with class dropdown we can trick
                     # it into accepting our link
-                    tags$li(a(href = '#',
-                              icon("cog", lib = "font-awesome"),
-                              title = "Settings"),
-                              class = "dropdown")),
+                    tags$li(span("Project File"), class = "dropdown fileSelectLabel"),
+                    tags$li(span(selectInput('fileList', label = NULL, choices=list(), width = '200px')),
+                            id = "fileSelect",
+                            class = "dropdown"),
+                    tags$li(actionButton('triggerUploadModal', NULL, icon("upload", lib = "font-awesome")),
+                            class = "dropdown")
+                    ),
 
     dashboardSidebar(
       sidebarMenu(
         menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
-        menuItem("Water", tabName = "maps", icon = icon("map", lib = "font-awesome")),
-        menuItem("Explore", tabName = "energy", icon = icon("bolt", lib = "font-awesome")),
+        menuItem("Maps", tabName = "maps", icon = icon("map", lib = "font-awesome")),
+        menuItem("Explore", tabName = "energy", icon = icon("search", lib = "font-awesome")),
         menuItem("Scenarios", tabName = "scenarios", icon = icon("line-chart", lib = "font-awesome")),
         menuItem("File Explorer", tabName = "file", icon = icon("file", lib = "font-awesome"))
       )
@@ -47,10 +50,16 @@ shinyUI(fluidPage(theme="style.css",
             ),
             column(6,
               box(title = 'Primary Energy Consumption by Fuel', width = NULL,
-                  solidHeader = TRUE, status = "primary",
+                  solidHeader = TRUE, status = "primary", collapsible = T,
+                  footer = radioButtons('lp1toggle', NULL,
+                                        c('Reference Scenario', 'Not Reference Scenario'),
+                                        inline = T),
                   plotOutput('landingPlot1', height='250px')),
-              box(title = 'CO2 Equivalent Emissions', width = NULL,
+              box(title = 'CO2 Emissions', width = NULL,
                   solidHeader = TRUE, status = "primary",
+                  footer = radioButtons('lp2toggle', NULL,
+                                        c('Reference Scenario', 'Not Reference Scenario'),
+                                        inline = T),
                   plotOutput('landingPlot2', height='250px'))
             )
           )
@@ -97,7 +106,18 @@ shinyUI(fluidPage(theme="style.css",
         tabItem(tabName = "energy",
           fluidRow(
             column(width = 8,
-              box(status = "primary", width = NULL,
+              box(title=NULL, status="primary", width=NULL,
+              fluidRow(
+                column(width = 5, selectInput('scenarioInput', 'Scenario:',
+                            choices=list())
+                ),
+                column(width = 5, conditionalPanel(condition = "input.diffCheck == true",
+                      selectInput('diffScenario', 'Difference Scenario:', choices=list()))
+                ),
+                column(width = 2, checkboxInput('diffCheck', 'Add Difference Scenario')
+                )
+              )),
+              box(status = "warning", width = NULL,
                 plotOutput('timePlot', height='400px',
                            hover = hoverOpts("energyHover", delay = 50, delayType = 'throttle')),
                 uiOutput('hoverInfo')
@@ -110,7 +130,7 @@ shinyUI(fluidPage(theme="style.css",
 
             column(width = 4,
               box(title = "Filter by Region", status = "primary", solidHeader = TRUE,
-                width = NULL, height = '420px',
+                width = NULL, height = '550px',
                 tableOutput("regionFilter"),
                 actionButton('rgnSelectAll', 'Select all regions'),
                 br(),
@@ -160,25 +180,17 @@ shinyUI(fluidPage(theme="style.css",
                     plotOutput('sspComparison', height = "520px", width = "100%"))
         ),
         # upload
-        tabItem(tabName = "file",
-                fileInput('projectFile', 'Upload Project Data File'),
-                p(" File size: ", textOutput('projectSize', inline = TRUE)),
-                p(" Scenarios: ", textOutput('scenarios', inline = TRUE)),
-                selectInput('scenarioInput','Select scenarios to see available queries:',
-                            choices=list(), multiple=TRUE),
-                p(" Queries present in ALL selected scenarios: ", textOutput('queries')),
-                fluidRow(
-                  column(1, selectInput('plotScenario', 'Select Scenario to Plot', choices=list())),
-                  column(3, checkboxInput('inclSpatial', 'Include Spatial Queries', value=TRUE))
-                ),
-                checkboxInput('diffCheck', 'Plot Difference vs Another Scenario'),
-                conditionalPanel(
-                  condition = "input.diffCheck == true",
-                  fluidRow(column(8,
-                                  selectInput('diffScenario', 'Select Difference Scenario', choices=list())))
-                )
-        )
-      ) # tabItems
+        tabItem(tabName = "file", "Nothing to see here.")
+      ), # tabItems
+      bsModal('uploadModal', 'Upload a File', trigger = 'triggerUploadModal', size = 'large',
+              fileInput('projectFile', 'Upload Project Data File'),
+              p(" File size: ", textOutput('projectSize', inline = TRUE)),
+
+              p(" Queries present in ALL selected scenarios: ", textOutput('queries')),
+              fluidRow(
+                column(3, checkboxInput('inclSpatial', 'Include Spatial Queries', value=TRUE))
+              )
+      ) #bsModal
     ) # dashboardBody
   ) #dashboardPage
 ))

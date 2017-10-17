@@ -12,76 +12,88 @@ shinyServer(function(input, output, session) {
     scenarios <- ""
     queries <- ""
 
-    ## Data that should show on load
-    exampleData <- loadProject(system.file('idb.dat', package = "GCAMdashboard"))
-    exampleData2 <- loadProject(system.file('idb_ndc_long.dat', package = "GCAMdashboard"))
-
     ## Get the new data file on upload
     rFileinfo <- reactive({
-        fileinfo <- input$projectFile
-        if(is.null(fileinfo)) {
-            project.data <- NULL
-        }
-        else {
-            project.data <- loadProject(fileinfo$datapath)   # should be only one file
-            updateSelectInput(session, 'scenarioInput', choices=listScenarios(project.data))
-        }
-        list(project.data=project.data)
+      fileinfo <- input$projectFile
+      # if(is.null(fileinfo)) {
+      #   project.filename <- NULL
+      #   project.data <- NULL
+      # }
+      # else {
+      #   project.data <- loadProject(fileinfo$datapath)   # should be only one file
+      #   project.filename <- fileinfo$name
+      #   updateSelectInput(session, 'scenarioInput', choices=listScenarios(project.data))
+      # }
+      # list(project.filename=project.filename, project.data=project.data)
     })
 
-    ## Update controls on sidebar in response to user selections
+    ## ----- INITIALIZATION -----
+    ## Data that should show on load
+    defaultProj <- 'idb.dat'
+    files <- list()
+    files[[defaultProj]] <- loadProject(system.file(defaultProj, package = "GCAMdashboard"))
+    updateSelectInput(session, 'fileList', choices=names(files))
+    # files[[input$fileList]] <- loadProject(system.file('idb_ndc_long.dat', package = "GCAMdashboard"))
+
+
+    ## ----- PLOT OPTION UPDATES -----
+    ## When a new file is uploaded, update available projects
     observe({
-        if(is.null(rFileinfo()$project.data)) {
-            new.scenarios <- list()
-        }
-        else {
-            new.scenarios <- getProjectScenarios(rFileinfo)
-        }
+      fileinfo <- input$projectFile
+      if(!is.null(input$projectFile)) {
+        project.data <- loadProject(fileinfo$datapath)  # should be only one file
+        project.filename <- fileinfo$name
+        files[[project.filename]] <<- project.data
+        updateSelectInput(session, 'fileList', choices=names(files), selected=project.filename)
 
-        if(!all(scenarios == new.scenarios)) {
-            scenarios <<- new.scenarios # Update UI state
-            updateSelectInput(session, 'plotScenario', choices=scenarios)
-            updateSelectInput(session, 'diffScenario', choices=scenarios)
-        }
-
-        if(!is.null(rFileinfo()$project.data)) {
-            if(input$plotScenario == "") {
-                # When first loading a dataset, no scenario is selected
-                qscenarios <- scenarios
-            }
-            else if(input$diffCheck) {
-                qscenarios <- c(input$plotScenario, input$diffScenario)
-            }
-            else {
-                qscenarios <- input$plotScenario
-            }
-            new.queries <- getScenarioQueries(rFileinfo, qscenarios)
-            if(!input$inclSpatial) {
-                ## Filter out grid queries, if requested.
-                nonGrid <- sapply(new.queries,
-                                  function(q) {!isGrid(rFileinfo()$project.data,
-                                                      input$plotScenario, q)})
-                new.queries <- new.queries[nonGrid]
-            }
-            if(!identical(queries,new.queries)) {
-                ## capture new query list
-                queries <<- new.queries
-                ## preserve selected value if possible
-                sel <- input$plotQuery
-                if(!(sel %in% queries))
-                   sel <- NULL          # allow update to reset selection
-                updateSelectInput(session, 'plotQuery', choices=queries,
-                                  selected=sel)
-            }
-        }
-
+      }
     })
 
+    ## When a new project is selected, update available scenarios
     observe({
-        ## update the subcategory selector on the energy plot.
-        ## Only do this when the selected plot query changes.
-        scen <- "Reference"
-        prj <- exampleData2
+      if(input$fileList != "") {
+        project.data <- files[[input$fileList]]
+        updateSelectInput(session, 'scenarioInput', choices=listScenarios(project.data))
+        updateSelectInput(session, 'diffScenario', choices=listScenarios(project.data))
+      }
+    })
+
+    ## When a new scenario is selected, update available queries
+    observe({
+      prj <- isolate(files[[input$fileList]])
+
+      # Get the current scenario (or scenarios for a difference plot)
+      if(input$scenarioInput == "") {
+        return() # There should always be a dataset loaded
+      }
+      else if(input$diffCheck) {
+        qscenarios <- c(input$scenarioInput, input$diffScenario)
+      }
+      else {
+        qscenarios <- input$scenarioInput
+      }
+
+      queries <- getScenarioQueries(prj, qscenarios)
+
+      ## Filter out grid queries, if requested.
+      if(!input$inclSpatial) {
+        nonGrid <- sapply(queries,
+                          function(q) {!isGrid(prj, input$scenarioInput, q)})
+        queries <- queries[nonGrid]
+      }
+
+      ## Preserve selected value if possible, else allow update to reset selection
+      sel <- input$plotQuery
+      if(!(sel %in% queries)) sel <- NULL
+
+      updateSelectInput(session, 'plotQuery', choices = queries, selected = sel)
+      updateSelectInput(session, 'lp1Query', choices = queries, selected = sel)
+    })
+
+    ## When a new query is selected, update available subcategories
+    observe({
+        prj <- files[[defaultProj]]
+        scen <- input$scenarioInput
         query <- input$plotQuery
 
         ## Assumes that a particular query has the same columns in all scenarios
@@ -91,10 +103,10 @@ shinyServer(function(input, output, session) {
                           selected=prevSubcat)
     })
 
+    ## TODO: revisit this
     observe({
-        ## update the subcategory selector on the time value plot and the limits
-        ## on the time slider on the map plot.  Only do this when the selected
-        ## plot query changes.
+        ## update the limits on the time slider on the map plot.  Only do this
+        ## when the selected plot query changes.
         scen <- isolate(input$plotScenario)
         prj <- rFileinfo()$project.data
         query <- input$plotQuery
@@ -113,7 +125,8 @@ shinyServer(function(input, output, session) {
         }
     })
 
-    # Update checkboxes when select or deselect checkbox is pressed
+    ## When a 'select all' or 'deselect all' button is pressed, update region
+    ## filtering checkboxes
     observeEvent(input$rgns1All, {
       updateRegionFilter(session, 'rgns1All', 'tvRgns1', input$rgns1All%%2 == 0, africa.rgns)
     })
@@ -137,26 +150,26 @@ shinyServer(function(input, output, session) {
       updateRegionFilter(session, 'rgnSelectAll', 'tvRgns3', sAll, north.america.rgns)
       updateRegionFilter(session, 'rgnSelectAll', 'tvRgns4', sAll, europe.rgns)
       updateRegionFilter(session, 'rgnSelectAll', 'tvRgns5', sAll, asiapac.rgns)
-      # Update button text
-      # updateCheckboxInput(session, 'rgnSelectAll', label = paste0(ifelse(sAll, "Des", "S"), "elect all"))
     })
 
+
+    ## -----
     output$projectSize <- renderText({
-        if(is.null(rFileinfo()$project.data))
-            0
+        if(is.null(input$projectFile))
+          0
         else
-            format(object.size(rFileinfo()$project.data), units='auto')
+          utils:::format.object_size(input$projectFile$size, "auto")
     })
 
     output$scenarios <- renderText({
-        getProjectScenarios(rFileinfo, concat='\n')
+        getProjectScenarios(files[[input$fileList]], concat='\n')
     })
 
     output$queries <- renderText({
-        getScenarioQueries(rFileinfo, input$scenarioInput, concat='\n')
+        getScenarioQueries(files[[input$fileList]], input$scenarioInput, concat='\n')
     })
 
-    output$mapPlot <- renderPlot(height = '100%',{
+    output$mapPlot <- renderPlot({
         if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
                         input$plotQuery )) {
             diffscen <- if(input$diffCheck) {
@@ -181,33 +194,39 @@ shinyServer(function(input, output, session) {
 
     output$mapName <- renderText({input$plotQuery})
 
-    updateSelectInput(session, 'plotQuery', choices=listQueries(exampleData2), selected = "GDP by region")
     output$timePlot <- renderPlot({
-        prj <- exampleData2
-        scen <- "Reference"
+        prj <- isolate(files[[input$fileList]])
+        scen <- input$scenarioInput
         query <- input$plotQuery
-        if(query=="") return(default.plot('Select a query to plot'))
+
+        diffscen <- if(input$diffCheck) input$diffScenario else NULL
 
         tvSubcatVar <- input$tvSubcatVar
 
         region.filter <- c(input$tvRgns1, input$tvRgns2, input$tvRgns3,
                            input$tvRgns4, input$tvRgns5)
-        last.region.filter <<- region.filter
 
-        # If the query has changed, the value of the subcategory selector
-        # may not be valid anymore. Change it to none.
+        # If the scenario has changed, the value of the query selector may not
+        # be valid anymore.
+        availableQueries <- getScenarioQueries(prj, scen)
+        if(!query %in% availableQueries) {
+          query <- availableQueries[1]
+        }
+
+        # If the query has changed, the value of the subcategory selector may
+        # not be valid anymore. Change it to none.
         if(!tvSubcatVar %in% names(getQuery(prj, query, scen))) {
            tvSubcatVar <- 'none'
         }
 
-        plotTime(prj, query, scen, NULL, tvSubcatVar, region.filter)
+        plotTime(prj, query, scen, diffscen, tvSubcatVar, region.filter)
     })
 
     output$hoverInfo <- renderUI({
       hover <- input$energyHover
-      prj <- isolate(rFileinfo()$project.data)
-      scen <- isolate(input$plotScenario)
-      query <- isolate(input$plotQuery)
+      prj <- isolate(files[[input$fileList]])
+      scen <- input$scenarioInput
+      query <- input$plotQuery
 
       if (is.null(hover)) return(NULL)
       if (is.null(prj)) return(NULL)
@@ -215,7 +234,6 @@ shinyServer(function(input, output, session) {
       tvSubcatVar <- isolate(input$tvSubcatVar)
       region.filter <- c(input$tvRgns1, input$tvRgns2, input$tvRgns3,
                          input$tvRgns4, input$tvRgns5)
-      last.region.filter <<- region.filter
 
       df <- getPlotData(prj, query, scen, NULL, tvSubcatVar, 'region', region.filter)
 
@@ -269,18 +287,26 @@ shinyServer(function(input, output, session) {
     })
 
     output$landingPlot1 <- renderPlot({
-      plotTime(exampleData, "Primary Energy Consumption by Fuel",
-               "REFlu_e6_mex", NULL, "fuel", lac.rgns)
+      if(input$lp1toggle == "Reference Scenario")
+        scen <- "REFlu_e6_mex"
+      else
+        scen <- "PIAlu_e6_mex"
+      plotTime(files[[input$fileList]], "Primary Energy Consumption by Fuel",
+               scen, NULL, "fuel", lac.rgns)
     })
 
     output$landingPlot2 <- renderPlot({
-      plotTime(exampleData, "CO2 Emissions",
-               "REFlu_e6_mex", NULL, "sector", lac.rgns)
+      if(input$lp2toggle == "Reference Scenario")
+        scen <- "REFlu_e6_mex"
+      else
+        scen <- "PIAlu_e6_mex"
+      plotTime(files[[input$fileList]], "CO2 Emissions",
+               scen, NULL, "sector", lac.rgns)
     })
 
     output$landingPlot3 <- renderPlot({
         query <- "Agriculture production"
-        plotMap(exampleData, query, "REFlu_e6_mex", NULL,
+        plotMap(files[[input$fileList]], query, "REFlu_e6_mex", NULL,
                  "lac", 2050)
     })
 

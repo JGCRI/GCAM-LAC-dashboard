@@ -11,30 +11,30 @@ last.region.filter <- NULL
 #' Get the scenarios in the project for display
 #'
 #' Returns a place holder string if no project has been loaded yet.
-#' @param rFileinfo Reactive fileinfo object returned by file browser in the UI.
+#' @param rFileinfo Project data to query.
 #' @param concat Separator string to use when concatenating scenario names.
 #' @importFrom magrittr "%>%"
 #' @export
-getProjectScenarios <- function(rFileinfo, concat=NULL)
+getProjectScenarios <- function(projData, concat=NULL)
 {
-    pd <- rFileinfo()$project.data
+    pd <- projData
     if(is.null(pd)) {
         '->none<-'
     } else {
-        rgcam::listScenarios(rFileinfo()$project.data) %>% paste(collapse=concat)
+        rgcam::listScenarios(pd) %>% paste(collapse=concat)
     }
 }
 
 #' Get the queries for a project and scenario(s) for display
 #'
-#' @param rFileinfo Reactive fileinfo object returned by file browser in the UI.
+#' @param projData Project data to query.
 #' @param scenarios List of scenarios.
 #' @param concat Separator string for concatenating query names.
 #' @importFrom magrittr "%>%"
 #' @export
-getScenarioQueries <- function(rFileinfo, scenarios, concat=NULL)
+getScenarioQueries <- function(projData, scenarios, concat=NULL)
 {
-    prj <- rFileinfo()$project.data
+    prj <- projData
     if(is.null(prj)) {
         if(is.null(concat))
             ''                          # probably not intended for display
@@ -125,11 +125,12 @@ getQueryYears <- function(prj, scenario, query)
 #' Get the subcategories for a query
 #'
 #' A subcategory is defined as column that doesn't define the scenario, year,
-#' units, or value
+#' units, or value. If the subcategory contains only one unique element, it is
+#' not included.
 #'
-#' @param prj Project data structure
-#' @param scenario Name of the scenario
-#' @param query Name of the query
+#' @param prj Project data structure.
+#' @param scenario Name of the scenario.
+#' @param query Name of the query.
 #' @export
 getQuerySubcategories <- function(prj, scenario, query)
 {
@@ -137,8 +138,17 @@ getQuerySubcategories <- function(prj, scenario, query)
       NULL
     }
     else {
-      querycols <- getQuery(prj, query, scenario) %>% names
-      catvars <- querycols[!querycols %in% c('scenario', 'Units', 'year', 'value')]
+      querydata <- getQuery(prj, query, scenario)
+      querycols <- names(querydata)
+      ignorecols <- c('scenario', 'Units', 'year', 'value')
+
+      # Remove subcategories that only have one unique element
+      numcats <- sapply(querydata[, !querycols %in% ignorecols], function(x) {
+        length(unique(x))
+      })
+      ignorecols <- c(ignorecols, names(which(numcats == 1)))
+
+      catvars <- querycols[!querycols %in% ignorecols]
     }
 }
 
