@@ -19,10 +19,10 @@ shinyUI(fluidPage(theme="style.css",
     dashboardSidebar(
       sidebarMenu(
         menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
-        # menuItem("Water", tabName = "water", icon = icon("tint", lib = "font-awesome")),
+        menuItem("Water", tabName = "maps", icon = icon("map", lib = "font-awesome")),
         menuItem("Explore", tabName = "energy", icon = icon("bolt", lib = "font-awesome")),
-        menuItem("Scenarios", tabName = "scenarios", icon = icon("line-chart", lib = "font-awesome"))
-        # menuItem("File Explorer", tabName = "file", icon = icon("file", lib = "font-awesome"))
+        menuItem("Scenarios", tabName = "scenarios", icon = icon("line-chart", lib = "font-awesome")),
+        menuItem("File Explorer", tabName = "file", icon = icon("file", lib = "font-awesome"))
       )
     ),
     dashboardBody(
@@ -55,7 +55,7 @@ shinyUI(fluidPage(theme="style.css",
             )
           )
         ),
-        tabItem(tabName = "water",
+        tabItem(tabName = "maps",
           fluidRow(
             column(6,
               box(width = NULL, status = "primary",

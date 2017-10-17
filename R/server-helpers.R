@@ -150,6 +150,7 @@ getQuerySubcategories <- function(prj, scenario, query)
 #' @param selectAll If TRUE, select all checkboxes in the group defined by
 #'   groupId. If not TRUE then deselect.
 #' @param choices The labels of the checkboxes.
+#' @export
 updateRegionFilter <- function(session, btnId, groupId, selectAll, choices) {
   if(selectAll) {
     updateCheckboxGroupInput(session, groupId, choices = choices)
@@ -302,6 +303,35 @@ determineMapset <- function(prjdata, pltscen, query)
 
 ### Data wrangling
 
+#' Filter out data that cannot be plotted
+#'
+#' @param plotData Data frame containing the data for a plot.
+#' @param startYear Minimum year to display. If NULL, searches year column for
+#'   minimum in data.
+#' @param endYear Maximum year to display. If NULL, searches year column for
+#'   maximum in data.
+#' @return Cleaned data frame.
+cleanPlotData <- function(plotData, startYear=NULL, endYear=NULL) {
+  # Only select relevant years
+  if (is.null(startYear)) {
+    startYear = min(plotData$year)
+  }
+  if (is.null(endYear)) {
+    endYear = max(plotData$year)
+  }
+  plotData <- dplyr::filter(plotData, year >= startYear & year <= endYear)
+
+  # To plot cleanly, we can only take data with the same units
+  units <- unique(plotData$Units)
+  if (length(units) > 1) {
+    mostCommonUnit <- sort(table(plotData$Units), decreasing = T)[1] %>% names()
+    plotData <- dplyr::filter(plotData, Units == mostCommonUnit)
+  }
+
+  plotData
+}
+
+
 #' Extract and format data for a plot
 #'
 #' @param prjdata Project data structure
@@ -318,7 +348,7 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
                         filterset=NULL)
 {
     tp <- getQuery(prjdata, query, pltscen) # table plot
-    tp <- dplyr::filter(tp, year >= 2005 & year <= 2050) # only select relevant years
+    tp <- cleanPlotData(tp, 2005, 2050)
 
     if (nrow(tp) == 0) return(NULL)
 
@@ -499,7 +529,9 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
                                filtervar, rgns)
 
         plt <- ggplot(pltdata, aes_string('year','value', fill=subcatvar)) +
-          geom_bar(stat='identity') + theme_minimal() + ylab(pltdata$Units)
+          geom_bar(stat='identity') + ggplot2::theme(axis.text=ggplot2::element_text(size=12),
+                                                     axis.title=ggplot2::element_text(size=13,face="bold")) +
+          ylab(pltdata$Units)
 
         if(is.null(subcatvar)) {
             plt

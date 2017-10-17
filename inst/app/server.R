@@ -269,7 +269,7 @@ shinyServer(function(input, output, session) {
     })
 
     output$landingPlot1 <- renderPlot({
-      plotTime(exampleData, "Primary Energy Consumption by Fuel [EJ]",
+      plotTime(exampleData, "Primary Energy Consumption by Fuel",
                "REFlu_e6_mex", NULL, "fuel", lac.rgns)
     })
 
