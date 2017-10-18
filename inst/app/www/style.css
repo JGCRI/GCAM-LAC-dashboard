@@ -87,6 +87,10 @@
   overflow-y: auto;
 }
 
+.selectize-control {
+  margin-bottom: 0px;
+}
+
 h4.panel-title {
   font-size: 14px;
 }

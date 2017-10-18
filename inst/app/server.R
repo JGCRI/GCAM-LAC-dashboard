@@ -200,6 +200,7 @@ shinyServer(function(input, output, session) {
         query <- input$plotQuery
 
         diffscen <- if(input$diffCheck) input$diffScenario else NULL
+        # if(diffscen == scen) return(default.plot("Scenarios are the same"))
 
         tvSubcatVar <- input$tvSubcatVar
 
@@ -208,7 +209,7 @@ shinyServer(function(input, output, session) {
 
         # If the scenario has changed, the value of the query selector may not
         # be valid anymore.
-        availableQueries <- getScenarioQueries(prj, scen)
+        availableQueries <- getScenarioQueries(prj, c(scen, diffscen))
         if(!query %in% availableQueries) {
           query <- availableQueries[1]
         }

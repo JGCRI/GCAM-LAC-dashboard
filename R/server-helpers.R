@@ -313,12 +313,38 @@ determineMapset <- function(prjdata, pltscen, query)
 #' Filter out data that cannot be plotted
 #'
 #' @param plotData Data frame containing the data for a plot.
+#' @return Cleaned data frame.
+cleanPlotData <- function(plotData)
+{
+  # To plot cleanly, we can only take data with the same units
+  units <- unique(plotData$Units)
+  if (length(units) > 1) {
+    mostCommonUnit <- sort(table(plotData$Units), decreasing = T)[1] %>% names()
+    plotData <- dplyr::filter(plotData, Units == mostCommonUnit)
+  }
+
+  # If the data has a region column, put it in the canoncial order for GCAM.
+  if('region' %in% names(plotData)) {
+    plotData$region <- factor(plotData$region,
+                              levels=c(names(gcammaptools::gcam32_colors), '0'),
+                              ordered=TRUE) # convert to ordered factor
+  }
+
+  plotData
+}
+
+#' Filter out data that should not be plotted
+#'
+#' @param plotData Data frame containing the data for a plot.
+#' @param filtervar Filter on this variable before aggregating.
+#' @param filterset Set of values to include in the filter operation.
 #' @param startYear Minimum year to display. If NULL, searches year column for
 #'   minimum in data.
 #' @param endYear Maximum year to display. If NULL, searches year column for
 #'   maximum in data.
-#' @return Cleaned data frame.
-cleanPlotData <- function(plotData, startYear=NULL, endYear=NULL) {
+#' @return Filtered data frame.
+filterPlotData <- function(plotData, filtervar, filterset, startYear, endYear)
+{
   # Only select relevant years
   if (is.null(startYear)) {
     startYear = min(plotData$year)
@@ -328,16 +354,18 @@ cleanPlotData <- function(plotData, startYear=NULL, endYear=NULL) {
   }
   plotData <- dplyr::filter(plotData, year >= startYear & year <= endYear)
 
-  # To plot cleanly, we can only take data with the same units
-  units <- unique(plotData$Units)
-  if (length(units) > 1) {
-    mostCommonUnit <- sort(table(plotData$Units), decreasing = T)[1] %>% names()
-    plotData <- dplyr::filter(plotData, Units == mostCommonUnit)
+  # Filter out all items in filterset that are found in column filtervar
+  if(!is.null(filtervar) &&
+     !is.null(filterset) &&
+     length(filterset) > 0 &&
+     filtervar %in% names(plotData)
+  ) {
+    plotData <- dplyr::filter_(plotData, lazyeval::interp(~y %in% x,
+                                                          y = as.name(filtervar),
+                                                          x = filterset))
   }
-
   plotData
 }
-
 
 #' Extract and format data for a plot
 #'
@@ -354,24 +382,18 @@ cleanPlotData <- function(plotData, startYear=NULL, endYear=NULL) {
 getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
                         filterset=NULL)
 {
-    tp <- getQuery(prjdata, query, pltscen) # table plot
-    tp <- cleanPlotData(tp, 2005, 2050)
+    # table plot
+    tp <- getQuery(prjdata, query, pltscen) %>%
+          cleanPlotData() %>%
+          filterPlotData(filtervar, filterset, 2005, 2050)
 
     if (nrow(tp) == 0) return(NULL)
 
-    if('region' %in% names(tp)) {
-        ## If the data has a region column, put it in the canoncial order given above.
-        tp$region <- factor(tp$region,
-                            levels=c(names(gcammaptools::gcam32_colors), '0'),
-                            ordered=TRUE) # convert to ordered factor
-    }
     if(!is.null(diffscen)) {
-        dp <- getQuery(prjdata, query, diffscen) # 'difference plot'
-        if('region' %in% names(dp)) {
-            dp$region <- factor(dp$region,
-                                levels=c(names(gcammaptools::gcam32_colors), '0'),
-                                ordered=TRUE)
-        }
+        # 'difference plot'
+        dp <- getQuery(prjdata, query, diffscen) %>%
+              cleanPlotData() %>%
+              filterPlotData(filtervar, filterset, 2005, 2050)
     }
     else {
         dp <- NULL
@@ -382,11 +404,13 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
         ## Join the data sets first so that we can be sure that we have matched
         ## the rows and columns correctly
         varnames <- names(tp)
-        mergenames <- varnames[!varnames %in% c('scenario', 'Units', 'value')]
+        mergenames <- varnames[!varnames %in% c('scenario', 'value')]
 
         joint.data <- merge(tp, dp, by=mergenames, all=TRUE)
-        if(anyNA(joint.data))
-            joint.data[is.na(joint.data)] <- 0 # zero out missing values
+
+        # zero out missing values
+        joint.data$value.x[is.na(joint.data$value.x)] <- 0
+        joint.data$value.y[is.na(joint.data$value.y)] <- 0
 
         value <- joint.data$value.x - joint.data$value.y
 
@@ -394,18 +418,8 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
 
         # Construct the new data frame.  We use the scenario name from the left
         # (dp) data frame.
-        tp <- dplyr::rename(joint.data, scenario=scenario.x, Units=Units.x) %>%
+        tp <- dplyr::rename(joint.data, scenario=scenario.x) %>%
            dplyr::select_(.dots=c('scenario', mergenames, 'Units')) %>% cbind(value)
-    }
-
-    ## If filtering is in effect, do it now
-    if(!is.null(filtervar) &&
-       !is.null(filterset) &&
-       length(filterset) > 0 &&
-       filtervar %in% names(tp)
-       ) {
-
-        tp <- dplyr::filter_(tp, lazyeval::interp(~y %in% x, y = as.name(filtervar), x = filterset))
     }
 
     if(!isGrid(prjdata, pltscen, query)) {
