@@ -20,10 +20,10 @@ shinyUI(fluidPage(theme="style.css",
                     ),
 
     dashboardSidebar(
-      sidebarMenu(
+      sidebarMenu(id = "sidebar",
         menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
         menuItem("Maps", tabName = "maps", icon = icon("map", lib = "font-awesome")),
-        menuItem("Explore", tabName = "energy", icon = icon("search", lib = "font-awesome")),
+        menuItem("Explore", tabName = "explore", icon = icon("search", lib = "font-awesome")),
         menuItem("Scenarios", tabName = "scenarios", icon = icon("line-chart", lib = "font-awesome")),
         menuItem("File Explorer", tabName = "file", icon = icon("file", lib = "font-awesome"))
       )
@@ -103,7 +103,10 @@ shinyUI(fluidPage(theme="style.css",
             )
           )
         ),
-        tabItem(tabName = "energy",
+        tabItem(tabName = "explore",
+          bsModal('tableModal', 'View Table', trigger = 'triggerTableModal', size = 'large',
+                  dataTableOutput('timeTable')
+          ),
           fluidRow(
             column(width = 8,
               box(title=NULL, status="primary", width=NULL,
@@ -119,12 +122,20 @@ shinyUI(fluidPage(theme="style.css",
               )),
               box(status = "warning", width = NULL,
                 plotOutput('timePlot', height='400px',
-                           hover = hoverOpts("energyHover", delay = 50, delayType = 'throttle')),
+                           hover = hoverOpts("exploreHover", delay = 50, delayType = 'throttle')),
                 uiOutput('hoverInfo')
               ),
               box(title=NULL, status = "primary", width = NULL,
-                selectInput('tvSubcatVar', 'Break totals into subcategories by:',
-                            choices=c('none','region'))
+                fluidRow(
+                  column(width = 11,
+                    selectInput('tvSubcatVar', 'Break totals into subcategories by:',
+                                choices=c('none','region'))
+                  ),
+                  column(width = 1,
+                         actionButton('triggerTableModal', NULL,
+                                      icon("table", lib = "font-awesome"))
+                  )
+                )
               )
             ),
 

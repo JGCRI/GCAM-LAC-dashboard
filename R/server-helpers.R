@@ -4,6 +4,7 @@ tag.noscen <- '->No scenarios selected<-'     # placeholder when no scenario sel
 
 #### State variables
 last.region.filter <- NULL
+current.time.plot <- NULL # used for hover
 
 #' Get the scenarios in the project for display
 #'
@@ -517,6 +518,12 @@ summarize.unit <- function(unitcol)
     unitcol[which.max(table(unitcol))]
 }
 
+#' Get the data frame of the current time plot being shown
+#'
+#' @return A data frame containing the values currently being plotted
+#' @export
+getTimePlotData <- function() { current.time.plot }
+
 #' Plot values over time as a bar chart
 #' @param prjdata A project data structure
 #' @param query  Name of the query to plot
@@ -529,6 +536,8 @@ summarize.unit <- function(unitcol)
 #' @export
 plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
 {
+    current.time.plot <<- NULL
+
     if(is.null(prjdata)) {
         default.plot()
     }
@@ -548,6 +557,7 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
 
         pltdata <- getPlotData(prjdata, query, scen, diffscen, subcatvar,
                                filtervar, rgns)
+        current.time.plot <<- pltdata
 
         plt <- ggplot(pltdata, aes_string('year','value', fill=subcatvar)) +
           geom_bar(stat='identity') + ggplot2::theme(axis.text=ggplot2::element_text(size=12),

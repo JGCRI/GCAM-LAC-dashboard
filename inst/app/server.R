@@ -224,19 +224,16 @@ shinyServer(function(input, output, session) {
     })
 
     output$hoverInfo <- renderUI({
-      hover <- input$energyHover
-      prj <- isolate(files[[input$fileList]])
-      scen <- input$scenarioInput
-      query <- input$plotQuery
+      hover <- input$exploreHover
+      df <- getTimePlotData()
+      subcat <- input$tvSubcatVar
 
-      if (is.null(hover)) return(NULL)
-      if (is.null(prj)) return(NULL)
-
-      tvSubcatVar <- isolate(input$tvSubcatVar)
-      region.filter <- c(input$tvRgns1, input$tvRgns2, input$tvRgns3,
-                         input$tvRgns4, input$tvRgns5)
-
-      df <- getPlotData(prj, query, scen, NULL, tvSubcatVar, 'region', region.filter)
+      # Don't attempt hover if tab isn't selected. TODO: Fix bug where changing
+      # other time plot (like the one on the landing page) also updates the data
+      # the hover refers to.
+      if(input$sidebar != 'explore') return(NULL)
+      if(is.null(hover)) return(NULL)
+      if(is.null(df)) return(NULL)
 
       # Detect the year of the bar that is being hovered over
       hoverYear <- df[which.min(abs(df$year - hover$x)), 'year'][[1]]
@@ -244,23 +241,22 @@ shinyServer(function(input, output, session) {
 
       # If there's a subcategory, we also need to find which category is being
       # hovered over
-      if (tvSubcatVar == 'region') {
-        # Return NULL if the hover is above the top of the bar
-        if (hover$y > sum(df$value)) return(NULL)
+      if(subcat != 'none') {
 
         # Find which segment of the stacked bar the hover is closest to
-        stackedSum <- rev(cumsum(df$value))
-        index <- which.min(abs(stackedSum - hover$y))
+        stackedSum <- sum(df$value) - cumsum(df$value)
+        index <- which(stackedSum - hover$y < 0)[1]
 
-        # Make sure we are choosing the segment the hover is actually over
-        if (df[index,]$value < hover$y)
-          index <- index - 1
-        val <- paste(df[index,]$region, round(df[index,]$value, digits=1), sep=': ')
+        if(hover$y > sum(df$value)) return(NULL) # Hover is above the bar
+        if(is.na(index)) return(NULL) # Hover is below the bar
+
+        # Get the region name and value for display
+        val <- paste(df[[subcat]][index], round(df$value[index], digits=1), sep=': ')
 
       } else {
         val <- df[which.min(abs(df$year - hover$x)), 'value'] %>%
                round(digits=1)
-        if (hover$y > val) return(NULL)
+        if(hover$y > val) return(NULL)
         val <- as.character(val)
       }
 
@@ -273,15 +269,15 @@ shinyServer(function(input, output, session) {
       left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
       top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
 
-      # create style property fot tooltip
-      # background color is set so tooltip is a bit transparent
-      # z-index is set so we are sure are tooltip will be on top
+      left <- round(left_px) - 30
+      top <- round(top_px) - 30
+      if(left < 0 || top < 0) return(NULL)
 
-      # actual tooltip created as wellPanel
+      # actual tooltip created as absolutePanel
       absolutePanel(
         class = 'hoverPanel',
-        top = paste0(round(top_px) - 30, "px"),
-        left = paste0(round(left_px) - 30, "px"),
+        left = paste0(left, "px"),
+        top = paste0(top, "px"),
         # style = style,
         p(HTML(val)))
 
