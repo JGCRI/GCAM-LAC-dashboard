@@ -1,8 +1,5 @@
 ### Helper functions for the server side of the app.
 
-### Conventions:
-###    rFileinfo:  The reactive fileinfo structure returned by the file browser
-
 tag.noscen <- '->No scenarios selected<-'     # placeholder when no scenario selected
 
 #### State variables
@@ -11,7 +8,7 @@ last.region.filter <- NULL
 #' Get the scenarios in the project for display
 #'
 #' Returns a place holder string if no project has been loaded yet.
-#' @param rFileinfo Project data to query.
+#' @param projData Project data to query.
 #' @param concat Separator string to use when concatenating scenario names.
 #' @importFrom magrittr "%>%"
 #' @export

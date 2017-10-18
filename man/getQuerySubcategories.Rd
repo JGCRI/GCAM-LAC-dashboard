@@ -7,13 +7,14 @@
 getQuerySubcategories(prj, scenario, query)
 }
 \arguments{
-\item{prj}{Project data structure}
+\item{prj}{Project data structure.}
 
-\item{scenario}{Name of the scenario}
+\item{scenario}{Name of the scenario.}
 
-\item{query}{Name of the query}
+\item{query}{Name of the query.}
 }
 \description{
 A subcategory is defined as column that doesn't define the scenario, year,
-units, or value
+units, or value. If the subcategory contains only one unique element, it is
+not included.
 }

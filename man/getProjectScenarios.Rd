@@ -4,10 +4,10 @@
 \alias{getProjectScenarios}
 \title{Get the scenarios in the project for display}
 \usage{
-getProjectScenarios(rFileinfo, concat = NULL)
+getProjectScenarios(projData, concat = NULL)
 }
 \arguments{
-\item{rFileinfo}{Reactive fileinfo object returned by file browser in the UI.}
+\item{projData}{Project data to query.}
 
 \item{concat}{Separator string to use when concatenating scenario names.}
 }

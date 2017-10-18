@@ -4,10 +4,10 @@
 \alias{getScenarioQueries}
 \title{Get the queries for a project and scenario(s) for display}
 \usage{
-getScenarioQueries(rFileinfo, scenarios, concat = NULL)
+getScenarioQueries(projData, scenarios, concat = NULL)
 }
 \arguments{
-\item{rFileinfo}{Reactive fileinfo object returned by file browser in the UI.}
+\item{projData}{Project data to query.}
 
 \item{scenarios}{List of scenarios.}
 
