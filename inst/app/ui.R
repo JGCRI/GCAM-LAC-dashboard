@@ -79,38 +79,31 @@ shinyUI(fluidPage(theme="style.css",
           fluidRow(
             column(6,
               box(width = NULL, status = "primary",
-                  fluidRow(column(6,
-                    selectInput('mapExtent', label = "Map Extent", width = NULL,
-                                choices=c(Global='global', USA='usa', China='china',
-                                        Africa='africa', `Latin America`='lac'),
-                                selected = 'lac')
-                    ),
-                    column(6,
-                      selectInput('mapType', label = "Map Type", width = NULL,
-                                  choices=c(`GCAM Regions`='regions',
-                                            China='china',
-                                            Countries='countries',
-                                            Basins='basins',
-                                            `No Borders`='none'),
-                                  selected = 'lac')
-                  ))
-              ),
-              box(width = NULL, height = '450px',
-                 status = "primary",
                  # h3(textOutput('mapName', inline=TRUE),align='center'),
-                 plotOutput('mapPlot'),
-                 sliderInput('mapYear', NULL, min=2005, max=2100, step=5,
-                             value=2050, sep='', animate = TRUE)
-              )
-              # box(width = NULL,
-              #    sliderInput('mapYear', NULL, min=2005, max=2100, step=5,
-              #                value=2050, sep='', animate = TRUE)
-              # )
+                 plotOutput('mapPlot', height = '700px')
+              ),
+              sliderInput('mapYear', NULL, min=2005, max=2100, step=5,
+                          value=2050, sep='', animate = TRUE)
             ),
 
             column(6,
-              box(title = "Water withdrawals for irrigation", width = NULL,
-                 solidHeader = TRUE, status = "primary", height = '350px'),
+              box(width = NULL, status = "primary",
+                 fluidRow(column(6,
+                                 selectInput('mapExtent', label = "Map Extent", width = NULL,
+                                             choices=c(Global='global', USA='usa', China='china',
+                                                       Africa='africa', `Latin America`='lac'),
+                                             selected = 'lac')
+                 ),
+                 column(6,
+                        selectInput('mapType', label = "Map Type", width = NULL,
+                                    choices=c(`GCAM Regions`='regions',
+                                              China='china',
+                                              Countries='countries',
+                                              Basins='basins',
+                                              `No Borders`='none'),
+                                    selected = 'lac')
+                 ))
+              ),
               box(title = "Water withdrawals for electricity", width = NULL,
                  solidHeader = TRUE, status = "primary", height = '350px')
             )
@@ -123,38 +116,45 @@ shinyUI(fluidPage(theme="style.css",
           fluidRow(
             column(width = 8,
               box(title=NULL, status="primary", width=NULL,
-              fluidRow(
-                column(width = 5, selectInput('scenarioInput', 'Scenario:',
-                            choices=list())
-                ),
-                column(width = 5, conditionalPanel(condition = "input.diffCheck == true",
-                      selectInput('diffScenario', 'Difference Scenario:', choices=list()))
-                ),
-                column(width = 2, checkboxInput('diffCheck', 'Add Difference Scenario')
+                fluidRow(
+                  column(width = 7,
+                         selectInput('tvSubcatVar', 'Break totals into subcategories by:',
+                                     choices=c('none','region'))
+                  ),
+                  column(width = 5,
+                         div(class="table-title", align="right", "View Table",
+                            br(),
+                            actionButton('triggerTableModal', NULL,
+                                         icon("table", lib = "font-awesome"))
+                         )
+                  )
                 )
-              )),
+              ),
               box(status = "warning", width = NULL,
-                plotOutput('timePlot', height='400px',
+                plotOutput('timePlot', height='450px',
                            hover = hoverOpts("exploreHover", delay = 50, delayType = 'throttle')),
                 uiOutput('hoverInfo')
               ),
               box(title=NULL, status = "primary", width = NULL,
                 fluidRow(
-                  column(width = 11,
-                    selectInput('tvSubcatVar', 'Break totals into subcategories by:',
-                                choices=c('none','region'))
+                  column(width = 5, selectInput('scenarioInput', 'Scenario:',
+                                                choices=list())
                   ),
-                  column(width = 1,
-                         actionButton('triggerTableModal', NULL,
-                                      icon("table", lib = "font-awesome"))
+                  column(width = 5, conditionalPanel(condition = "input.diffCheck == true",
+                                                     selectInput('diffScenario', 'Difference Scenario:', choices=list()))
+                  ),
+                  column(width = 2, checkboxInput('diffCheck', 'Add Difference Scenario')
                   )
                 )
               )
             ),
 
             column(width = 4,
+              box(status = "primary", width = NULL,
+                  selectInput('plotQuery', label="Plot Variable", choices=list())
+              ),
               box(title = "Filter by Region", status = "primary", solidHeader = TRUE,
-                width = NULL, height = '550px',
+                width = NULL, height = '580px',
                 tableOutput("regionFilter"),
                 actionButton('rgnSelectAll', 'Select all regions'),
                 br(),
@@ -181,9 +181,6 @@ shinyUI(fluidPage(theme="style.css",
                     checkboxGroupInput('tvRgns3', NULL, choices=north.america.rgns)
                   )
                 )
-              ),
-              box(status = "primary", width = NULL,
-                  selectInput('plotQuery', label="Plot Variable", choices=list())
               )
             )
           )
