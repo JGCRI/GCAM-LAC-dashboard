@@ -118,8 +118,44 @@ h4.panel-title {
   margin: 6px 0px 0px 10px;
 }
 
+.form-group {
+  margin-bottom: 3px;
+}
+
 .dropdown.fileSelectLabel {
   font-size: 14px;
   font-weight: 600;
   padding: 13px 10px;
+}
+
+/* For segmented radio buttons */
+.radio-inline {
+  padding: 0px;
+  margin-right: -14px;
+  margin-left: 0px;
+  cursor: pointer;
+}
+
+.shiny-options-group>.radio-inline:first-of-type>span  {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.shiny-options-group>.radio-inline:last-of-type>span  {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.radio-inline input[type=radio] {
+  display: none;
+}
+
+.radio-inline input[type=radio] + span {
+  background: #fff;
+  padding: 2px 16px;
+  border: 1px solid #ccc;
+}
+
+.radio-inline input[type=radio]:checked + span {
+  background: #ddd;
 }

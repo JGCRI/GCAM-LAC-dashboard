@@ -226,7 +226,8 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map=NUL
             key <- if(mapset==gcammaptools::basin235) 'basin' else 'region'
         }
 
-        pltdata <- getPlotData(prjdata, query, pltscen, diffscen, key)
+        pltdata <- getPlotData(prjdata, query, pltscen, diffscen, key,
+                               yearRange = c(year, year))
         if (is.null(pltdata)) return(default.plot())
 
         ## map plot is expecting the column coresponding to the map locations to
@@ -234,9 +235,6 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map=NUL
         ## rename it.
         if(mapset==gcammaptools::basin235 && 'basin' %in% names(pltdata))
             pltdata$region <- pltdata$basin
-
-        # Filter the data to only the selected year
-        pltdata <- dplyr::filter_(pltdata, paste("year ==", year))
 
         mapLimits <- getMapLimits(pltdata, is.diff)
         unitstr <- summarize.unit(pltdata$Units)
@@ -378,15 +376,17 @@ filterPlotData <- function(plotData, filtervar, filterset, startYear, endYear)
 #' @param filtervar If not NULL, filter on this variable before aggregating
 #' @param filterset:  Set of values to include in the filter operation.  Ignored
 #'   if filtervar is NULL.
+#' @param yearRange A vector of two integers of form c(start year, end year)
+#'   to filter the data to.
 #' @keywords internal
 #' @export
 getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
-                        filterset=NULL)
+                        filterset=NULL, yearRange = c(2005, 2050))
 {
     # table plot
     tp <- getQuery(prjdata, query, pltscen) %>%
           cleanPlotData() %>%
-          filterPlotData(filtervar, filterset, 2005, 2050)
+          filterPlotData(filtervar, filterset, yearRange[1], yearRange[2])
 
     if (nrow(tp) == 0) return(NULL)
 
@@ -394,7 +394,7 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
         # 'difference plot'
         dp <- getQuery(prjdata, query, diffscen) %>%
               cleanPlotData() %>%
-              filterPlotData(filtervar, filterset, 2005, 2050)
+              filterPlotData(filtervar, filterset, yearRange[1], yearRange[2])
     }
     else {
         dp <- NULL

@@ -32,19 +32,22 @@ shinyUI(fluidPage(theme="style.css",
       tabItems(
         tabItem(tabName = "dashboard",
           fluidRow(
-            column(3,
+            column(3, align = "center",
               tabBox(title = NULL, side = 'left', width = NULL,
                      id = "waterTabset",
-                     tabPanel("Supply",
-                              plotOutput('waterSupplyPlot', height='580px')),
-                     tabPanel("Demand",
-                              plotOutput('waterDemandPlot', height='580px')),
-                     tabPanel("Scarcity",
-                              plotOutput('waterScarcityPlot', height='580px'))
-              )
+                     tabPanel("Supply", value = "Water Supply",
+                              h3(class = "box-title", "Water Supply"),
+                              plotOutput('waterSupplyPlot', height='480px')),
+                     tabPanel("Demand", value = "Water Demand",
+                              plotOutput('waterDemandPlot', height='480px')),
+                     tabPanel("Scarcity", value = "Water Scarcity",
+                              plotOutput('waterScarcityPlot', height='480px'))
+              ),
+              radioButtons('waterYearToggle', NULL, choices = 2050, inline = T)
             ),
             column(3,
-              box(title = 'Agriculture Production',align='center', width = NULL,
+              h3("Agriculture Production"),
+              box(title = NULL,align='center', width = NULL,
                   solidHeader = TRUE, status = "primary",
                   plotOutput('landingPlot3', height='583px'))
             ),
@@ -86,13 +89,15 @@ shinyUI(fluidPage(theme="style.css",
               ),
               box(width = NULL, height = '450px',
                  status = "primary",
-                 h3(textOutput('mapName', inline=TRUE),align='center'),
-                 plotOutput('mapPlot')
-              ),
-              box(width = NULL,
+                 # h3(textOutput('mapName', inline=TRUE),align='center'),
+                 plotOutput('mapPlot'),
                  sliderInput('mapYear', NULL, min=2005, max=2100, step=5,
                              value=2050, sep='', animate = TRUE)
               )
+              # box(width = NULL,
+              #    sliderInput('mapYear', NULL, min=2005, max=2100, step=5,
+              #                value=2050, sep='', animate = TRUE)
+              # )
             ),
 
             column(6,

@@ -12,24 +12,10 @@ shinyServer(function(input, output, session) {
     scenarios <- ""
     queries <- ""
 
-    ## Get the new data file on upload
-    rFileinfo <- reactive({
-      fileinfo <- input$projectFile
-      # if(is.null(fileinfo)) {
-      #   project.filename <- NULL
-      #   project.data <- NULL
-      # }
-      # else {
-      #   project.data <- loadProject(fileinfo$datapath)   # should be only one file
-      #   project.filename <- fileinfo$name
-      #   updateSelectInput(session, 'scenarioInput', choices=listScenarios(project.data))
-      # }
-      # list(project.filename=project.filename, project.data=project.data)
-    })
-
     ## ----- INITIALIZATION -----
     ## Data that should show on load
-    defaultProj <- 'idb.dat'
+    waterData <- loadProject(system.file('hydro.dat', package = "GCAMdashboard"))
+    defaultProj <- 'dashboard.dat'
     files <- list()
     files[[defaultProj]] <- loadProject(system.file(defaultProj, package = "GCAMdashboard"))
     updateSelectInput(session, 'fileList', choices=names(files))
@@ -92,7 +78,7 @@ shinyServer(function(input, output, session) {
 
     ## When a new query is selected, update available subcategories
     observe({
-        prj <- files[[defaultProj]]
+        prj <- files[[input$fileList]]
         scen <- input$scenarioInput
         query <- input$plotQuery
 
@@ -107,8 +93,8 @@ shinyServer(function(input, output, session) {
     observe({
         ## update the limits on the time slider on the map plot.  Only do this
         ## when the selected plot query changes.
-        scen <- isolate(input$plotScenario)
-        prj <- rFileinfo()$project.data
+        prj <- files[[input$fileList]]
+        scen <- input$scenarioInput
         query <- input$plotQuery
         if(uiStateValid(prj, scen, query)) {
             ## now do the map slider
@@ -123,6 +109,15 @@ shinyServer(function(input, output, session) {
             updateSliderInput(session, 'mapYear', min=yrlimits[1],
                               max=yrlimits[2], value=yrsel)
         }
+    })
+
+    # When the map plots on the landing page are loaded, generate year toggle
+    observe({
+      query <- input$waterTabset
+      years <- getQuery(waterData, query, "Reference")$year %>% unique()
+      middleYear <- years[(length(years) + 1) / 2]
+      updateRadioButtons(session, 'waterYearToggle', NULL,
+                         choices = years, selected = middleYear, inline = TRUE)
     })
 
     ## When a 'select all' or 'deselect all' button is pressed, update region
@@ -170,29 +165,21 @@ shinyServer(function(input, output, session) {
     })
 
     output$mapPlot <- renderPlot({
-        if(uiStateValid( rFileinfo()$project.data, input$plotScenario,
-                        input$plotQuery )) {
-            diffscen <- if(input$diffCheck) {
-                input$diffScenario
-            } else {
-                  NULL
-              }
-            year <- input$mapYear
-            map <- switch(input$mapType,
-                          regions =   gcammaptools::map.rgn32.simple,
-                          china =     gcammaptools::map.chn.simple,
-                          countries = gcammaptools::map.rgn32,
-                          basins =    gcammaptools::map.basin235,
-                          none =      gcammaptools::map.basin235.simple)
-            plotMap(rFileinfo()$project.data, input$plotQuery,
-                    input$plotScenario, diffscen, input$mapExtent, year, map)
+      diffscen <- if(input$diffCheck) {
+          input$diffScenario
+      } else {
+            NULL
         }
-        else {
-            default.plot('No Data')
-        }
+      year <- input$mapYear
+      map <- switch(input$mapType,
+                    regions =   gcammaptools::map.rgn32.simple,
+                    china =     gcammaptools::map.chn.simple,
+                    countries = gcammaptools::map.rgn32,
+                    basins =    gcammaptools::map.basin235,
+                    none =      gcammaptools::map.basin235.simple)
+      plotMap(files[[input$fileList]], input$plotQuery,
+              input$plotScenario, diffscen, input$mapExtent, year, map)
     })
-
-    output$mapName <- renderText({input$plotQuery})
 
     output$timePlot <- renderPlot({
         prj <- isolate(files[[input$fileList]])
@@ -283,12 +270,17 @@ shinyServer(function(input, output, session) {
 
     })
 
+    output$timeTable <- renderDataTable({
+      input$plotQuery
+      getTimePlotData()
+    })
+
     output$landingPlot1 <- renderPlot({
       if(input$lp1toggle == "Reference Scenario")
         scen <- "REFlu_e6_mex"
       else
         scen <- "PIAlu_e6_mex"
-      plotTime(files[[input$fileList]], "Primary Energy Consumption by Fuel",
+      plotTime(files[[defaultProj]], "Primary Energy Consumption (Direct Equivalent)",
                scen, NULL, "fuel", lac.rgns)
     })
 
@@ -297,36 +289,36 @@ shinyServer(function(input, output, session) {
         scen <- "REFlu_e6_mex"
       else
         scen <- "PIAlu_e6_mex"
-      plotTime(files[[input$fileList]], "CO2 Emissions",
+      plotTime(files[[defaultProj]], "CO2 emissions by technology",
                scen, NULL, "sector", lac.rgns)
     })
 
     output$landingPlot3 <- renderPlot({
         query <- "Agriculture production"
-        plotMap(files[[input$fileList]], query, "REFlu_e6_mex", NULL,
+        plotMap(files[[defaultProj]], query, "REFlu_e6_mex", NULL,
                  "lac", 2050)
     })
 
-
-    waterData <- loadProject(system.file('hydro.dat', package = "GCAMdashboard"))
     output$waterScarcityPlot <- renderPlot({
       query <- "Water Scarcity"
       pscen <- "Reference"
-      plotMap(waterData, query, pscen, NULL, "lac", 2050)
+      year <- as.integer(input$waterYearToggle)
+      plotMap(waterData, query, pscen, NULL, "lac", year)
     })
 
     output$waterSupplyPlot <- renderPlot({
       query <- "Water Supply"
       pscen <- "Reference"
-      plotMap(waterData, query, pscen, NULL, "lac", 2050)
+      year <- as.integer(input$waterYearToggle)
+      plotMap(waterData, query, pscen, NULL, "lac", year)
     })
 
     output$waterDemandPlot <- renderPlot({
       query <- "Water Demand"
       pscen <- "Reference"
-      plotMap(waterData, query, pscen, NULL, "lac", 2050)
+      year <- as.integer(input$waterYearToggle)
+      plotMap(waterData, query, pscen, NULL, "lac", year)
     })
-
 
     output$sspTitle <- renderUI({
       h3(input$sspCategory, align = "center")
@@ -347,7 +339,7 @@ shinyServer(function(input, output, session) {
     ## but I'm keeping it around for now in case we want to allow for the
     ## possibility that a data set has custom regions.
     ## observe({
-    ##     prj <- rFileinfo()$project.data
+    ##     prj <- files[[input$fileList]]
     ##     scen <- input$plotScenario
     ##     query <- input$plotQuery
     ##     if(uiStateValid(prj, scen, query)) {
