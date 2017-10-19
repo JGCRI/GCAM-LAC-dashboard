@@ -24,46 +24,54 @@ shinyUI(fluidPage(theme="style.css",
         menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
         menuItem("Maps", tabName = "maps", icon = icon("map", lib = "font-awesome")),
         menuItem("Explore", tabName = "explore", icon = icon("search", lib = "font-awesome")),
-        menuItem("Scenarios", tabName = "scenarios", icon = icon("line-chart", lib = "font-awesome")),
-        menuItem("File Explorer", tabName = "file", icon = icon("file", lib = "font-awesome"))
+        menuItem("Scenarios", tabName = "scenarios", icon = icon("line-chart", lib = "font-awesome"))
       )
     ),
     dashboardBody(
       tabItems(
         tabItem(tabName = "dashboard",
           fluidRow(
-            column(3, align = "center",
+            column(3, align = "left",
+              h4("Water Availability"),
               tabBox(title = NULL, side = 'left', width = NULL,
                      id = "waterTabset",
                      tabPanel("Supply", value = "Water Supply",
-                              h3(class = "box-title", "Water Supply"),
-                              plotOutput('waterSupplyPlot', height='480px')),
+                              plotOutput('waterSupplyPlot', height='500px')),
                      tabPanel("Demand", value = "Water Demand",
-                              plotOutput('waterDemandPlot', height='480px')),
+                              plotOutput('waterDemandPlot', height='500px')),
                      tabPanel("Scarcity", value = "Water Scarcity",
-                              plotOutput('waterScarcityPlot', height='480px'))
+                              plotOutput('waterScarcityPlot', height='500px'))
               ),
-              radioButtons('waterYearToggle', NULL, choices = 2050, inline = T)
+              div(align="center", radioButtons('waterYearToggle', NULL,
+                                               choices = 2050, inline = T)
+              )
             ),
-            column(3,
-              h3("Agriculture Production"),
-              box(title = NULL,align='center', width = NULL,
-                  solidHeader = TRUE, status = "primary",
-                  plotOutput('landingPlot3', height='583px'))
+            column(3, align = "left",
+              h4("Population and GDP"),
+              tabBox(title = NULL, side = 'left', width = NULL,
+                    id = "popTabset",
+                    tabPanel("Population", value = "Population by region",
+                             plotOutput('popPlot', height='500px')),
+                    tabPanel("GDP", value = "GDP by region",
+                             plotOutput('gdpPlot', height='500px'))
+              ),
+              sliderInput('popYear', NULL, min=2005, max=2100, step=5,
+                          value=2050, sep='', animate = F)
             ),
             column(6,
+              h4("Energy and Emissions"),
               box(title = 'Primary Energy Consumption by Fuel', width = NULL,
-                  solidHeader = TRUE, status = "primary", collapsible = T,
-                  footer = radioButtons('lp1toggle', NULL,
-                                        c('Reference Scenario', 'Not Reference Scenario'),
-                                        inline = T),
-                  plotOutput('landingPlot1', height='250px')),
+                  solidHeader = TRUE, status = "primary",
+                  plotOutput('landingPlot1', height='211px')
+              ),
               box(title = 'CO2 Emissions', width = NULL,
                   solidHeader = TRUE, status = "primary",
-                  footer = radioButtons('lp2toggle', NULL,
-                                        c('Reference Scenario', 'Not Reference Scenario'),
-                                        inline = T),
-                  plotOutput('landingPlot2', height='250px'))
+                  plotOutput('landingPlot2', height='211px')
+              ),
+              div(align="center", radioButtons('lptoggle', NULL,
+                                               c('Reference Scenario', 'Not Reference Scenario'),
+                                               inline = T)
+              )
             )
           )
         ),
@@ -194,9 +202,7 @@ shinyUI(fluidPage(theme="style.css",
                 box(solidHeader = F, width = 12,
                     htmlOutput('sspTitle'),
                     plotOutput('sspComparison', height = "520px", width = "100%"))
-        ),
-        # upload
-        tabItem(tabName = "file", "Nothing to see here.")
+        )
       ), # tabItems
       bsModal('uploadModal', 'Upload a File', trigger = 'triggerUploadModal', size = 'large',
               fileInput('projectFile', 'Upload Project Data File'),

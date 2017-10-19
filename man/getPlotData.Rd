@@ -5,7 +5,7 @@
 \title{Extract and format data for a plot}
 \usage{
 getPlotData(prjdata, query, pltscen, diffscen, key, filtervar = NULL,
-  filterset = NULL)
+  filterset = NULL, yearRange = c(2005, 2050))
 }
 \arguments{
 \item{prjdata}{Project data structure}
@@ -19,6 +19,9 @@ getPlotData(prjdata, query, pltscen, diffscen, key, filtervar = NULL,
 \item{key}{Aggregation variable.  (e.g., 'region' or 'sector')}
 
 \item{filtervar}{If not NULL, filter on this variable before aggregating}
+
+\item{yearRange}{A vector of two integers of form c(start year, end year)
+to filter the data to.}
 
 \item{filterset:}{Set of values to include in the filter operation.  Ignored
 if filtervar is NULL.}

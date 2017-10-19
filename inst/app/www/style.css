@@ -73,6 +73,7 @@
 .nav-tabs-custom {
     border: 1px solid #473335;
     background-color: #548687;
+    margin-bottom: 10px;
 }
 
 .nav-tabs-custom>.nav-tabs>li.header {

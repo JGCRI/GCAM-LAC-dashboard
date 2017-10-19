@@ -5,12 +5,7 @@ library(GCAMdashboard)
 
 options(shiny.maxRequestSize=512*1024^2) # 512 MB max file upload size.
 
-# Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
-
-    ## Set up some UI state
-    scenarios <- ""
-    queries <- ""
 
     ## ----- INITIALIZATION -----
     ## Data that should show on load
@@ -19,7 +14,6 @@ shinyServer(function(input, output, session) {
     files <- list()
     files[[defaultProj]] <- loadProject(system.file(defaultProj, package = "GCAMdashboard"))
     updateSelectInput(session, 'fileList', choices=names(files))
-    # files[[input$fileList]] <- loadProject(system.file('idb_ndc_long.dat', package = "GCAMdashboard"))
 
 
     ## ----- PLOT OPTION UPDATES -----
@@ -276,7 +270,7 @@ shinyServer(function(input, output, session) {
     })
 
     output$landingPlot1 <- renderPlot({
-      if(input$lp1toggle == "Reference Scenario")
+      if(input$lptoggle == "Reference Scenario")
         scen <- "REFlu_e6_mex"
       else
         scen <- "PIAlu_e6_mex"
@@ -285,18 +279,12 @@ shinyServer(function(input, output, session) {
     })
 
     output$landingPlot2 <- renderPlot({
-      if(input$lp2toggle == "Reference Scenario")
+      if(input$lptoggle == "Reference Scenario")
         scen <- "REFlu_e6_mex"
       else
         scen <- "PIAlu_e6_mex"
-      plotTime(files[[defaultProj]], "CO2 emissions by technology",
+      plotTime(files[[defaultProj]], "Top 12 CO2 emissions by sector",
                scen, NULL, "sector", lac.rgns)
-    })
-
-    output$landingPlot3 <- renderPlot({
-        query <- "Agriculture production"
-        plotMap(files[[defaultProj]], query, "REFlu_e6_mex", NULL,
-                 "lac", 2050)
     })
 
     output$waterScarcityPlot <- renderPlot({
@@ -318,6 +306,20 @@ shinyServer(function(input, output, session) {
       pscen <- "Reference"
       year <- as.integer(input$waterYearToggle)
       plotMap(waterData, query, pscen, NULL, "lac", year)
+    })
+
+    output$popPlot <- renderPlot({
+      query <- input$popTabset
+      pscen <- "REFlu_e6_mex"
+      year <- input$popYear
+      plotMap(files[[defaultProj]], query, pscen, NULL, "lac", year)
+    })
+
+    output$gdpPlot <- renderPlot({
+      query <- input$popTabset
+      pscen <- "REFlu_e6_mex"
+      year <- input$popYear
+      plotMap(files[[defaultProj]], query, pscen, NULL, "lac", year)
     })
 
     output$sspTitle <- renderUI({
