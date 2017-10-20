@@ -10,5 +10,5 @@ getTimePlotData()
 A data frame containing the values currently being plotted
 }
 \description{
-Get the data frame of the current time plot being shown
+...there has got to be a better way to deal with this current.time.plot thing
 }
