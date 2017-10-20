@@ -520,9 +520,11 @@ summarize.unit <- function(unitcol)
 
 #' Get the data frame of the current time plot being shown
 #'
+#' ...there has got to be a better way to deal with this current.time.plot thing
+#'
 #' @return A data frame containing the values currently being plotted
 #' @export
-getTimePlotData <- function() { current.time.plot }
+getTimePlotData <- function() { get("current.time.plot", .GlobalEnv) }
 
 #' Plot values over time as a bar chart
 #' @param prjdata A project data structure
@@ -557,7 +559,7 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
 
         pltdata <- getPlotData(prjdata, query, scen, diffscen, subcatvar,
                                filtervar, rgns)
-        assign("current.time.plot", NULL, .GlobalEnv)
+        assign("current.time.plot", pltdata, .GlobalEnv)
 
         plt <- ggplot(pltdata, aes_string('year','value', fill=subcatvar)) +
           geom_bar(stat='identity') + ggplot2::theme(axis.text=ggplot2::element_text(size=12),
