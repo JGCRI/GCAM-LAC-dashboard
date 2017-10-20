@@ -154,7 +154,7 @@ shinyServer(function(input, output, session) {
     })
 
 
-    ## -----
+    ## ----- FILE UPLOAD UPDATES -----
     output$projectSize <- renderText({
         if(is.null(input$projectFile))
           0
@@ -163,13 +163,14 @@ shinyServer(function(input, output, session) {
     })
 
     output$scenarios <- renderText({
-        getProjectScenarios(files[[input$fileList]], concat='\n')
+        if(input$fileList != defaultProj)
+          getProjectScenarios(files[[input$fileList]], concat='\n')
+        else
+          NULL
     })
 
-    output$queries <- renderText({
-        getScenarioQueries(files[[input$fileList]], input$scenarioInput, concat='\n')
-    })
 
+    ## ----- PLOT UPDATES -----
     output$mapPlot <- renderPlot({
       prj <- isolate(files[[input$fileList]])
       scen <- input$mapScenario

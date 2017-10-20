@@ -69,7 +69,7 @@ shinyUI(fluidPage(theme="style.css",
                   plotOutput('landingPlot2', height='211px')
               ),
               div(align="center", radioButtons('lptoggle', NULL,
-                                               c('Reference Scenario', 'Paris Increased Ambitions Scenario'),
+                                               c('Reference Scenario', 'Policy Scenario'),
                                                inline = T)
               )
             )
@@ -114,7 +114,7 @@ shinyUI(fluidPage(theme="style.css",
                   )
               ),
               box(title = NULL, width = NULL, status = "primary",
-                  plotOutput('mapAltPlot', height = '400px')
+                  plotOutput('mapAltPlot', height = '430px')
               )
             )
           )
@@ -161,7 +161,8 @@ shinyUI(fluidPage(theme="style.css",
 
             column(width = 4,
               box(status = "primary", width = NULL,
-                  selectInput('plotQuery', label="Plot Variable", choices=list())
+                  selectInput('plotQuery', label="Plot Variable", choices=list()),
+                  checkboxInput('inclSpatial', 'Include Spatial Queries', value=TRUE)
               ),
               div(class = "box-overflow",
               box(title = "Filter by Region", status = "primary", solidHeader = TRUE,
@@ -213,14 +214,10 @@ shinyUI(fluidPage(theme="style.css",
                     plotOutput('sspComparison', height = "520px", width = "100%"))
         )
       ), # tabItems
-      bsModal('uploadModal', 'Upload a File', trigger = 'triggerUploadModal', size = 'large',
+      bsModal('uploadModal', 'Upload a File', trigger = 'triggerUploadModal', size = 'small',
               fileInput('projectFile', 'Upload Project Data File'),
-              p(" File size: ", textOutput('projectSize', inline = TRUE)),
-
-              p(" Queries present in ALL selected scenarios: ", textOutput('queries')),
-              fluidRow(
-                column(3, checkboxInput('inclSpatial', 'Include Spatial Queries', value=TRUE))
-              )
+              p("File size: ", textOutput('projectSize', inline = TRUE)),
+              p("Project contains scenarios: ", verbatimTextOutput('scenarios'))
       ) #bsModal
     ) # dashboardBody
   ) #dashboardPage
