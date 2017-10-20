@@ -41,9 +41,10 @@ shinyServer(function(input, output, session) {
     observe({
       if(input$fileList != "") {
         project.data <- files[[input$fileList]]
-        updateSelectInput(session, 'scenarioInput', choices=listScenarios(project.data))
-        updateSelectInput(session, 'diffScenario', choices=listScenarios(project.data))
-        updateSelectInput(session, 'mapScenario', choices=listScenarios(project.data))
+        scens <- listScenarios(project.data)
+        updateSelectInput(session, 'scenarioInput', choices=scens)
+        updateSelectInput(session, 'diffScenario', choices=scens)
+        updateSelectInput(session, 'mapScenario', choices=scens)
       }
     })
 
@@ -175,6 +176,8 @@ shinyServer(function(input, output, session) {
       query <- input$mapQuery
 
       diffscen <- if(input$diffCheck) input$diffScenario
+      if(!is.null(diffscen) && diffscen == scen)
+        return(default.plot("The selected scenarios are the same"))
 
       # If the scenario has changed, the value of the query selector may not
       # be valid anymore.
@@ -192,6 +195,23 @@ shinyServer(function(input, output, session) {
                     none =      gcammaptools::map.basin235.simple)
 
       plotMap(prj, query, scen, NULL, input$mapExtent, year, map)
+    })
+
+    output$mapAltPlot <- renderPlot({
+      prj <- isolate(files[[input$fileList]])
+      scen <- input$mapScenario
+      query <- input$mapQuery
+
+      diffscen <- if(input$diffCheck) input$diffScenario
+
+      # If the scenario has changed, the value of the query selector may not
+      # be valid anymore.
+      availableQueries <- getScenarioQueries(prj, c(scen, diffscen))
+      if(!query %in% availableQueries) {
+        query <- availableQueries[1]
+      }
+
+      plotTime(prj, query, scen, NULL, "region", lac.rgns)
     })
 
     output$timePlot <- renderPlot({

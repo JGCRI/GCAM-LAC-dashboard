@@ -77,46 +77,45 @@ shinyUI(fluidPage(theme="style.css",
         ),
         tabItem(tabName = "maps",
           fluidRow(
-            column(6,
+            column(7,
               box(width = NULL, status = "primary", solidHeader = T,
                   title = textOutput('mapName', inline=TRUE), align = 'center',
-                  plotOutput('mapPlot', height = '700px')
+                  plotOutput('mapPlot', height = '600px')
               ),
               sliderInput('mapYear', NULL, min=2005, max=2100, step=5,
                           value=2050, sep='', animate = F, width = '100%',
                           ticks = TRUE)
             ),
 
-            column(6,
-              box(width = NULL, status = "primary",
+            column(5,
+              box(width = NULL, status = "primary", title = "Map Options",
+                  solidHeader = T,
                   fluidRow(
                     column(6,
-                           selectInput('mapExtent', label = "Map Extent", width = NULL,
+                           selectInput('mapQuery', 'Query',
+                                       choices=list()),
+                           selectInput('mapExtent', label = "Extent", width = NULL,
                                        choices=c(Global='global', USA='usa', China='china',
                                                  Africa='africa', `Latin America`='lac'),
                                        selected = 'lac')),
                     column(6,
-                           selectInput('mapType', label = "Map Type", width = NULL,
-                                       choices=c(`GCAM Regions`='regions',
-                                                 China='china',
-                                                 Countries='countries',
-                                                 Basins='basins',
-                                                 `No Borders`='none'),
-                                       selected = 'lac'))
+                           selectInput('mapScenario', 'Scenario',
+                                       choices=list()),
+                           conditionalPanel("input.mapQuery == 'Cooling Degree Days'",
+                             selectInput('mapType', label = "Map Type", width = NULL,
+                                         choices=c(`GCAM Regions`='regions',
+                                                   China='china',
+                                                   Countries='countries',
+                                                   Basins='basins',
+                                                   `No Borders`='none'),
+                                         selected = 'lac')
+                           )
+                    )
                   )
               ),
-              box(title=NULL, status = "primary", width = NULL,
-                fluidRow(
-                  column(width = 6, selectInput('mapScenario', 'Choose a scenario',
-                                                choices=list())
-                  ),
-                  column(width = 6, selectInput('mapQuery', 'Choose a query',
-                                                choices=list())
-                  )
-                )
-              ),
-              box(title = "Water withdrawals for electricity", width = NULL,
-                 solidHeader = TRUE, status = "primary", height = '350px')
+              box(title = NULL, width = NULL, status = "primary",
+                  plotOutput('mapAltPlot', height = '400px')
+              )
             )
           )
         ),
