@@ -32,7 +32,7 @@ shinyUI(fluidPage(theme="style.css",
         tabItem(tabName = "dashboard",
           fluidRow(
             column(3, align = "left",
-              h4("Water Availability"),
+              h4("Water"),
               tabBox(title = NULL, side = 'left', width = NULL,
                      id = "waterTabset",
                      tabPanel("Supply", value = "Water Supply",
@@ -69,7 +69,7 @@ shinyUI(fluidPage(theme="style.css",
                   plotOutput('landingPlot2', height='211px')
               ),
               div(align="center", radioButtons('lptoggle', NULL,
-                                               c('Reference Scenario', 'Not Reference Scenario'),
+                                               c('Reference Scenario', 'Paris Increased Ambitions Scenario'),
                                                inline = T)
               )
             )

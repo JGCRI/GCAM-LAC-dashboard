@@ -41,14 +41,14 @@ hydro3 <- system.file('extdata/hydrology',
                       'hydro_demand_mm-per-yr_ipsl_cm5a-lr_hist-rcp8p5_2010_2050_2090.csv',
                       package = "GCAMdashboard")
 
-scar <- read.gcam(hydro1, data.units="hydro scarcity index", scenario="Reference")
+scar <- read.gcam(hydro1, data.units="water scarcity index", scenario="Reference")
 scar <- dplyr::filter(scar, scar$value > 0 & scar$value < 1) # invalid data vals
 supp <- read.gcam(hydro2, data.units="mm per year", scenario="Reference")
 dmnd <- read.gcam(hydro3, data.units="mm per year", scenario="Reference")
 dmnd <- dplyr::filter(dmnd, dmnd$value > 0 & dmnd$value < 50)
 
 waterData <- loadProject('inst/extdata/hydro.dat')
-waterData <- addQueryTable(waterData, scar, "Water Scarcity")
+waterData <- addQueryTable(waterData, scar, "Water Scarcity", clobber = T)
 waterData <- addQueryTable(waterData, supp, "Water Supply")
 waterData <- addQueryTable(waterData, dmnd, "Water Demand")
 
