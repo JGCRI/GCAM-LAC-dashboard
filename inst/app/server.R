@@ -19,6 +19,10 @@ shinyServer(function(input, output, session) {
     # To access the current project file, refer to the select in the upper right
     updateSelectInput(session, 'fileList', choices=names(files))
 
+    # Initialize data for the scenario comparison tab
+    updateSelectInput(session, 'sspCategory', choices=listQueries(sspData),
+                      selected = "Population")
+
 
     ## ----- PLOT OPTION UPDATES -----
     ## When a new file is uploaded, update available projects
@@ -39,6 +43,7 @@ shinyServer(function(input, output, session) {
         project.data <- files[[input$fileList]]
         updateSelectInput(session, 'scenarioInput', choices=listScenarios(project.data))
         updateSelectInput(session, 'diffScenario', choices=listScenarios(project.data))
+        updateSelectInput(session, 'mapScenario', choices=listScenarios(project.data))
       }
     })
 
@@ -60,7 +65,7 @@ shinyServer(function(input, output, session) {
       queries <- getScenarioQueries(prj, qscenarios)
 
       ## Filter out grid queries, if requested.
-      if(!input$inclSpatial) {
+      if(!input$inclSpatial && input$sidebar != "maps") {
         nonGrid <- sapply(queries,
                           function(q) {!isGrid(prj, input$scenarioInput, q)})
         queries <- queries[nonGrid]
@@ -71,7 +76,7 @@ shinyServer(function(input, output, session) {
       if(!(sel %in% queries)) sel <- NULL
 
       updateSelectInput(session, 'plotQuery', choices = queries, selected = sel)
-      updateSelectInput(session, 'lp1Query', choices = queries, selected = sel)
+      updateSelectInput(session, 'mapQuery', choices = queries, selected = sel)
     })
 
     ## When a new query is selected, update available subcategories
@@ -87,26 +92,28 @@ shinyServer(function(input, output, session) {
                           selected=prevSubcat)
     })
 
-    ## TODO: revisit this
+    ## When a new map query is selected, update limits on the time slider
     observe({
-        ## update the limits on the time slider on the map plot.  Only do this
-        ## when the selected plot query changes.
         prj <- files[[input$fileList]]
-        scen <- input$scenarioInput
-        query <- input$plotQuery
-        if(uiStateValid(prj, scen, query)) {
-            ## now do the map slider
-            yrlimits <- getQueryYears(prj, scen, query)
-            yrsel <- isolate(input$mapYear)
-            if(yrsel < yrlimits[1])
-                yrsel <- yrlimits[1]
-            else if(yrsel > yrlimits[2])
-                yrsel <- yrlimits[2]
-            else
-                yrsel <- NULL           # NULL means leave it alone
-            updateSliderInput(session, 'mapYear', min=yrlimits[1],
-                              max=yrlimits[2], value=yrsel)
-        }
+        scen <- input$mapScenario
+        query <- input$mapQuery
+
+        yrlimits <- getQueryYears(prj, scen, query)
+
+        # Usually there isn't consistent data before 2005, so filter out early
+        # years.
+        if(yrlimits[1] < 2005) yrlimits[1] <- 2005
+
+        yrsel <- isolate(input$mapYear)
+        if(yrsel < yrlimits[1])
+            yrsel <- yrlimits[1]
+        else if(yrsel > yrlimits[2])
+            yrsel <- yrlimits[2]
+        else
+            yrsel <- NULL           # NULL means leave it alone
+        updateSliderInput(session, 'mapYear', min=yrlimits[1],
+                          max=yrlimits[2], value=yrsel)
+        output$mapName <- renderText({query})
     })
 
     # When the map plots on the landing page are loaded, generate year toggle
@@ -163,11 +170,19 @@ shinyServer(function(input, output, session) {
     })
 
     output$mapPlot <- renderPlot({
-      diffscen <- if(input$diffCheck) {
-          input$diffScenario
-      } else {
-            NULL
-        }
+      prj <- isolate(files[[input$fileList]])
+      scen <- input$mapScenario
+      query <- input$mapQuery
+
+      diffscen <- if(input$diffCheck) input$diffScenario
+
+      # If the scenario has changed, the value of the query selector may not
+      # be valid anymore.
+      availableQueries <- getScenarioQueries(prj, c(scen, diffscen))
+      if(!query %in% availableQueries) {
+        query <- availableQueries[1]
+      }
+
       year <- input$mapYear
       map <- switch(input$mapType,
                     regions =   gcammaptools::map.rgn32.simple,
@@ -175,8 +190,8 @@ shinyServer(function(input, output, session) {
                     countries = gcammaptools::map.rgn32,
                     basins =    gcammaptools::map.basin235,
                     none =      gcammaptools::map.basin235.simple)
-      plotMap(files[[input$fileList]], input$plotQuery,
-              input$plotScenario, diffscen, input$mapExtent, year, map)
+
+      plotMap(prj, query, scen, NULL, input$mapExtent, year, map)
     })
 
     output$timePlot <- renderPlot({
@@ -330,35 +345,10 @@ shinyServer(function(input, output, session) {
       h3(input$sspCategory, align = "center")
     })
 
-    updateSelectInput(session, 'sspCategory', choices=listQueries(sspData), selected = "Population")
-
     output$sspComparison <- renderPlot({
       query <- input$sspCategory
       scens <- input$sspChoices
       subcatvar <- tail(getQuerySubcategories(sspData, scens[1], query), n=1)
       plotScenComparison(sspData, query, scens, NULL, subcatvar, lac.rgns)
     })
-
-    ## update region controls on time view panel
-    ## None of this is necessary anymore, since we hardwired the region lists,
-    ## but I'm keeping it around for now in case we want to allow for the
-    ## possibility that a data set has custom regions.
-    ## observe({
-    ##     prj <- files[[input$fileList]]
-    ##     scen <- input$plotScenario
-    ##     query <- input$plotQuery
-    ##     if(uiStateValid(prj, scen, query)) {
-    ##         tbl <- getQuery(prj,query,scen)
-    ##         rgns <- unique(tbl$region) %>% sort
-    ##         updateCheckboxGroupInput(session, 'tvRgns', choices = rgns,
-    ##                                  selected = last.region.filter)
-    ##     }
-    ##})
-### Debugging
-    ## observe({
-    ##             print('****************Change of Input****************')
-    ##             cat('plotScenario: ', input$plotScenario, '\n')
-    ##             cat('diffScenario: ', input$diffScenario, '\n')
-    ##             cat('plotQuery: ', input$plotQuery, '\n')
-    ##         })
 })

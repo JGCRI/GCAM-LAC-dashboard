@@ -24,7 +24,7 @@ shinyUI(fluidPage(theme="style.css",
         menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
         menuItem("Maps", tabName = "maps", icon = icon("map", lib = "font-awesome")),
         menuItem("Explore", tabName = "explore", icon = icon("search", lib = "font-awesome")),
-        menuItem("Scenarios", tabName = "scenarios", icon = icon("line-chart", lib = "font-awesome"))
+        menuItem("Compare Scenarios", tabName = "scenarios", icon = icon("line-chart", lib = "font-awesome"))
       )
     ),
     dashboardBody(
@@ -78,31 +78,42 @@ shinyUI(fluidPage(theme="style.css",
         tabItem(tabName = "maps",
           fluidRow(
             column(6,
-              box(width = NULL, status = "primary",
-                 # h3(textOutput('mapName', inline=TRUE),align='center'),
-                 plotOutput('mapPlot', height = '700px')
+              box(width = NULL, status = "primary", solidHeader = T,
+                  title = textOutput('mapName', inline=TRUE), align = 'center',
+                  plotOutput('mapPlot', height = '700px')
               ),
               sliderInput('mapYear', NULL, min=2005, max=2100, step=5,
-                          value=2050, sep='', animate = TRUE)
+                          value=2050, sep='', animate = F, width = '100%',
+                          ticks = TRUE)
             ),
 
             column(6,
               box(width = NULL, status = "primary",
-                 fluidRow(column(6,
-                                 selectInput('mapExtent', label = "Map Extent", width = NULL,
-                                             choices=c(Global='global', USA='usa', China='china',
-                                                       Africa='africa', `Latin America`='lac'),
-                                             selected = 'lac')
-                 ),
-                 column(6,
-                        selectInput('mapType', label = "Map Type", width = NULL,
-                                    choices=c(`GCAM Regions`='regions',
-                                              China='china',
-                                              Countries='countries',
-                                              Basins='basins',
-                                              `No Borders`='none'),
-                                    selected = 'lac')
-                 ))
+                  fluidRow(
+                    column(6,
+                           selectInput('mapExtent', label = "Map Extent", width = NULL,
+                                       choices=c(Global='global', USA='usa', China='china',
+                                                 Africa='africa', `Latin America`='lac'),
+                                       selected = 'lac')),
+                    column(6,
+                           selectInput('mapType', label = "Map Type", width = NULL,
+                                       choices=c(`GCAM Regions`='regions',
+                                                 China='china',
+                                                 Countries='countries',
+                                                 Basins='basins',
+                                                 `No Borders`='none'),
+                                       selected = 'lac'))
+                  )
+              ),
+              box(title=NULL, status = "primary", width = NULL,
+                fluidRow(
+                  column(width = 6, selectInput('mapScenario', 'Choose a scenario',
+                                                choices=list())
+                  ),
+                  column(width = 6, selectInput('mapQuery', 'Choose a query',
+                                                choices=list())
+                  )
+                )
               ),
               box(title = "Water withdrawals for electricity", width = NULL,
                  solidHeader = TRUE, status = "primary", height = '350px')
