@@ -84,8 +84,9 @@
   border-top-color: #FCAA67;
 }
 
-.box.box-solid.box-primary {
+.box-body.box-overflow-y {
   overflow-y: auto;
+  height: 537px;
 }
 
 .selectize-control {

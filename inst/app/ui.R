@@ -163,8 +163,9 @@ shinyUI(fluidPage(theme="style.css",
               box(status = "primary", width = NULL,
                   selectInput('plotQuery', label="Plot Variable", choices=list())
               ),
+              div(class = "box-overflow",
               box(title = "Filter by Region", status = "primary", solidHeader = TRUE,
-                width = NULL, height = '580px',
+                width = NULL, height = '580px', class = "box-overflow-y",
                 tableOutput("regionFilter"),
                 actionButton('rgnSelectAll', 'Select all regions'),
                 br(),
@@ -191,6 +192,7 @@ shinyUI(fluidPage(theme="style.css",
                     checkboxGroupInput('tvRgns3', NULL, choices=north.america.rgns)
                   )
                 )
+              )
               )
             )
           )
