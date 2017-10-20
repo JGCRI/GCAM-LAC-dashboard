@@ -3,3 +3,5 @@
 rsconnect
 to-do.md
 
+^data-raw$
+^inst/extdata/hydrology/*$

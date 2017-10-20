@@ -8,11 +8,15 @@ options(shiny.maxRequestSize=512*1024^2) # 512 MB max file upload size.
 shinyServer(function(input, output, session) {
 
     ## ----- INITIALIZATION -----
-    ## Data that should show on load
-    waterData <- loadProject(system.file('hydro.dat', package = "GCAMdashboard"))
-    defaultProj <- 'dashboard.dat'
+    ## Data that should show on load. The default data come from the objects
+    ## defaultData, waterData, and sspData (in the data directory).
+
+    # files is the master list of project files
+    defaultProj <- 'Default Project'
     files <- list()
-    files[[defaultProj]] <- loadProject(system.file(defaultProj, package = "GCAMdashboard"))
+    files[[defaultProj]] <- defaultData
+
+    # To access the current project file, refer to the select in the upper right
     updateSelectInput(session, 'fileList', choices=names(files))
 
 
@@ -326,7 +330,6 @@ shinyServer(function(input, output, session) {
       h3(input$sspCategory, align = "center")
     })
 
-    sspData <- loadProject(system.file('ssp.dat', package = "GCAMdashboard"))
     updateSelectInput(session, 'sspCategory', choices=listQueries(sspData), selected = "Population")
 
     output$sspComparison <- renderPlot({

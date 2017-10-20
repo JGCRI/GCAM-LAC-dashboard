@@ -536,7 +536,7 @@ getTimePlotData <- function() { current.time.plot }
 #' @export
 plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
 {
-    current.time.plot <<- NULL
+    assign("current.time.plot", NULL, .GlobalEnv)
 
     if(is.null(prjdata)) {
         default.plot()
@@ -557,7 +557,7 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
 
         pltdata <- getPlotData(prjdata, query, scen, diffscen, subcatvar,
                                filtervar, rgns)
-        current.time.plot <<- pltdata
+        assign("current.time.plot", NULL, .GlobalEnv)
 
         plt <- ggplot(pltdata, aes_string('year','value', fill=subcatvar)) +
           geom_bar(stat='identity') + ggplot2::theme(axis.text=ggplot2::element_text(size=12),
