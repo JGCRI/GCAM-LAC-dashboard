@@ -188,7 +188,7 @@ shinyServer(function(input, output, session) {
       year <- input$mapYear
       map <- switch(input$mapType,
                     regions =   gcammaptools::map.rgn32.simple,
-                    china =     gcammaptools::map.chn.simple,
+                    china =     gcammaptools::map.chn,
                     countries = gcammaptools::map.rgn32,
                     basins =    gcammaptools::map.basin235,
                     none =      gcammaptools::map.basin235.simple)
