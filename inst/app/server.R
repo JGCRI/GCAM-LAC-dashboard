@@ -8,6 +8,12 @@ options(shiny.maxRequestSize=512*1024^2) # 512 MB max file upload size.
 shinyServer(function(input, output, session) {
 
     ## ----- INITIALIZATION -----
+
+    # Show loading screen on start up
+    initComplete <- reactiveVal(FALSE)
+    output$setupComplete <- reactive({ initComplete() })
+    outputOptions(output, 'setupComplete', suspendWhenHidden=FALSE)
+
     ## Data that should show on load. The default data come from the objects
     ## defaultData, waterData, and sspData (in the data directory).
 
@@ -22,7 +28,6 @@ shinyServer(function(input, output, session) {
     # Initialize data for the scenario comparison tab
     updateSelectInput(session, 'sspCategory', choices=listQueries(sspData),
                       selected = "Population")
-
 
     ## ----- PLOT OPTION UPDATES -----
     ## When a new file is uploaded, update available projects
@@ -169,12 +174,21 @@ shinyServer(function(input, output, session) {
           NULL
     })
 
+    output$mapIsGrid <- reactive({
+      prj <- files[[input$fileList]]
+      scen <- input$mapScenario
+      query <- input$mapQuery
+      if(uiStateValid(prj, scen, query)) isGrid(prj, scen, query) else FALSE
+    })
+    outputOptions(output, "mapIsGrid", suspendWhenHidden = FALSE)
 
     ## ----- PLOT UPDATES -----
     output$mapPlot <- renderPlot({
-      prj <- isolate(files[[input$fileList]])
+      prj <- files[[input$fileList]]
       scen <- input$mapScenario
       query <- input$mapQuery
+
+      if(!uiStateValid(prj, scen, query)) return(default.plot("Updating..."))
 
       diffscen <- if(input$diffCheck) input$diffScenario
 
@@ -197,9 +211,10 @@ shinyServer(function(input, output, session) {
     })
 
     output$mapAltPlot <- renderPlot({
-      prj <- isolate(files[[input$fileList]])
+      prj <- files[[input$fileList]]
       scen <- input$mapScenario
       query <- input$mapQuery
+      if(!uiStateValid(prj, scen, query)) return(default.plot("Updating..."))
 
       diffscen <- if(input$diffCheck) input$diffScenario
 
@@ -348,6 +363,7 @@ shinyServer(function(input, output, session) {
       query <- input$popTabset
       pscen <- "REFlu_e6_mex"
       year <- input$popYear
+      initComplete(TRUE)
       plotMap(files[[defaultProj]], query, pscen, NULL, "lac", year)
     })
 

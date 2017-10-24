@@ -28,6 +28,8 @@ shinyUI(fluidPage(theme="style.css",
       )
     ),
     dashboardBody(
+      # Wrap everything in conditional panel to only show when loaded
+      conditionalPanel("output.setupComplete", {
       tabItems(
         tabItem(tabName = "dashboard",
           fluidRow(
@@ -101,7 +103,7 @@ shinyUI(fluidPage(theme="style.css",
                     column(6,
                            selectInput('mapScenario', 'Scenario',
                                        choices=list()),
-                           conditionalPanel("input.mapQuery == 'Cooling Degree Days'",
+                           conditionalPanel(condition = "output.mapIsGrid",
                              selectInput('mapType', label = "Map Type", width = NULL,
                                          choices=c(`GCAM Regions`='regions',
                                                    China='china',
@@ -213,7 +215,20 @@ shinyUI(fluidPage(theme="style.css",
                     htmlOutput('sspTitle'),
                     plotOutput('sspComparison', height = "520px", width = "100%"))
         )
-      ), # tabItems
+      ) # tabItems
+      }), # loading panel
+      conditionalPanel("!output.setupComplete", {
+        div(class="loading-panel", div(class="loading-panel-container",
+          h3("Loading"),
+          div(class="spinner",
+              div(class="rect1"),
+              div(class="rect2"),
+              div(class="rect3"),
+              div(class="rect4"),
+              div(class="rect5")
+          )
+        ))
+      }),
       bsModal('uploadModal', 'Upload a File', trigger = 'triggerUploadModal', size = 'small',
               fileInput('projectFile', 'Upload Project Data File'),
               p("File size: ", textOutput('projectSize', inline = TRUE)),
