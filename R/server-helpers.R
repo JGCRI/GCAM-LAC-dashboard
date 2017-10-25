@@ -2,10 +2,6 @@
 
 tag.noscen <- '->No scenarios selected<-'     # placeholder when no scenario selected
 
-#### State variables
-last.region.filter <- NULL
-current.time.plot <- NULL # used for hover
-
 #' Get the scenarios in the project for display
 #'
 #' Returns a place holder string if no project has been loaded yet.
@@ -534,16 +530,14 @@ summarize.unit <- function(unitcol)
 #' @export
 plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
 {
-    assign("current.time.plot", NULL, .GlobalEnv)
-
     if(is.null(prjdata)) {
-        default.plot()
+      list(plot = default.plot())
     }
     else if(isGrid(prjdata, scen, query)) {
-        default.plot("Can't plot time series of\nspatial grid data.")
+      list(plot = default.plot("Can't plot time series of\nspatial grid data."))
     }
     else if(length(rgns) == 0) {
-        default.plot("No regions selected.")
+      list(plot = default.plot("No regions selected."))
     }
     else {
         filtervar <- 'region'
@@ -555,7 +549,6 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
 
         pltdata <- getPlotData(prjdata, query, scen, diffscen, subcatvar,
                                filtervar, rgns)
-        assign("current.time.plot", pltdata, .GlobalEnv)
 
         plt <- ggplot(pltdata, aes_string('year','value', fill=subcatvar)) +
           geom_bar(stat='identity') + ggplot2::theme(axis.text=ggplot2::element_text(size=12),
@@ -577,7 +570,13 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
                     fillpal <- RColorBrewer::brewer.pal(n,'Set3')
                 }
                 else {
-                    fillpal <- grDevices::rainbow(n, 0.8, 0.9)
+                    # https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
+                    fillpal <- rep(c("#e6194b", "#3cb44b", "#ffe119", "#0082c8",
+                                     "#f58231", "#911eb4", "#46f0f0", "#f032e6",
+                                     "#d2f53c", "#fabebe", "#008080", "#e6beff",
+                                     "#aa6e28", "#fffac8", "#800000", "#aaffc3",
+                                     "#808000", "#ffd8b1", "#000080", "#808080",
+                                     "#FFFFFF", "#000000"), n / 20 + 1)
                 }
             }
             plt <- plt + scale_fill_manual(values=fillpal)

@@ -31,7 +31,6 @@ shinyServer(function(input, output, session) {
     # the time plot view and the map plot view. These data frames are used for
     # getting hover values and for viewing the raw table data.
     timePlot.df <- reactiveVal()
-    mapPlot.df <- reactiveVal()
     mapZoom <- reactiveVal(0)
 
 
@@ -211,11 +210,10 @@ shinyServer(function(input, output, session) {
 
       year <- input$mapYear
       map <- switch(input$mapType,
-                    regions =   gcammaptools::map.rgn32.simple,
-                    china =     gcammaptools::map.chn,
-                    countries = gcammaptools::map.rgn32,
+                    regions =   gcammaptools::map.rgn32,
+                    countries = gcammaptools::map.countries,
                     basins =    gcammaptools::map.basin235,
-                    none =      gcammaptools::map.basin235.simple)
+                    usa =       gcammaptools::map.usa)
 
       plotMap(prj, query, scen, NULL, input$mapExtent, year, map, mapZoom())
     })
@@ -227,6 +225,7 @@ shinyServer(function(input, output, session) {
       if(!uiStateValid(prj, scen, query)) return(default.plot("Updating..."))
 
       diffscen <- if(input$diffCheck) input$diffScenario
+      regions <- lac.rgns
 
       # If the scenario has changed, the value of the query selector may not
       # be valid anymore.
@@ -235,13 +234,14 @@ shinyServer(function(input, output, session) {
         query <- availableQueries[1]
       }
 
-      plotTime(prj, query, scen, NULL, "region", lac.rgns)
+      plotTime(prj, query, scen, NULL, "region", regions)
     })
 
     output$timePlot <- renderPlot({
         prj <- isolate(files[[input$fileList]])
         scen <- input$scenarioInput
         query <- input$plotQuery
+        if(!uiStateValid(prj, scen, query)) return(default.plot())
 
         diffscen <- if(input$diffCheck) input$diffScenario else NULL
         if(!is.null(diffscen) && diffscen == scen)
@@ -278,6 +278,9 @@ shinyServer(function(input, output, session) {
         plt <- plotTime(prj, query, scen, diffscen, tvSubcatVar, region.filter)
         if(!is.null(plt$plotdata)) {
           timePlot.df(plt$plotdata)
+          session$sendCustomMessage(type = 'enable-element', message = 'triggerTableModal')
+        } else {
+          session$sendCustomMessage(type = 'disable-element', message = 'triggerTableModal')
         }
         plt$plot
     })

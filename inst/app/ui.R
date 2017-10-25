@@ -116,10 +116,8 @@ shinyUI(fluidPage(theme="style.css",
                            conditionalPanel(condition = "output.mapIsGrid",
                              selectInput('mapType', label = "Map Type", width = NULL,
                                          choices=c(`GCAM Regions`='regions',
-                                                   China='china',
                                                    Countries='countries',
-                                                   Basins='basins',
-                                                   `No Borders`='none'),
+                                                   Basins='basins'),
                                          selected = 'lac')
                            )
                     )
@@ -245,8 +243,10 @@ shinyUI(fluidPage(theme="style.css",
               fileInput('projectFile', 'Upload Project Data File'),
               p("File size: ", textOutput('projectSize', inline = TRUE)),
               p("Project contains scenarios: ", verbatimTextOutput('scenarios'))
-      ) #bsModal
+      ) # bsModal
     ) # dashboardBody
-  ) #dashboardPage
-))
+  ), # dashboardPage
+  singleton(tags$head(tags$script(src = "custom-scripts.js")))
+) # fluidPage
+) # shinyUI
 
