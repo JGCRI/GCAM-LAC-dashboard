@@ -14,12 +14,10 @@ shinyServer(function(input, output, session) {
     output$setupComplete <- reactive({ initComplete() })
     outputOptions(output, 'setupComplete', suspendWhenHidden=FALSE)
 
-    ## Data that should show on load. The default data come from the objects
-    ## defaultData, waterData, and sspData (in the data directory).
-
-    # files is the master list of project files
+    # Data that should show on load. The default data come from the objects
+    # defaultData, waterData, and sspData (in the data directory).
     defaultProj <- 'Default Project'
-    files <- list()
+    files <- list() # files is the master list of project files
     files[[defaultProj]] <- defaultData
 
     # To access the current project file, refer to the select in the upper right
@@ -29,7 +27,15 @@ shinyServer(function(input, output, session) {
     updateSelectInput(session, 'sspCategory', choices=listQueries(sspData),
                       selected = "Population")
 
+    # Initialize reactive values to hold the data frame being displayed in both
+    # the time plot view and the map plot view. These data frames are used for
+    # getting hover values and for viewing the raw table data.
+    timePlot.df <- reactiveVal()
+    mapPlot.df <- reactiveVal()
+
+
     ## ----- PLOT OPTION UPDATES -----
+
     ## When a new file is uploaded, update available projects
     observe({
       fileinfo <- input$projectFile
@@ -255,19 +261,39 @@ shinyServer(function(input, output, session) {
            tvSubcatVar <- 'none'
         }
 
-        output$timeTable <- renderDataTable({ getTimePlotData() })
+        output$timeTable <- renderDataTable({ timePlot.df() })
 
-        plotTime(prj, query, scen, diffscen, tvSubcatVar, region.filter)
+        # Set the data table title
+        tableTitle <- query
+        if(tvSubcatVar != 'none') {
+          tableTitle <- paste(query, tvSubcatVar, sep = ' by ')
+        }
+        output$tableTitle <- renderText(tableTitle)
+
+        # Update the plot and the time plot data frame (used for the hover)
+        plt <- plotTime(prj, query, scen, diffscen, tvSubcatVar, region.filter)
+        if(!is.null(plt$plotdata)) {
+          timePlot.df(plt$plotdata)
+        }
+        plt$plot
     })
+
+    # Downloadable csv of current plot table dataset
+    output$downloadButton <- downloadHandler(
+      filename = function() {
+        paste(input$plotQuery, ".csv", sep = "")
+      },
+      content = function(file) {
+        write.csv(timePlot.df(), file, row.names = FALSE)
+      }
+    )
 
     output$hoverInfo <- renderUI({
       hover <- input$exploreHover
-      df <- getTimePlotData()
+      df <- timePlot.df()
       subcat <- input$tvSubcatVar
 
-      # Don't attempt hover if tab isn't selected. TODO: Fix bug where changing
-      # other time plot (like the one on the landing page) also updates the data
-      # the hover refers to.
+      # Don't attempt hover if tab isn't selected.
       if(input$sidebar != 'explore') return(NULL)
       if(is.null(hover)) return(NULL)
       if(is.null(df)) return(NULL)
@@ -280,15 +306,28 @@ shinyServer(function(input, output, session) {
       # hovered over
       if(subcat != 'none') {
 
+        y <- hover$y
+        if(y < 0) {
+          df <- df[which(df$value < 0), ]
+          df$value <- abs(df$value)
+          y <- abs(y)
+        } else {
+          df <- df[which(df$value > 0), ]
+        }
+
         # Find which segment of the stacked bar the hover is closest to
         stackedSum <- sum(df$value) - cumsum(df$value)
-        index <- which(stackedSum - hover$y < 0)[1]
+        index <- which(stackedSum - y < 0)[1]
 
-        if(hover$y > sum(df$value)) return(NULL) # Hover is above the bar
+        # Don't show hover if position is above the sum of positive values or
+        # below the sum of negative values.
+        if(y > sum(df$value)) return(NULL) # Hover is above the bar
         if(is.na(index)) return(NULL) # Hover is below the bar
 
         # Get the region name and value for display
-        val <- paste(df[[subcat]][index], round(df$value[index], digits=1), sep=': ')
+        val <- paste(df[[subcat]][index],
+                     round(df$value[index], digits=1) * sign(hover$y),
+                     sep=': ')
 
       } else {
         val <- df[which.min(abs(df$year - hover$x)), 'value'] %>%
@@ -315,7 +354,6 @@ shinyServer(function(input, output, session) {
         class = 'hoverPanel',
         left = paste0(left, "px"),
         top = paste0(top, "px"),
-        # style = style,
         p(HTML(val)))
 
     })

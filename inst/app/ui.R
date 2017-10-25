@@ -122,8 +122,10 @@ shinyUI(fluidPage(theme="style.css",
           )
         ),
         tabItem(tabName = "explore",
-          bsModal('tableModal', 'View Table', trigger = 'triggerTableModal', size = 'large',
-                  dataTableOutput('timeTable')
+          bsModal('tableModal', textOutput('tableTitle', inline = T),
+                  trigger = 'triggerTableModal', size = 'large',
+            dataTableOutput('timeTable'),
+            downloadButton('downloadButton')
           ),
           fluidRow(
             column(width = 8,
@@ -134,7 +136,7 @@ shinyUI(fluidPage(theme="style.css",
                                      choices=c('none','region'))
                   ),
                   column(width = 5,
-                         div(class="table-title", align="right", "View Table",
+                         div(class="table-title", align="right", "View as Table",
                             br(),
                             actionButton('triggerTableModal', NULL,
                                          icon("table", lib = "font-awesome"))

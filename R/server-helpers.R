@@ -273,7 +273,8 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map=NUL
                                   proj_type = map.params$proj_type,
                                   proj = map.params$proj, extent = map.params$ext,
                                   zoom = map.params$zoom, legend = TRUE) +
-                scale_fill_gradientn(colors = pal, name = unitstr)
+                # scale_fill_gradientn(colors = pal, name = unitstr)
+                ggplot2::scale_fill_distiller(palette = "Spectral")
         } else {
             plt <- default.plot(label.text = "No geographic data available for this query")
         }
@@ -281,8 +282,7 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map=NUL
         plt + guides(fill=ggplot2::guide_colorbar(title=unitstr,
                                                   barwidth=ggplot2::unit(3.1,'in'),
                                                   title.position="bottom")) +
-          ggplot2::theme(legend.position="bottom",
-                         legend.title.align = 0.5)
+          ggplot2::theme(legend.position="bottom", legend.title.align = 0.5)
     }
 }
 
@@ -518,15 +518,11 @@ summarize.unit <- function(unitcol)
     unitcol[which.max(table(unitcol))]
 }
 
-#' Get the data frame of the current time plot being shown
-#'
-#' ...there has got to be a better way to deal with this current.time.plot thing
-#'
-#' @return A data frame containing the values currently being plotted
-#' @export
-getTimePlotData <- function() { get("current.time.plot", .GlobalEnv) }
-
 #' Plot values over time as a bar chart
+#'
+#' If it is possible to build a plot with the data, this function will return
+#' a list containing the data frame being plotted as the second element.
+#'
 #' @param prjdata A project data structure
 #' @param query  Name of the query to plot
 #' @param scen  Name of the scenario to plot
@@ -544,7 +540,7 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
         default.plot()
     }
     else if(isGrid(prjdata, scen, query)) {
-        default.plot("Can't plot time series of spatial grid data.")
+        default.plot("Can't plot time series of\nspatial grid data.")
     }
     else if(length(rgns) == 0) {
         default.plot("No regions selected.")
@@ -566,12 +562,11 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
                                                      axis.title=ggplot2::element_text(size=13,face="bold")) +
           ylab(pltdata$Units)
 
-        if(is.null(subcatvar)) {
-            plt
-        }
-        else {
+        # Get a color scheme for the subcategories
+        if(!is.null(subcatvar)) {
             subcatvar <- toString(subcatvar)
-            if(subcatvar=='region')
+
+            if(subcatvar == 'region')
                 fillpal <- gcammaptools::gcam32_colors
             else {
                 n <- length(unique(pltdata[[subcatvar]]))
@@ -585,9 +580,9 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
                     fillpal <- grDevices::rainbow(n, 0.8, 0.9)
                 }
             }
-
-            plt + scale_fill_manual(values=fillpal)
+            plt <- plt + scale_fill_manual(values=fillpal)
         }
+        list(plot = plt, plotdata = pltdata)
     }
 }
 

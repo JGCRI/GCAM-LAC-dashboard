@@ -20,5 +20,6 @@ plotTime(prjdata, query, scen, diffscen, subcatvar, rgns)
 \item{rgns}{Regions to filter to}
 }
 \description{
-Plot values over time as a bar chart
+If it is possible to build a plot with the data, this function will return
+a list containing the data frame being plotted as the second element.
 }
