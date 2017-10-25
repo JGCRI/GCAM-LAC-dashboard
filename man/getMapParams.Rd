@@ -4,7 +4,7 @@
 \alias{getMapParams}
 \title{Get projection parameters for the pre-defined projections}
 \usage{
-getMapParams(projselect)
+getMapParams(projselect, zoom)
 }
 \arguments{
 \item{projselect}{Name of the predefined projection}

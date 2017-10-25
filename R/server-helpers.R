@@ -199,7 +199,7 @@ default.plot <- function(label.text='No data selected')
 #' @importFrom ggplot2 scale_fill_gradientn guides
 #' @importFrom gcammaptools add_region_ID plot_GCAM plot_GCAM_grid
 #' @export
-plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map=NULL)
+plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map = NULL, zoom = 0)
 {
 
     if(is.null(prjdata)) {
@@ -239,7 +239,7 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map=NUL
         mapLimits <- getMapLimits(pltdata, is.diff)
         unitstr <- summarize.unit(pltdata$Units)
 
-        map.params <- getMapParams(projselect) # map projection and extent
+        map.params <- getMapParams(projselect, zoom) # map projection, extent, and zoom
         pal <- getMapPalette(is.diff)   # color palette
         datacol <- 'value' # name of the column with the data.
 
@@ -457,22 +457,22 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
 #'
 #' @param projselect Name of the predefined projection
 #' @keywords internal
-getMapParams <- function(projselect)
+getMapParams <- function(projselect, zoom)
 {
     if(projselect == 'global') {
-        list(proj=gcammaptools::eck3, ext=gcammaptools::EXTENT_WORLD)
+        list(proj=gcammaptools::eck3, ext=gcammaptools::EXTENT_WORLD, zoom=zoom)
     }
     else if(projselect == 'usa') {
-        list(proj=gcammaptools::na_aea, ext=gcammaptools::EXTENT_USA)
+        list(proj=gcammaptools::na_aea, ext=gcammaptools::EXTENT_USA, zoom=zoom)
     }
     else if(projselect == 'china') {
-        list(proj=gcammaptools::ch_aea, ext=gcammaptools::EXTENT_CHINA)
+        list(proj=gcammaptools::ch_aea, ext=gcammaptools::EXTENT_CHINA, zoom=zoom)
     }
     else if(projselect == 'africa') {
-        list(proj=gcammaptools::af_ortho, ext=gcammaptools::EXTENT_AFRICA, zoom=10)
+        list(proj=gcammaptools::af_ortho, ext=gcammaptools::EXTENT_AFRICA, zoom=10 + zoom)
     }
     else if(projselect == 'lac') {
-        list(proj=7567, proj_type='SR-ORG', ext=gcammaptools::EXTENT_LA, zoom=8)
+        list(proj=7567, proj_type='SR-ORG', ext=gcammaptools::EXTENT_LA, zoom=8 + zoom)
     }
 }
 

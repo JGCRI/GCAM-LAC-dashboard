@@ -82,7 +82,17 @@ shinyUI(fluidPage(theme="style.css",
             column(7,
               box(width = NULL, status = "primary", solidHeader = T,
                   title = textOutput('mapName', inline=TRUE), align = 'center',
-                  plotOutput('mapPlot', height = '600px')
+                  plotOutput('mapPlot', height = '600px'),
+                  absolutePanel(class = 'zoom-buttons', bottom = 10, right = 10,
+                    column(12,
+                      fluidRow(
+                        actionButton('zoomIn', icon("plus", lib = "font-awesome"))
+                      ),
+                      fluidRow(
+                        actionButton('zoomOut', icon("minus", lib = "font-awesome"))
+                      )
+                    )
+                  )
               ),
               sliderInput('mapYear', NULL, min=2005, max=2100, step=5,
                           value=2050, sep='', animate = F, width = '100%',

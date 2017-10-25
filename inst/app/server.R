@@ -32,6 +32,7 @@ shinyServer(function(input, output, session) {
     # getting hover values and for viewing the raw table data.
     timePlot.df <- reactiveVal()
     mapPlot.df <- reactiveVal()
+    mapZoom <- reactiveVal(0)
 
 
     ## ----- PLOT OPTION UPDATES -----
@@ -126,6 +127,7 @@ shinyServer(function(input, output, session) {
         updateSliderInput(session, 'mapYear', min=yrlimits[1],
                           max=yrlimits[2], value=yrsel)
         output$mapName <- renderText({query})
+        mapZoom(0)
     })
 
     # When the map plots on the landing page are loaded, generate year toggle
@@ -164,6 +166,8 @@ shinyServer(function(input, output, session) {
       updateRegionFilter(session, 'rgnSelectAll', 'tvRgns5', sAll, asiapac.rgns)
     })
 
+    observeEvent(input$zoomIn, { if(mapZoom() > -30) mapZoom(mapZoom() - 3) })
+    observeEvent(input$zoomOut, { if(mapZoom() < 30) mapZoom(mapZoom() + 3) })
 
     ## ----- FILE UPLOAD UPDATES -----
     output$projectSize <- renderText({
@@ -213,7 +217,7 @@ shinyServer(function(input, output, session) {
                     basins =    gcammaptools::map.basin235,
                     none =      gcammaptools::map.basin235.simple)
 
-      plotMap(prj, query, scen, NULL, input$mapExtent, year, map)
+      plotMap(prj, query, scen, NULL, input$mapExtent, year, map, mapZoom())
     })
 
     output$mapAltPlot <- renderPlot({
