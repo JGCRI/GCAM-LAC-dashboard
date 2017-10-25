@@ -23,10 +23,6 @@ shinyServer(function(input, output, session) {
     # To access the current project file, refer to the select in the upper right
     updateSelectInput(session, 'fileList', choices=names(files))
 
-    # Initialize data for the scenario comparison tab
-    updateSelectInput(session, 'sspCategory', choices=listQueries(sspData),
-                      selected = "Population")
-
     # Initialize reactive values to hold the data frame being displayed in both
     # the time plot view and the map plot view. These data frames are used for
     # getting hover values and for viewing the raw table data.
@@ -127,15 +123,6 @@ shinyServer(function(input, output, session) {
                           max=yrlimits[2], value=yrsel)
         output$mapName <- renderText({query})
         mapZoom(0)
-    })
-
-    # When the map plots on the landing page are loaded, generate year toggle
-    observe({
-      query <- input$waterTabset
-      years <- getQuery(waterData, query, "Reference")$year %>% unique()
-      middleYear <- years[(length(years) + 1) / 2]
-      updateRadioButtons(session, 'waterYearToggle', NULL,
-                         choices = years, selected = middleYear, inline = TRUE)
     })
 
     ## When a 'select all' or 'deselect all' button is pressed, update region
@@ -365,68 +352,10 @@ shinyServer(function(input, output, session) {
 
     })
 
-    output$landingPlot1 <- renderPlot({
-      if(input$lptoggle == "Reference Scenario")
-        scen <- "REFlu_e6_mex"
-      else
-        scen <- "PIAlu_e6_mex"
-      plotTime(files[[defaultProj]], "Primary Energy Consumption (Direct Equivalent)",
-               scen, NULL, "fuel", lac.rgns)
-    })
+    callModule(landingPage, "dashboard", files[[defaultProj]])
 
-    output$landingPlot2 <- renderPlot({
-      if(input$lptoggle == "Reference Scenario")
-        scen <- "REFlu_e6_mex"
-      else
-        scen <- "PIAlu_e6_mex"
-      plotTime(files[[defaultProj]], "Top 12 CO2 emissions by sector",
-               scen, NULL, "sector", lac.rgns)
-    })
+    callModule(scenarioComparison, "ssp")
 
-    output$waterScarcityPlot <- renderPlot({
-      query <- "Water Scarcity"
-      pscen <- "Reference"
-      year <- as.integer(input$waterYearToggle)
-      plotMap(waterData, query, pscen, NULL, "lac", year)
-    })
+    initComplete(TRUE)
 
-    output$waterSupplyPlot <- renderPlot({
-      query <- "Water Supply"
-      pscen <- "Reference"
-      year <- as.integer(input$waterYearToggle)
-      plotMap(waterData, query, pscen, NULL, "lac", year)
-    })
-
-    output$waterDemandPlot <- renderPlot({
-      query <- "Water Demand"
-      pscen <- "Reference"
-      year <- as.integer(input$waterYearToggle)
-      plotMap(waterData, query, pscen, NULL, "lac", year)
-    })
-
-    output$popPlot <- renderPlot({
-      query <- input$popTabset
-      pscen <- "REFlu_e6_mex"
-      year <- input$popYear
-      initComplete(TRUE)
-      plotMap(files[[defaultProj]], query, pscen, NULL, "lac", year)
-    })
-
-    output$gdpPlot <- renderPlot({
-      query <- input$popTabset
-      pscen <- "REFlu_e6_mex"
-      year <- input$popYear
-      plotMap(files[[defaultProj]], query, pscen, NULL, "lac", year)
-    })
-
-    output$sspTitle <- renderUI({
-      h3(input$sspCategory, align = "center")
-    })
-
-    output$sspComparison <- renderPlot({
-      query <- input$sspCategory
-      scens <- input$sspChoices
-      subcatvar <- tail(getQuerySubcategories(sspData, scens[1], query), n=1)
-      plotScenComparison(sspData, query, scens, NULL, subcatvar, lac.rgns)
-    })
 })

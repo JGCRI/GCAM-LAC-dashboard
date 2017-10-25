@@ -36,3 +36,5 @@ asiapac.rgns <- c('Australia_NZ', 'Central Asia', 'China', 'India', 'Indonesia',
 
 ## available color schemes
 color.schemes <- c('default', 'region32')
+
+

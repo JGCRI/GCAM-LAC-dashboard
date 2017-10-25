@@ -31,52 +31,7 @@ shinyUI(fluidPage(theme="style.css",
       # Wrap everything in conditional panel to only show when loaded
       conditionalPanel("output.setupComplete", {
       tabItems(
-        tabItem(tabName = "dashboard",
-          fluidRow(
-            column(3, align = "left",
-              h4("Water"),
-              tabBox(title = NULL, side = 'left', width = NULL,
-                     id = "waterTabset",
-                     tabPanel("Supply", value = "Water Supply",
-                              plotOutput('waterSupplyPlot', height='500px')),
-                     tabPanel("Demand", value = "Water Demand",
-                              plotOutput('waterDemandPlot', height='500px')),
-                     tabPanel("Scarcity", value = "Water Scarcity",
-                              plotOutput('waterScarcityPlot', height='500px'))
-              ),
-              div(align="center", radioButtons('waterYearToggle', NULL,
-                                               choices = 2050, inline = T)
-              )
-            ),
-            column(3, align = "left",
-              h4("Population and GDP"),
-              tabBox(title = NULL, side = 'left', width = NULL,
-                    id = "popTabset",
-                    tabPanel("Population", value = "Population by region",
-                             plotOutput('popPlot', height='500px')),
-                    tabPanel("GDP", value = "GDP by region",
-                             plotOutput('gdpPlot', height='500px'))
-              ),
-              sliderInput('popYear', NULL, min=2005, max=2100, step=5,
-                          value=2050, sep='', animate = F)
-            ),
-            column(6,
-              h4("Energy and Emissions"),
-              box(title = 'Primary Energy Consumption by Fuel', width = NULL,
-                  solidHeader = TRUE, status = "primary",
-                  plotOutput('landingPlot1', height='211px')
-              ),
-              box(title = 'CO2 Emissions', width = NULL,
-                  solidHeader = TRUE, status = "primary",
-                  plotOutput('landingPlot2', height='211px')
-              ),
-              div(align="center", radioButtons('lptoggle', NULL,
-                                               c('Reference Scenario', 'Policy Scenario'),
-                                               inline = T)
-              )
-            )
-          )
-        ),
+        tabItem(tabName = "dashboard", landingPageUI("dashboard")),
         tabItem(tabName = "maps",
           fluidRow(
             column(7,
@@ -210,32 +165,14 @@ shinyUI(fluidPage(theme="style.css",
             )
           )
         ),
-        tabItem(tabName = "scenarios",
-                h3("Compare Scenarios"),
-                fluidRow(
-                  column(3, selectInput('sspCategory', label = NULL,
-                                        choices = c("Population"), selected = "Population")),
-                  column(2, h5("Selected Scenarios:", align = "right")),
-                  column(3, selectInput('sspChoices', label = NULL,
-                                        c("SSP1", "SSP2", "SSP3", "SSP4", "SSP5"),
-                                        selected = c("SSP1", "SSP2"), multiple = TRUE))
-                ),
-
-                box(solidHeader = F, width = 12,
-                    htmlOutput('sspTitle'),
-                    plotOutput('sspComparison', height = "520px", width = "100%"))
-        )
+        tabItem(tabName = "scenarios", scenarioComparisonUI("ssp"))
       ) # tabItems
       }), # loading panel
       conditionalPanel("!output.setupComplete", {
         div(class="loading-panel", div(class="loading-panel-container",
           h3("Loading"),
           div(class="spinner",
-              div(class="rect1"),
-              div(class="rect2"),
-              div(class="rect3"),
-              div(class="rect4"),
-              div(class="rect5")
+            lapply(1:5, function(i) { div(class = paste0("rect", i)) })
           )
         ))
       }),
