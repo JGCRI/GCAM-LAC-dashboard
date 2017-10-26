@@ -131,37 +131,7 @@ shinyUI(fluidPage(theme="style.css",
                   selectInput('plotQuery', label="Plot Variable", choices=list()),
                   checkboxInput('inclSpatial', 'Include Spatial Queries', value=TRUE)
               ),
-              div(class = "box-overflow",
-              box(title = "Filter by Region", status = "primary", solidHeader = TRUE,
-                width = NULL, height = '580px', class = "box-overflow-y",
-                tableOutput("regionFilter"),
-                actionButton('rgnSelectAll', 'Select all regions'),
-                br(),
-
-                bsCollapse(open="Latin America and Caribbean",
-                  bsCollapsePanel(title='Latin America and Caribbean', style="primary",
-                    actionButton('rgns2All', 'Deselect All'),
-                    checkboxGroupInput('tvRgns2', NULL, choices=lac.rgns, selected = lac.rgns)
-                  ),
-                  bsCollapsePanel(title="Africa",
-                    actionButton('rgns1All', 'Select All'),
-                    checkboxGroupInput('tvRgns1', NULL, choices=africa.rgns)
-                  ),
-                  bsCollapsePanel(title="Asia-Europe",
-                    actionButton('rgns4All', 'Select All'),
-                    checkboxGroupInput('tvRgns4', NULL, choices=europe.rgns)
-                  ),
-                  bsCollapsePanel(title="Asia-Pacific",
-                    actionButton('rgns5All', 'Select All'),
-                    checkboxGroupInput('tvRgns5', NULL, choices=asiapac.rgns)
-                  ),
-                  bsCollapsePanel(title="North America",
-                    actionButton('rgns3All', 'Select All'),
-                    checkboxGroupInput('tvRgns3', NULL, choices=north.america.rgns)
-                  )
-                )
-              )
-              )
+              regionFilterInput("tpFilters")
             )
           )
         ),

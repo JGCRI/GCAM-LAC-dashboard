@@ -1,7 +1,9 @@
 library(shiny)
 
 
-## =============== Dashboard Tab ============= ##
+
+# Dashboard Tab -----------------------------------------------------------
+
 landingPageUI <- function(id) {
   ns <- NS(id)
 
@@ -67,42 +69,27 @@ landingPage <- function(input, output, session, data) {
                        selected = middleYear, inline = TRUE)
   })
 
-  # Plot outputs
-  output$waterScarcityPlot <- renderPlot({
-    query <- "Water Scarcity"
-    pscen <- "Reference"
-    year <- as.integer(input$waterYearToggle)
-    plotMap(waterData, query, pscen, NULL, "lac", year)
+  # Water plots
+  lapply(c("Scarcity", "Supply", "Demand"), function(query) {
+    output[[paste0("water", query, "Plot")]] <- renderPlot({
+      query <- paste("Water", query)
+      pscen <- "Reference"
+      year <- as.integer(input$waterYearToggle)
+      plotMap(waterData, query, pscen, NULL, "lac", year)
+    })
   })
 
-  output$waterSupplyPlot <- renderPlot({
-    query <- "Water Supply"
-    pscen <- "Reference"
-    year <- as.integer(input$waterYearToggle)
-    plotMap(waterData, query, pscen, NULL, "lac", year)
+  # Pop and GDP plots
+  lapply(c("popPlot", "gdpPlot"), function(outputID) {
+    output[[outputID]] <- renderPlot({
+      query <- input$popTabset
+      pscen <- "REFlu_e6_mex"
+      year <- input$popYear
+      plotMap(data, query, pscen, NULL, "lac", year)
+    })
   })
 
-  output$waterDemandPlot <- renderPlot({
-    query <- "Water Demand"
-    pscen <- "Reference"
-    year <- as.integer(input$waterYearToggle)
-    plotMap(waterData, query, pscen, NULL, "lac", year)
-  })
-
-  output$popPlot <- renderPlot({
-    query <- input$popTabset
-    pscen <- "REFlu_e6_mex"
-    year <- input$popYear
-    plotMap(data, query, pscen, NULL, "lac", year)
-  })
-
-  output$gdpPlot <- renderPlot({
-    query <- input$popTabset
-    pscen <- "REFlu_e6_mex"
-    year <- input$popYear
-    plotMap(data, query, pscen, NULL, "lac", year)
-  })
-
+  # Bar charts
   output$landingPlot1 <- renderPlot({
     if(input$lptoggle == "Reference Scenario")
       scen <- "REFlu_e6_mex"
@@ -121,7 +108,8 @@ landingPage <- function(input, output, session, data) {
 }
 
 
-## ================= SSP Tab ================= ##
+# SSP Tab -----------------------------------------------------------------
+
 scenarioComparisonUI <- function(id) {
   ns <- NS(id)
 
@@ -160,4 +148,96 @@ scenarioComparison <- function(input, output, session) {
     subcatvar <- tail(getQuerySubcategories(sspData, scens[1], query), n=1)
     plotScenComparison(sspData, query, scens, NULL, subcatvar, lac.rgns)
   })
+}
+
+
+# Region Filters ----------------------------------------------------------
+
+regionFilterInput <- function(id) {
+  ns <- NS(id)
+
+  div(class = "box-overflow",
+    box(title = "Filter by Region", status = "primary", solidHeader = TRUE,
+      width = NULL, height = '580px', class = "box-overflow-y",
+      actionButton(ns('rgnSelectAll'), 'Select all regions'),
+      br(),
+
+      bsCollapse(open="Latin America and Caribbean",
+        bsCollapsePanel(title='Latin America and Caribbean', style="primary",
+          actionButton(ns('rgns2All'), 'Deselect All'),
+          checkboxGroupInput(ns('tvRgns2'), NULL, choices=lac.rgns, selected = lac.rgns)
+        ),
+        bsCollapsePanel(title="Africa",
+          actionButton(ns('rgns1All'), 'Select All'),
+          checkboxGroupInput(ns('tvRgns1'), NULL, choices=africa.rgns)
+        ),
+        bsCollapsePanel(title="Asia-Europe",
+          actionButton(ns('rgns4All'), 'Select All'),
+          checkboxGroupInput(ns('tvRgns4'), NULL, choices=europe.rgns)
+        ),
+        bsCollapsePanel(title="Asia-Pacific",
+          actionButton(ns('rgns5All'), 'Select All'),
+          checkboxGroupInput(ns('tvRgns5'), NULL, choices=asiapac.rgns)
+        ),
+        bsCollapsePanel(title="North America",
+          actionButton(ns('rgns3All'), 'Select All'),
+          checkboxGroupInput(ns('tvRgns3'), NULL, choices=north.america.rgns)
+        )
+      ) #bsCollapse
+    ) # box
+  ) # div
+} # regionFilterInput
+
+
+regionFilter <- function(input, output, session) {
+
+  # When a 'select all' or 'deselect all' button is pressed, update region
+  # filtering checkboxes
+  observeEvent(input$rgns1All, {
+    updateRegionFilter(session, 'rgns1All', 'tvRgns1', input$rgns1All%%2 == 0, africa.rgns)
+  })
+  observeEvent(input$rgns2All, {
+    updateRegionFilter(session, 'rgns2All', 'tvRgns2', input$rgns2All%%2 == 1, lac.rgns) # starts with all checked
+  })
+  observeEvent(input$rgns3All, {
+    updateRegionFilter(session, 'rgns3All', 'tvRgns3', input$rgns3All%%2 == 0, north.america.rgns)
+  })
+  observeEvent(input$rgns4All, {
+    updateRegionFilter(session, 'rgns4All', 'tvRgns4', input$rgns4All%%2 == 0, europe.rgns)
+  })
+  observeEvent(input$rgns5All, {
+    updateRegionFilter(session, 'rgns5All', 'tvRgns5', input$rgns5All%%2 == 0, asiapac.rgns)
+  })
+  observeEvent(input$rgnSelectAll, {
+    # Select all
+    sAll <- input$rgnSelectAll%%2 == 0
+    updateRegionFilter(session, 'rgnSelectAll', 'tvRgns1', sAll, africa.rgns)
+    updateRegionFilter(session, 'rgnSelectAll', 'tvRgns2', sAll, lac.rgns)
+    updateRegionFilter(session, 'rgnSelectAll', 'tvRgns3', sAll, north.america.rgns)
+    updateRegionFilter(session, 'rgnSelectAll', 'tvRgns4', sAll, europe.rgns)
+    updateRegionFilter(session, 'rgnSelectAll', 'tvRgns5', sAll, asiapac.rgns)
+  })
+  return(reactive({c(input$tvRgns1, input$tvRgns2, input$tvRgns3, input$tvRgns4, input$tvRgns5)}))
+}
+
+#' Update the checkbox filters when select/deselect all button is pressed
+#'
+#' @param session The main session.
+#' @param btnId The id of the actionButton that was pressed.
+#' @param groupId The id of the checkboxGroupInput to act on.
+#' @param selectAll If TRUE, select all checkboxes in the group defined by
+#'   groupId. If not TRUE then deselect.
+#' @param choices The labels of the checkboxes.
+#' @export
+updateRegionFilter <- function(session, btnId, groupId, selectAll, choices) {
+  if(selectAll) {
+    updateCheckboxGroupInput(session, groupId, choices = choices)
+    newText <- "Select all"
+  }
+  else {
+    updateCheckboxGroupInput(session, groupId, choices = choices, selected = choices)
+    newText <- "Deselect all"
+  }
+
+  updateCheckboxInput(session, btnId, label = newText)
 }

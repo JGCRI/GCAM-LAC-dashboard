@@ -146,27 +146,6 @@ getQuerySubcategories <- function(prj, scenario, query)
     }
 }
 
-#' Update the checkbox filters when select/deselect all button is pressed
-#'
-#' @param session The main session.
-#' @param btnId The id of the actionButton that was pressed.
-#' @param groupId The id of the checkboxGroupInput to act on.
-#' @param selectAll If TRUE, select all checkboxes in the group defined by
-#'   groupId. If not TRUE then deselect.
-#' @param choices The labels of the checkboxes.
-#' @export
-updateRegionFilter <- function(session, btnId, groupId, selectAll, choices) {
-  if(selectAll) {
-    updateCheckboxGroupInput(session, groupId, choices = choices)
-    newText <- "Select all"
-  }
-  else {
-    updateCheckboxGroupInput(session, groupId, choices = choices, selected = choices)
-    newText <- "Deselect all"
-  }
-
-  updateCheckboxInput(session, btnId, label = newText)
-}
 
 ### Helpers for making plots
 
@@ -526,7 +505,7 @@ summarize.unit <- function(unitcol)
 #' @param subcatvar  Variable to use for subcategories in the plot
 #' @param rgns  Regions to filter to
 #' @importFrom magrittr "%>%"
-#' @importFrom ggplot2 ggplot aes_string geom_bar theme_minimal ylab scale_fill_manual
+#' @importFrom ggplot2 ggplot aes_string geom_bar theme ylab scale_fill_manual
 #' @export
 plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
 {
@@ -551,9 +530,11 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
                                filtervar, rgns)
 
         plt <- ggplot(pltdata, aes_string('year','value', fill=subcatvar)) +
-          geom_bar(stat='identity') + ggplot2::theme(axis.text=ggplot2::element_text(size=12),
-                                                     axis.title=ggplot2::element_text(size=13,face="bold")) +
-          ylab(pltdata$Units)
+               geom_bar(stat='identity') +
+               theme(axis.text=ggplot2::element_text(size=12),
+                     axis.title=ggplot2::element_text(size=13,face="bold"),
+                     legend.title=ggplot2::element_blank()) +
+               ylab(pltdata$Units)
 
         # Get a color scheme for the subcategories
         if(!is.null(subcatvar)) {

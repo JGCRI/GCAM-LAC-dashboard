@@ -125,33 +125,6 @@ shinyServer(function(input, output, session) {
         mapZoom(0)
     })
 
-    ## When a 'select all' or 'deselect all' button is pressed, update region
-    ## filtering checkboxes
-    observeEvent(input$rgns1All, {
-      updateRegionFilter(session, 'rgns1All', 'tvRgns1', input$rgns1All%%2 == 0, africa.rgns)
-    })
-    observeEvent(input$rgns2All, {
-      updateRegionFilter(session, 'rgns2All', 'tvRgns2', input$rgns2All%%2 == 1, lac.rgns) # starts with all checked
-    })
-    observeEvent(input$rgns3All, {
-      updateRegionFilter(session, 'rgns3All', 'tvRgns3', input$rgns3All%%2 == 0, north.america.rgns)
-    })
-    observeEvent(input$rgns4All, {
-      updateRegionFilter(session, 'rgns4All', 'tvRgns4', input$rgns4All%%2 == 0, europe.rgns)
-    })
-    observeEvent(input$rgns5All, {
-      updateRegionFilter(session, 'rgns5All', 'tvRgns5', input$rgns5All%%2 == 0, asiapac.rgns)
-    })
-    observeEvent(input$rgnSelectAll, {
-      # Select all
-      sAll <- input$rgnSelectAll%%2 == 0
-      updateRegionFilter(session, 'rgnSelectAll', 'tvRgns1', sAll, africa.rgns)
-      updateRegionFilter(session, 'rgnSelectAll', 'tvRgns2', sAll, lac.rgns)
-      updateRegionFilter(session, 'rgnSelectAll', 'tvRgns3', sAll, north.america.rgns)
-      updateRegionFilter(session, 'rgnSelectAll', 'tvRgns4', sAll, europe.rgns)
-      updateRegionFilter(session, 'rgnSelectAll', 'tvRgns5', sAll, asiapac.rgns)
-    })
-
     observeEvent(input$zoomIn, { if(mapZoom() > -30) mapZoom(mapZoom() - 3) })
     observeEvent(input$zoomOut, { if(mapZoom() < 30) mapZoom(mapZoom() + 3) })
 
@@ -224,6 +197,8 @@ shinyServer(function(input, output, session) {
       plotTime(prj, query, scen, NULL, "region", regions)
     })
 
+    region.filter <- callModule(regionFilter, "tpFilters")
+
     output$timePlot <- renderPlot({
         prj <- isolate(files[[input$fileList]])
         scen <- input$scenarioInput
@@ -235,9 +210,6 @@ shinyServer(function(input, output, session) {
           return(default.plot("Scenarios are the same"))
 
         tvSubcatVar <- input$tvSubcatVar
-
-        region.filter <- c(input$tvRgns1, input$tvRgns2, input$tvRgns3,
-                           input$tvRgns4, input$tvRgns5)
 
         # If the scenario has changed, the value of the query selector may not
         # be valid anymore.
@@ -262,7 +234,7 @@ shinyServer(function(input, output, session) {
         output$tableTitle <- renderText(tableTitle)
 
         # Update the plot and the time plot data frame (used for the hover)
-        plt <- plotTime(prj, query, scen, diffscen, tvSubcatVar, region.filter)
+        plt <- plotTime(prj, query, scen, diffscen, tvSubcatVar, region.filter())
         if(!is.null(plt$plotdata)) {
           timePlot.df(plt$plotdata)
           session$sendCustomMessage(type = 'enable-element', message = 'triggerTableModal')
