@@ -1,7 +1,7 @@
 library(shiny)
 library(rgcam)
 library(magrittr)
-library(GCAMdashboard)
+library(gcamlacdash)
 
 options(shiny.maxRequestSize=512*1024^2) # 512 MB max file upload size.
 
@@ -40,7 +40,6 @@ shinyServer(function(input, output, session) {
         project.filename <- fileinfo$name
         files[[project.filename]] <<- project.data
         updateSelectInput(session, 'fileList', choices=names(files), selected=project.filename)
-
       }
     })
 

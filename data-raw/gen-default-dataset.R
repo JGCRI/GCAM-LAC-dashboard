@@ -33,13 +33,13 @@ read.gcam <- function(filename, data.units=NULL, scenario=NULL) {
 
 hydro1 <- system.file('extdata/hydrology',
                       'hydro_scarcity-index_REF_IPSL_2010_2050_2090.csv',
-                      package = "GCAMdashboard")
+                      package = "gcamlacdash")
 hydro2 <- system.file('extdata/hydrology',
                       'hydro_q_mm-per-mth_rollmean20yr_ipsl-cm5a-lr_hist-rcp8p5_2010_2050_2090.csv',
-                      package = "GCAMdashboard")
+                      package = "gcamlacdash")
 hydro3 <- system.file('extdata/hydrology',
                       'hydro_demand_mm-per-yr_ipsl_cm5a-lr_hist-rcp8p5_2010_2050_2090.csv',
-                      package = "GCAMdashboard")
+                      package = "gcamlacdash")
 
 scar <- read.gcam(hydro1, data.units="water scarcity index", scenario="Reference")
 scar <- dplyr::filter(scar, scar$value > 0 & scar$value < 1) # invalid data vals
@@ -60,7 +60,7 @@ waterData <- addQueryTable(waterData, dmnd, "Water Demand")
 # for (i in c("SSP1", "SSP2", "SSP3", "SSP4", "SSP5")) {
 #   ssp <- addScenario(conn, 'inst/extdata/ssp.dat', i, '../IDB/SSP/ssp_water_latin_america_queries.xml')
 # }
-sspData <- loadProject(system.file('extdata/ssp.dat', package = "GCAMdashboard"))
+sspData <- loadProject(system.file('extdata/ssp.dat', package = "gcamlacdash"))
 
 
 # This dataset includes queries for a reference scenario and a scenario
@@ -69,7 +69,7 @@ sspData <- loadProject(system.file('extdata/ssp.dat', package = "GCAMdashboard")
 #
 # conn <- localDBConn('../IDB', 'idb_basexdb')
 # dashboard <- addScenario(conn, 'inst/extdata/dashboard.dat', '../IDB/SSP/ssp_water_latin_america_queries.xml')
-defaultData <- loadProject(system.file('extdata/dashboard.dat', package = "GCAMdashboard"))
+defaultData <- loadProject(system.file('extdata/dashboard.dat', package = "gcamlacdash"))
 
 
 devtools::use_data(waterData, sspData, defaultData)

@@ -112,7 +112,7 @@ getQueryYears <- function(prj, scenario, query)
         c(2005, 2100)
     }
     else {
-        range(getQuery(prj, query, scenario)["year"])
+        range(as.integer(getQuery(prj, query, scenario)$year))
     }
 }
 

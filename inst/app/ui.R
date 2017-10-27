@@ -1,9 +1,8 @@
-
 library(shiny)
 library(shinyBS)
 library(shinydashboard)
 library(shinythemes)
-library(GCAMdashboard)
+library(gcamlacdash)
 
 
 shinyUI(fluidPage(theme="style.css",

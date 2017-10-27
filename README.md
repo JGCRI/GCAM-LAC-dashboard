@@ -17,7 +17,7 @@ it already.  You can do that by entering:
 ```R
 install.packages('devtools')
 ```
-Next, install the GCAMdashboard package:
+Next, install the gcamlacdash package:
 ```R
 devtools::install_github('JGCRI/GCAM-LAC-dashboard')
 ```
@@ -27,7 +27,7 @@ Dashboard needs to operate for you automatically.
 ## Usage
 
 To run the GCAM Dashboard, from the R command console enter
-`GCAMdashboard::run()`.
+`gcamlacdash::run()`.
 
 ### Uploading data
 

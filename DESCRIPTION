@@ -1,7 +1,9 @@
-Package: GCAMdashboard
+Package: gcamlacdash
 Title: An Interactive Dashboard for Exploring GCAM Scenario Data
 Version: 0.2.0
-Authors@R: person("Robert", "Link", email = "robert.link@pnnl.gov", role = c("aut", "cre"))
+Authors@R: c(
+    person("Robert", "Link", email = "robert.link@pnnl.gov", role = c("aut", "cre")),
+    person("Caleb", "Braun", email = "caleb.braun@pnnl.gov", role = c("aut")))
 Description: This package provides a Shiny app for getting a quick and easy look at GCAM data.
 Depends: R (>= 3.3.3)
 Imports: 
