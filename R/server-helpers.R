@@ -4,7 +4,7 @@ tag.noscen <- '->No scenarios selected<-'     # placeholder when no scenario sel
 
 
 
-# Project and query helpers -----------------------------------------------
+# Project helper functions ------------------------------------------------
 
 #' Convert all queries in the project from wideform to long form
 #'
@@ -111,6 +111,21 @@ uiStateValid <- function(prj, scenario, query)
     else {
         FALSE
     }
+}
+
+
+# Query helper functions --------------------------------------------------
+
+#' Convert a data frame to wideform
+#'
+#' Takes a data frame with a 'year' column and creates a new column for each
+#' distinct year.
+#' @param data Data frame to convert, likely the output of a query.
+#' @export
+convertToWideform <- function(data) {
+
+  if(!'year' %in% names(data)) return(data)
+  tidyr::spread(data, year, value)
 }
 
 #' Indicate whether a query is a gridded data set
@@ -310,7 +325,7 @@ determineMapset <- function(prjdata, pltscen, query)
 }
 
 
-# Data wrangling ----------------------------------------------------------
+# Plot data processing ----------------------------------------------------
 
 #' Filter out data that cannot be plotted
 #'

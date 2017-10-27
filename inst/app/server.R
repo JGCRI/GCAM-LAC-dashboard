@@ -227,7 +227,12 @@ shinyServer(function(input, output, session) {
            tvSubcatVar <- 'none'
         }
 
-        output$timeTable <- renderDataTable({ timePlot.df() })
+        output$timeTable <- renderDataTable(options = list(scrollX = TRUE), {
+          if(tvSubcatVar == 'none')
+            timePlot.df()
+          else
+            convertToWideform(timePlot.df())
+        })
 
         # Set the data table title
         tableTitle <- query
@@ -251,7 +256,9 @@ shinyServer(function(input, output, session) {
         paste(input$plotQuery, ".csv", sep = "")
       },
       content = function(file) {
-        write.csv(timePlot.df(), file, row.names = FALSE)
+        downloadData <- getQuery(files[[input$fileList]], input$plotQuery) %>%
+                        convertToWideform()
+        write.csv(downloadData, file, row.names = FALSE)
       }
     )
 
