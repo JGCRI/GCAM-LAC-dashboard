@@ -2,6 +2,32 @@
 
 tag.noscen <- '->No scenarios selected<-'     # placeholder when no scenario selected
 
+
+
+# Project and query helpers -----------------------------------------------
+
+#' Convert all queries in the project from wideform to long form
+#'
+#' Assumes that a wideform table has no 'year' column and several Xyear columns.
+#' @param projData Project data to convert
+#' @export
+convertProjectToLongform <- function(projData) {
+  for(q in listQueries(projData)) {
+    qtable <- getQuery(projData, q)
+
+    # Assume that if a query has a year column, the data is already longform
+    if('year' %in% names(qtable)) {
+      break
+    } else {
+      ycols <- grep('^X[12]\\d{3}$', names(qtable))
+      names(qtable)[ycols] <- substring(names(qtable)[ycols], 2) # remove the X
+      qtable <- tidyr::gather(qtable, 'year', 'value', ycols, convert = T)
+    }
+    projData <- addQueryTable(projData, qtable, q, clobber = T, saveProj = F)
+  }
+  projData
+}
+
 #' Get the scenarios in the project for display
 #'
 #' Returns a place holder string if no project has been loaded yet.
@@ -147,7 +173,8 @@ getQuerySubcategories <- function(prj, scenario, query)
 }
 
 
-### Helpers for making plots
+
+# Helpers for building plots ----------------------------------------------
 
 #' Plot a default panel
 #'
@@ -282,7 +309,8 @@ determineMapset <- function(prjdata, pltscen, query)
     }
 }
 
-### Data wrangling
+
+# Data wrangling ----------------------------------------------------------
 
 #' Filter out data that cannot be plotted
 #'
@@ -303,6 +331,23 @@ cleanPlotData <- function(plotData)
                               levels=c(names(gcammaptools::gcam32_colors), '0'),
                               ordered=TRUE) # convert to ordered factor
   }
+
+  # Convert the data to long form if it isn't already
+  if(!'year' %in% names(plotData)) {
+    ycols <- grep('^X?[12]\\d{3}$', names(plotData))
+    names(plotData)[ycols] <- substring(names(plotData)[ycols], 2) # remove the X
+    plotData <- tidyr::gather(plotData, 'year', 'value', ycols, convert = T)
+  }
+
+  # Ensure spatial data column names are correct
+  if ('longitude' %in% names(plotData))
+    plotData <- dplyr::rename(plotData, lon=longitude)
+  if ('latitude' %in% names(plotData))
+    plotData <- dplyr::rename(plotData, lat=latitude)
+
+  # Make sure the data's year column is numeric
+  if(class(plotData$year) != "integer")
+    plotData$year <- as.integer(plotData$year)
 
   plotData
 }
@@ -424,6 +469,9 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
     tp$Units <- summarize.unit(tp$Units)
     tp
 }
+
+
+# Plot style and construction ---------------------------------------------
 
 #' Get projection parameters for the pre-defined projections
 #'

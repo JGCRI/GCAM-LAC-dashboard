@@ -37,6 +37,8 @@ shinyServer(function(input, output, session) {
       fileinfo <- input$projectFile
       if(!is.null(input$projectFile)) {
         project.data <- loadProject(fileinfo$datapath)  # should be only one file
+        project.data <- convertProjectToLongform(project.data)
+
         project.filename <- fileinfo$name
         files[[project.filename]] <<- project.data
         updateSelectInput(session, 'fileList', choices=names(files), selected=project.filename)

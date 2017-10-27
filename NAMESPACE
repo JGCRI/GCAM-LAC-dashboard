@@ -2,6 +2,7 @@
 
 export(africa.rgns)
 export(asiapac.rgns)
+export(convertProjectToLongform)
 export(default.plot)
 export(europe.rgns)
 export(getPlotData)
