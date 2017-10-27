@@ -206,8 +206,10 @@ shinyServer(function(input, output, session) {
         if(!uiStateValid(prj, scen, query)) return(default.plot())
 
         diffscen <- if(input$diffCheck) input$diffScenario else NULL
-        if(!is.null(diffscen) && diffscen == scen)
+        if(!is.null(diffscen) && diffscen == scen) {
+          timePlot.df(NULL)
           return(default.plot("Scenarios are the same"))
+        }
 
         tvSubcatVar <- input$tvSubcatVar
 
@@ -235,12 +237,10 @@ shinyServer(function(input, output, session) {
 
         # Update the plot and the time plot data frame (used for the hover)
         plt <- plotTime(prj, query, scen, diffscen, tvSubcatVar, region.filter())
-        if(!is.null(plt$plotdata)) {
-          timePlot.df(plt$plotdata)
-          session$sendCustomMessage(type = 'enable-element', message = 'triggerTableModal')
-        } else {
-          session$sendCustomMessage(type = 'disable-element', message = 'triggerTableModal')
-        }
+        t <- if(is.null(plt$plotdata)) 'dis' else 'en'
+        session$sendCustomMessage(type = paste0(t, 'able-element'),
+                                  message = 'triggerTableModal')
+        timePlot.df(plt$plotdata)
         plt$plot
     })
 
@@ -254,75 +254,9 @@ shinyServer(function(input, output, session) {
       }
     )
 
-    output$hoverInfo <- renderUI({
-      hover <- input$exploreHover
-      df <- timePlot.df()
-      subcat <- input$tvSubcatVar
-
-      # Don't attempt hover if tab isn't selected.
-      if(input$sidebar != 'explore') return(NULL)
-      if(is.null(hover)) return(NULL)
-      if(is.null(df)) return(NULL)
-
-      # Detect the year of the bar that is being hovered over
-      hoverYear <- df[which.min(abs(df$year - hover$x)), 'year'][[1]]
-      df <- dplyr::filter(df, year==hoverYear)
-
-      # If there's a subcategory, we also need to find which category is being
-      # hovered over
-      if(subcat != 'none') {
-
-        y <- hover$y
-        if(y < 0) {
-          df <- df[which(df$value < 0), ]
-          df$value <- abs(df$value)
-          y <- abs(y)
-        } else {
-          df <- df[which(df$value > 0), ]
-        }
-
-        # Find which segment of the stacked bar the hover is closest to
-        stackedSum <- sum(df$value) - cumsum(df$value)
-        index <- which(stackedSum - y < 0)[1]
-
-        # Don't show hover if position is above the sum of positive values or
-        # below the sum of negative values.
-        if(y > sum(df$value)) return(NULL) # Hover is above the bar
-        if(is.na(index)) return(NULL) # Hover is below the bar
-
-        # Get the region name and value for display
-        val <- paste(df[[subcat]][index],
-                     round(df$value[index], digits=1) * sign(hover$y),
-                     sep=': ')
-
-      } else {
-        val <- df[which.min(abs(df$year - hover$x)), 'value'] %>%
-               round(digits=1)
-        if(hover$y > val) return(NULL)
-        val <- as.character(val)
-      }
-
-      # calculate point position INSIDE the image as percent of total dimensions
-      # from left (horizontal) and from top (vertical)
-      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
-      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
-
-      # calculate distance from left and bottom side of the picture in pixels
-      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
-      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
-
-      left <- round(left_px) - 30
-      top <- round(top_px) - 30
-      if(left < 0 || top < 0) return(NULL)
-
-      # actual tooltip created as absolutePanel
-      absolutePanel(
-        class = 'hoverPanel',
-        left = paste0(left, "px"),
-        top = paste0(top, "px"),
-        p(HTML(val)))
-
-    })
+    # Add a hover over the time plot bar chart
+    callModule(barChartHover, "timePlot", reactive(input$exploreHover),
+               reactive(timePlot.df()), reactive(input$tvSubcatVar))
 
     callModule(landingPage, "dashboard", files[[defaultProj]])
 

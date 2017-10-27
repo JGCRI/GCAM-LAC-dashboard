@@ -110,7 +110,7 @@ shinyUI(fluidPage(theme="style.css",
               box(status = "warning", width = NULL,
                 plotOutput('timePlot', height='450px',
                            hover = hoverOpts("exploreHover", delay = 50, delayType = 'throttle')),
-                uiOutput('hoverInfo')
+                barChartHoverUI("timePlot")
               ),
               box(title=NULL, status = "primary", width = NULL,
                 fluidRow(
