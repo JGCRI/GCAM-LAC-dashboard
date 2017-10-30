@@ -99,10 +99,12 @@ shinyServer(function(input, output, session) {
         query <- input$plotQuery
 
         ## Assumes that a particular query has the same columns in all scenarios
-        catvars <- getQuerySubcategories(prj, scen, query)
-        prevSubcat <- if(input$tvSubcatVar %in% catvars) input$tvSubcatVar else 'none'
-        updateSelectInput(session, 'tvSubcatVar', choices=c('none', catvars),
-                          selected=prevSubcat)
+        if(uiStateValid(prj, scen, query)) {
+          catvars <- getQuerySubcategories(prj, scen, query)
+          selected <- getNewSubcategory(prj, scen, query, input$tvSubcatVar)
+          updateSelectInput(session, 'tvSubcatVar', choices=c('none', catvars),
+                            selected=selected)
+        }
     })
 
     ## When a new map query is selected, update limits on the time slider
@@ -226,10 +228,8 @@ shinyServer(function(input, output, session) {
         }
 
         # If the query has changed, the value of the subcategory selector may
-        # not be valid anymore. Change it to none.
-        if(!tvSubcatVar %in% names(getQuery(prj, query, scen))) {
-           tvSubcatVar <- 'none'
-        }
+        # not be valid anymore. Change it to the new one.
+        tvSubcatVar <- getNewSubcategory(prj, scen, query, input$tvSubcatVar)
 
         output$timeTable <- renderDataTable(options = list(scrollX = TRUE), {
           if(tvSubcatVar == 'none')

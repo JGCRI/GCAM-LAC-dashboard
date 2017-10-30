@@ -95,7 +95,7 @@ shinyUI(fluidPage(theme="style.css",
                 fluidRow(
                   column(width = 7,
                          selectInput('tvSubcatVar', 'Break totals into subcategories by:',
-                                     choices=c('none','region'))
+                                     choices=list())
                   ),
                   column(width = 5,
                          div(class="table-title", align="right", "View as Table",

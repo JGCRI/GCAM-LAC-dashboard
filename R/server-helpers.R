@@ -173,20 +173,61 @@ getQuerySubcategories <- function(prj, scenario, query)
       NULL
     }
     else {
-      querydata <- getQuery(prj, query, scenario)
-      querycols <- names(querydata)
-      ignorecols <- c('scenario', 'Units', 'year', 'value')
-
-      # Remove subcategories that only have one unique element
-      numcats <- sapply(querydata[, !querycols %in% ignorecols], function(x) {
-        length(unique(x))
-      })
-      ignorecols <- c(ignorecols, names(which(numcats == 1)))
-
-      catvars <- querycols[!querycols %in% ignorecols]
+      numcats <- countUniqueSubcatValues(prj, scenario, query)
+      names(which(numcats != 1))
     }
 }
 
+#' Get the subcategory to show for a new query
+#'
+#' A subcategory is defined as column that doesn't define the scenario, year,
+#' units, or value. When a new query is selected, the new subcategory should be
+#' the same as one in the previous query if it exists. If the new query does not
+#' have that subcategory, a new one is chosen based on number of unique values.
+#' If the subcategory contains only one unique element, it is not included.
+#'
+#' @param prj Project data structure.
+#' @param scenario Name of the scenario.
+#' @param query Name of the query.
+#' @param oldSubcategory The subcategory for the previous query.
+#' @export
+getNewSubcategory <- function(prj, scenario, query, oldSubcategory)
+{
+  if(!uiStateValid(prj, scenario, query)) {
+    NULL
+  }
+  else {
+    numcats <- countUniqueSubcatValues(prj, scenario, query)
+
+    # A good choice will have more than 2 elements, but not too many
+    choices <- numcats[which(numcats > 2)]
+    if(oldSubcategory %in% names(numcats) || oldSubcategory == 'none') {
+      oldSubcategory
+    }
+    else if(length(choices) == 0) {
+      'none'
+    }
+    else {
+      names(which(choices == min(choices)))[1]
+    }
+  }
+}
+
+#' Counts the number of unique values for a query subcategory
+#'
+#' @param prj Project data structure.
+#' @param scenario Name of the scenario.
+#' @param query Name of the query.
+countUniqueSubcatValues <- function(prj, scenario, query)
+{
+  querydata <- getQuery(prj, query, scenario)
+  querycols <- names(querydata)
+  ignorecols <- c('scenario', 'Units', 'year', 'value')
+
+  sapply(querydata[, !querycols %in% ignorecols], function(x) {
+    length(unique(x))
+  })
+}
 
 
 # Helpers for building plots ----------------------------------------------
