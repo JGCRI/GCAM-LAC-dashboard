@@ -26,13 +26,13 @@ landingPageUI <- function(id) {
     # Tabbed box with population and GDP plots in middle
     column(3, align = "left",
 
-      h4("Population and GDP"),
+      h4("Agriculture and Biomass"),
       tabBox(id = ns("popTabset"), title = NULL, width = NULL, side = 'left',
-        tabPanel("Population", value = "Population by region", plotOutput(ns("popPlot"), height='500px')),
-        tabPanel("GDP", value = "GDP by region", plotOutput(ns("gdpPlot"), height='500px'))
+        tabPanel("Agriculture", value = "Agriculture production", plotOutput(ns("landPlot1"), height='500px')),
+        tabPanel("Biomass", value = "Biomass production", plotOutput(ns("landPlot2"), height='500px'))
       ),
 
-      sliderInput(ns('popYear'), NULL, min=2005, max=2100, step=5, value=2050,
+      sliderInput(ns('popYear'), NULL, min=2005, max=2050, step=5, value=2020,
                   sep='', animate = F)
     ),
 
@@ -80,7 +80,7 @@ landingPage <- function(input, output, session, data) {
   })
 
   # Pop and GDP plots
-  lapply(c("popPlot", "gdpPlot"), function(outputID) {
+  lapply(c("landPlot1", "landPlot2"), function(outputID) {
     output[[outputID]] <- renderPlot({
       query <- input$popTabset
       pscen <- "REFlu_e6_mex"

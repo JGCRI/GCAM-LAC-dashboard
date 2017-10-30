@@ -7,7 +7,7 @@ library(gcamlacdash)
 
 shinyUI(fluidPage(theme="style.css",
   dashboardPage(
-    dashboardHeader(title = 'GCAM Latin America',
+    dashboardHeader(title = 'GCAM Dashboard',
                     # by making an li element with class dropdown we can trick
                     # it into accepting our link
                     tags$li(span("Project File"), class = "dropdown fileSelectLabel"),
