@@ -77,13 +77,6 @@ shinyServer(function(input, output, session) {
 
       queries <- getScenarioQueries(prj, qscenarios)
 
-      ## Filter out grid queries, if requested.
-      if(!input$inclSpatial && input$sidebar != "maps") {
-        nonGrid <- sapply(queries,
-                          function(q) {!isGrid(prj, input$scenarioInput, q)})
-        queries <- queries[nonGrid]
-      }
-
       ## Preserve selected value if possible, else allow update to reset selection
       sel <- input$plotQuery
       if(!(sel %in% queries)) sel <- NULL

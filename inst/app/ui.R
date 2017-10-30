@@ -127,8 +127,7 @@ shinyUI(fluidPage(theme="style.css",
 
             column(width = 4,
               box(status = "primary", width = NULL,
-                  selectInput('plotQuery', label="Plot Variable", choices=list()),
-                  checkboxInput('inclSpatial', 'Include Spatial Queries', value=TRUE)
+                  selectInput('plotQuery', label="Plot Variable", choices=list())
               ),
               regionFilterInput("tpFilters")
             )
