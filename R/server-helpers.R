@@ -93,8 +93,8 @@ getScenarioQueries <- function(projData, scenarios, concat=NULL)
 #' @export
 uiStateValid <- function(prj, scenario, query)
 {
-    valid.values <- !(is.null(prj) || scenario == '' || query == '' ||
-                          query==tag.noscen)
+    valid.values <- !(is.null(prj) || is.null(scenario) || scenario == '' ||
+                                      query==tag.noscen ||  query == '')
     if(valid.values) {
         prjscens <- listScenarios(prj)
         valid.scen <- all(scenario %in% prjscens)
@@ -222,11 +222,7 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map = N
     if(is.null(prjdata)) {
         default.plot()
     }
-    else if(is.null(pltscen) ||
-            !pltscen %in% listScenarios(prjdata) ||
-            (!is.null(diffscen) && pltscen==diffscen) ||
-            query==tag.noscen) {
-        ## These condition(s) all indicate a transitional state, so don't do anything.
+    else if(!uiStateValid(prjdata, pltscen, query)) {
         ggplot2::last_plot()
     }
     else {
@@ -243,8 +239,11 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map = N
             key <- if(mapset==gcammaptools::basin235) 'basin' else 'region'
         }
 
-        pltdata <- getPlotData(prjdata, query, pltscen, diffscen, key,
-                               yearRange = c(year, year))
+        # This filters out all other countries for the LAC extent
+        rgns <- if(projselect == "lac") lac.rgns else NULL
+
+        pltdata <- getPlotData(prjdata, query, pltscen, diffscen, key, "region",
+                               rgns, yearRange = c(year, year))
         if (is.null(pltdata)) return(default.plot())
 
         ## map plot is expecting the column coresponding to the map locations to
@@ -281,7 +280,7 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map = N
                              legend = TRUE, gcam_df = pltdata, gcam_key = 'id',
                              mapdata_key = 'region_id', zoom = map.params$zoom) +
               scale_fill_gradientn(colors = pal, na.value = gray(0.75),
-                                   name = query)
+                                   name = query, limits = mapLimits)
 
         }
         else if(isGrid(prjdata, pltscen, query)) {
