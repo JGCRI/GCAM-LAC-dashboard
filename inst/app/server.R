@@ -16,9 +16,13 @@ shinyServer(function(input, output, session) {
 
     # Data that should show on load. The default data come from the objects
     # defaultData, waterData, and sspData (in the data directory).
-    defaultProj <- 'Default Project'
-    files <- list() # files is the master list of project files
-    files[[defaultProj]] <- defaultData
+    defaultProj <- 'GCAM LAC'
+    hydroProj <- 'Water'
+    sspProj <- 'SSP'
+
+    # files is the master list of project files
+    files <- setNames(list(defaultData, waterData, sspData),
+                      c(defaultProj, hydroProj, sspProj))
 
     # To access the current project file, refer to the select in the upper right
     updateSelectInput(session, 'fileList', choices=names(files))
@@ -268,7 +272,7 @@ shinyServer(function(input, output, session) {
 
     callModule(landingPage, "dashboard", files[[defaultProj]])
 
-    callModule(scenarioComparison, "ssp")
+    callModule(scenarioComparison, "ssp", reactive(files[[input$fileList]]))
 
     initComplete(TRUE)
 

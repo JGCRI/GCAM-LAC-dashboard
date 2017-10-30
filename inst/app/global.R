@@ -118,12 +118,10 @@ scenarioComparisonUI <- function(id) {
     h3("Compare Scenarios"),
 
     fluidRow(
-      column(3, selectInput(ns("sspCategory"), label = NULL,
-                            choices = c("Population"), selected = "Population")),
+      column(3, selectInput(ns("sspCategory"), label = NULL, choices = list())),
       column(2, h5("Selected Scenarios:", align = "right")),
-      column(3, selectInput(ns("sspChoices"), label = NULL,
-                            c("SSP1", "SSP2", "SSP3", "SSP4", "SSP5"),
-                            selected = c("SSP1", "SSP2"), multiple = TRUE))
+      column(3, selectInput(ns("sspChoices"), label = NULL, choices = list(),
+                            multiple = TRUE))
     ),
 
     box(solidHeader = F, width = 12,
@@ -132,11 +130,21 @@ scenarioComparisonUI <- function(id) {
   )
 }
 
-scenarioComparison <- function(input, output, session) {
+scenarioComparison <- function(input, output, session, data) {
 
-  # Initialize data for the scenario comparison tab
-  updateSelectInput(session, 'sspCategory', choices=listQueries(sspData),
-                    selected = "Population")
+  # When a new project is selected, update available scenarios
+  observe({
+    if(!is.null(data())) {
+      scens <- listScenarios(data())
+      updateSelectInput(session, 'sspChoices', choices = scens, selected = scens[1])
+    }
+  })
+
+  observe({
+    prj <- data()
+    queries <- getScenarioQueries(prj, input$sspChoices)
+    updateSelectInput(session, 'sspCategory', choices = queries, selected = queries[1])
+  })
 
   output$sspTitle <- renderUI({
     h3(input$sspCategory, align = "center")
@@ -145,8 +153,13 @@ scenarioComparison <- function(input, output, session) {
   output$sspComparison <- renderPlot({
     query <- input$sspCategory
     scens <- input$sspChoices
-    subcatvar <- tail(getQuerySubcategories(sspData, scens[1], query), n=1)
-    plotScenComparison(sspData, query, scens, NULL, subcatvar, lac.rgns)
+    if(!uiStateValid(data(), scens[1], query)) {
+      default.plot("No data")
+    }
+    else {
+      subcatvar <- tail(getQuerySubcategories(data(), scens[1], query), n=1)
+      plotScenComparison(data(), query, scens, NULL, subcatvar, lac.rgns)
+    }
   })
 }
 
