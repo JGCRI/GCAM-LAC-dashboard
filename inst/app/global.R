@@ -23,7 +23,7 @@ landingPageUI <- function(id) {
       )
     ),
 
-    # Tabbed box with population and GDP plots in middle
+    # Tabbed box with agriculture and biomass plots in middle
     column(3, align = "left",
 
       h4("Agriculture and Biomass"),
@@ -79,10 +79,10 @@ landingPage <- function(input, output, session, data) {
     })
   })
 
-  # Pop and GDP plots
+  # Agriculture and biomass maps
   lapply(c("landPlot1", "landPlot2"), function(outputID) {
     output[[outputID]] <- renderPlot({
-      query <- input$popTabset
+      query <- if(outputID == "landPlot1") "Agriculture production" else "Biomass production"
       pscen <- "REFlu_e6_mex"
       year <- input$popYear
       plotMap(data, query, pscen, NULL, "lac", year)

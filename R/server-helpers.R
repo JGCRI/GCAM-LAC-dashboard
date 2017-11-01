@@ -1,7 +1,7 @@
 ### Helper functions for the server side of the app.
 
 tag.noscen <- '->No scenarios selected<-'     # placeholder when no scenario selected
-
+mapCache <- new.env() # Use this environment for efficiently caching maps
 
 
 # Project helper functions ------------------------------------------------
@@ -250,9 +250,10 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map = N
         ggplot2::last_plot()
     }
     else {
-        scens <- paste(c(pltscen, diffscen), collapse=', ')
-
-        is.diff <- !is.null(diffscen)      # We'll do a couple of things differently for a diff plot
+        # Check the cache to see if we have created this plot before
+        cacheKey <- paste0(attr(prjdata, "file"), query, pltscen, diffscen,
+                           projselect, year, length(map), zoom)
+        if(!is.null(mapCache[[cacheKey]])) return(mapCache[[cacheKey]])
 
         mapset <- determineMapset(prjdata, pltscen, query)
 
@@ -266,9 +267,10 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map = N
         # This filters out all other countries for the LAC extent
         rgns <- if(projselect == "lac") lac.rgns else NULL
 
+        # Get the data and make sure it is valid
         pltdata <- getPlotData(prjdata, query, pltscen, diffscen, key, "region",
                                rgns, yearRange = c(year, year))
-        if (is.null(pltdata)) return(default.plot())
+        if(is.null(pltdata)) return(default.plot())
 
         ## map plot is expecting the column coresponding to the map locations to
         ## be called "region", so if we're working with water basins, we have to
@@ -276,11 +278,11 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map = N
         if(mapset==gcammaptools::basin235 && 'basin' %in% names(pltdata))
             pltdata$region <- pltdata$basin
 
-        mapLimits <- getMapLimits(pltdata, is.diff)
-        unitstr <- summarize.unit(pltdata$Units)
-
+        is.diff <- !is.null(diffscen)
+        map.pal <- getMapPalette(is.diff)   # color palette
+        map.limits <- getMapLimits(pltdata, is.diff)
         map.params <- getMapParams(projselect, zoom) # map projection, extent, and zoom
-        pal <- getMapPalette(is.diff)   # color palette
+        unitstr <- summarize.unit(pltdata$Units)
         datacol <- 'value' # name of the column with the data.
 
         # Determine whether to use basin or region map, and which level of detail
@@ -303,8 +305,8 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map = N
                              proj_type = map.params$proj_type, extent = map.params$ext,
                              legend = TRUE, gcam_df = pltdata, gcam_key = 'id',
                              mapdata_key = 'region_id', zoom = map.params$zoom) +
-              scale_fill_gradientn(colors = pal, na.value = gray(0.75),
-                                   name = query, limits = mapLimits)
+              scale_fill_gradientn(colors = map.pal, na.value = gray(0.75),
+                                   name = query, limits = map.limits)
 
         }
         else if(isGrid(prjdata, pltscen, query)) {
@@ -313,16 +315,18 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map = N
                                   proj_type = map.params$proj_type,
                                   proj = map.params$proj, extent = map.params$ext,
                                   zoom = map.params$zoom, legend = TRUE) +
-                # scale_fill_gradientn(colors = pal, name = unitstr)
+                # scale_fill_gradientn(colors = map.pal, name = unitstr)
                 ggplot2::scale_fill_distiller(palette = "Spectral")
         } else {
             plt <- default.plot(label.text = "No geographic data available for this query")
         }
         ## set up elements that are common to both kinds of plots here
-        plt + guides(fill=ggplot2::guide_colorbar(title=unitstr,
-                                                  barwidth=ggplot2::unit(3.1,'in'),
-                                                  title.position="bottom")) +
-          ggplot2::theme(legend.position="bottom", legend.title.align = 0.5)
+        plt <- plt + guides(fill=ggplot2::guide_colorbar(title=unitstr,
+                                                         barwidth=ggplot2::unit(3.1,'in'),
+                                                         title.position="bottom")) +
+                     ggplot2::theme(legend.position="bottom", legend.title.align = 0.5)
+        mapCache[[cacheKey]] <- plt
+        plt
     }
 }
 
