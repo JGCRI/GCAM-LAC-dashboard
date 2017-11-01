@@ -54,30 +54,13 @@ getProjectScenarios <- function(projData, concat=NULL)
 #' @export
 getScenarioQueries <- function(projData, scenarios, concat=NULL)
 {
-    prj <- projData
-    if(is.null(prj)) {
-        if(is.null(concat))
-            ''                          # probably not intended for display
-        else
-            '->none<-'                  # probably intended for display
-    }
-    else if(length(scenarios) == 0 || all(scenarios=='')) {
-        if(is.null(concat))
-            ''                          # probably not intended for display
-        else
-            tag.noscen                  # probably intended for display
+    if(is.null(scenarios) || !all(scenarios %in% listScenarios(projData))) {
+        tag.noscen
     }
     else {
-        tryCatch(
-            lapply(scenarios, . %>% rgcam::listQueries(prj, .)) %>%
-                Reduce(intersect,.) %>% sort %>%
-                    paste(collapse=concat),
-            ## errors in the pipeline above are caused by selecting a new data
-            ## set that doesn't contain the current scenario.  The problem will
-            ## clear up once the scenario selector is repopulated.
-            error = function(e) {
-                if(is.null(concat)) '' else tag.noscen
-            })
+        lapply(scenarios, . %>% rgcam::listQueries(projData, .)) %>%
+            Reduce(intersect,.) %>% sort %>%
+            paste(collapse=concat)
     }
 }
 
