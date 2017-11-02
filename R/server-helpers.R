@@ -618,6 +618,7 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
 
         pltdata <- getPlotData(prjdata, query, scen, diffscen, subcatvar,
                                filtervar, rgns)
+        if(is.null(pltdata)) return(list(plot = default.plot()))
 
         plt <- ggplot(pltdata, aes_string('year','value', fill=subcatvar)) +
                geom_bar(stat='identity') +

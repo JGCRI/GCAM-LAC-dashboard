@@ -64,9 +64,14 @@ landingPage <- function(input, output, session, data) {
   observe({
     query <- input$waterTabset
     years <- getQuery(waterData, query, "Reference")$year %>% unique()
-    middleYear <- years[(length(years) + 1) / 2]
+
+    if(input$waterYearToggle %in% years)
+      selected <- input$waterYearToggle # the previous selection
+    else
+      selected <- years[(length(years) + 1) / 2] # the middle year
+
     updateRadioButtons(session, 'waterYearToggle', NULL, choices = years,
-                       selected = middleYear, inline = TRUE)
+                       selected = selected, inline = TRUE)
   })
 
   # Water plots
@@ -124,9 +129,11 @@ scenarioComparisonUI <- function(id) {
                             multiple = TRUE))
     ),
 
-    box(solidHeader = F, width = 12,
-        htmlOutput(ns("sspTitle")),
-        plotOutput(ns("sspComparison"), height = "520px", width = "100%"))
+    fluidRow(
+      box(solidHeader = F, width = 12,
+          htmlOutput(ns("sspTitle")),
+          plotOutput(ns("sspComparison"), height = "520px", width = "100%"))
+    )
   )
 }
 
