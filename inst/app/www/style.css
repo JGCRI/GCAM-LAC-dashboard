@@ -107,12 +107,12 @@ h4.panel-title {
   line-height: 10px;
 }
 
-#rgns1All, #rgns2All, #rgns3All, #rgns4All, #rgns5All, #rgnSelectAll {
+#tpFilters-rgns1All, #tpFilters-rgns2All, #tpFilters-rgns3All, #tpFilters-rgns4All, #tpFilters-rgns5All, #tpFilters-rgnSelectAll {
   padding: 1px 7px;
   font-size: 12px;
 }
 
-#rgnSelectAll {
+#tpFilters-rgnSelectAll {
   margin-bottom: 5px;
 }
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/server-helpers.R
 \name{getMapPalette}
 \alias{getMapPalette}
-\title{Select a suitable color palette}
+\title{Select a suitable color palette for map plots}
 \usage{
 getMapPalette(is.diff)
 }
@@ -10,6 +10,6 @@ getMapPalette(is.diff)
 \item{is.diff}{Boolean indicating whether the plot is a difference plot}
 }
 \description{
-Select a suitable color palette
+Select a suitable color palette for map plots
 }
 \keyword{internal}

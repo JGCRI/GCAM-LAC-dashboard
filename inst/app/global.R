@@ -120,18 +120,16 @@ scenarioComparisonUI <- function(id) {
 
   tagList(
 
-    h3("Compare Scenarios"),
-
     fluidRow(
-      column(3, selectInput(ns("sspCategory"), label = NULL, choices = list())),
-      column(2, h5("Selected Scenarios:", align = "right")),
-      column(3, selectInput(ns("sspChoices"), label = NULL, choices = list(),
-                            multiple = TRUE))
+      column(4, selectInput(ns("sspChoices"), label = "Selected Scenarios", choices = list(),
+                            multiple = TRUE)),
+      column(4, selectInput(ns("sspCategory"), label = "Plot Variable", choices = list())),
+      column(4, selectInput(ns("sspSubcat"), label = "Subcategory", choices = list('none')))
     ),
 
     fluidRow(
-      box(solidHeader = F, width = 12,
-          htmlOutput(ns("sspTitle")),
+      box(width = 12, status = "primary", solidHeader = T,
+          title = textOutput(ns('compQuery')),
           plotOutput(ns("sspComparison"), height = "520px", width = "100%"))
     )
   )
@@ -143,7 +141,7 @@ scenarioComparison <- function(input, output, session, data) {
   observe({
     if(!is.null(data())) {
       scens <- listScenarios(data())
-      updateSelectInput(session, 'sspChoices', choices = scens, selected = scens[1])
+      updateSelectInput(session, 'sspChoices', choices = scens, selected = scens)
     }
   })
 
@@ -153,9 +151,18 @@ scenarioComparison <- function(input, output, session, data) {
     updateSelectInput(session, 'sspCategory', choices = queries, selected = queries[1])
   })
 
-  output$sspTitle <- renderUI({
-    h3(input$sspCategory, align = "center")
+  # When a new query is selected, update available subcategories
+  observe({
+    prj <- data()
+    if(!is.null(prj)) {
+      cats <- getQuerySubcategories(prj, input$sspChoices[1], input$sspCategory)
+      updateSelectInput(session, 'sspSubcat', choices = cats)
+    }
   })
+
+  # output$sspTitle <- renderUI({
+  #   h3(input$sspCategory, align = "center")
+  # })
 
   output$sspComparison <- renderPlot({
     query <- input$sspCategory
@@ -164,7 +171,9 @@ scenarioComparison <- function(input, output, session, data) {
       default.plot("No data")
     }
     else {
-      subcatvar <- tail(getQuerySubcategories(data(), scens[1], query), n=1)
+      output$compQuery <- renderText({query})
+      # subcatvar <- tail(getQuerySubcategories(data(), scens[1], query), n=1)
+      subcatvar <- getNewSubcategory(data(), scens[1], query, input$sspSubcat)
       plotScenComparison(data(), query, scens, NULL, subcatvar, lac.rgns)
     }
   })

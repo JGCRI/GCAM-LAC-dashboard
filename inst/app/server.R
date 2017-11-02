@@ -211,8 +211,6 @@ shinyServer(function(input, output, session) {
           return(default.plot("Scenarios are the same"))
         }
 
-        tvSubcatVar <- input$tvSubcatVar
-
         # If the scenario has changed, the value of the query selector may not
         # be valid anymore.
         availableQueries <- getScenarioQueries(prj, c(scen, diffscen))

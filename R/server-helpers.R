@@ -215,119 +215,120 @@ countUniqueSubcatValues <- function(prj, scenario, query)
 
 # Helpers for building plots ----------------------------------------------
 
-#' Plot a default panel
+#' Get projection parameters for the pre-defined projections
 #'
-#' Mainly intended for use when no data has been loaded.
+#' Valid inputs are "global", "lac" (Latin America and Caribbean), "usa",
+#' "china", and "africa".
 #'
-#' @param label.text Text to display in the middle of the panel
-#' @importFrom ggplot2 ggplot geom_label theme_minimal aes aes_
-#' @export
-default.plot <- function(label.text='No data selected')
+#' @param projselect Name of the predefined projection
+#' @keywords internal
+getMapParams <- function(projselect, zoom)
 {
-    ggplot(mapping=aes(x=0,y=0)) + geom_label(aes_(label=label.text), size=10) +
-        theme_minimal()
+  if(projselect == 'global') {
+    list(proj=gcammaptools::eck3, ext=gcammaptools::EXTENT_WORLD, zoom=zoom)
+  }
+  else if(projselect == 'usa') {
+    list(proj=gcammaptools::na_aea, ext=gcammaptools::EXTENT_USA, zoom=zoom)
+  }
+  else if(projselect == 'china') {
+    list(proj=gcammaptools::ch_aea, ext=gcammaptools::EXTENT_CHINA, zoom=zoom)
+  }
+  else if(projselect == 'africa') {
+    list(proj=gcammaptools::af_ortho, ext=gcammaptools::EXTENT_AFRICA, zoom=10 + zoom)
+  }
+  else if(projselect == 'lac') {
+    list(proj=7567, proj_type='SR-ORG', ext=gcammaptools::EXTENT_LA, zoom=8 + zoom)
+  }
 }
 
-#' Plot GCAM data on a global or regional map
-#'
-#' @param prjdata Project data file
-#' @param query Name of the query to plot
-#' @param pltscen Name of the scenario to plot
-#' @param diffscen Name of the scenario to difference against pltscen, or NULL if none
-#' @param projselect Projection to use for the map
-#' @param year Year to plot data for
-#' @param map Base map to plot on (for gridded data only)
-#' @importFrom ggplot2 scale_fill_gradientn guides
-#' @importFrom gcammaptools add_region_ID plot_GCAM plot_GCAM_grid
-#' @export
-plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map = NULL, zoom = 0)
+#' Select a suitable color palette for map plots
+#' @param is.diff Boolean indicating whether the plot is a difference plot
+#' @keywords internal
+getMapPalette <- function(is.diff)
 {
+  if(is.diff) {
+    RColorBrewer::brewer.pal(9, 'RdBu')
+  } else {
+    RColorBrewer::brewer.pal(9,'Blues')
+  }
+}
 
-    if(is.null(prjdata)) {
-        default.plot()
-    }
-    else if(!uiStateValid(prjdata, pltscen, query)) {
-        ggplot2::last_plot()
-    }
+#' Select a suitable color palette for time series bar plots
+#' @param pltdata The data getting plotted
+#' @param subcatvar The subcategory selected
+#' @keywords internal
+barPlotScale <- function(pltdata, subcatvar)
+{
+  if(is.null(subcatvar)) {
+    fillpal <- "#808080"
+  }
+  else {
+    subcatvar <- toString(subcatvar)
+
+    if(subcatvar == 'region')
+      fillpal <- gcammaptools::gcam32_colors
     else {
-        # Check the cache to see if we have created this plot before
-        cacheKey <- paste0(attr(prjdata, "file"), query, pltscen, diffscen,
-                           projselect, year, length(map), zoom)
-        if(!is.null(mapCache[[cacheKey]])) return(mapCache[[cacheKey]])
-
-        mapset <- determineMapset(prjdata, pltscen, query)
-
-        if(isGrid(prjdata, pltscen, query)) {
-            key <- c('lat', 'lon')
-        }
-        else {
-            key <- if(mapset==gcammaptools::basin235) 'basin' else 'region'
-        }
-
-        # This filters out all other countries for the LAC extent
-        rgns <- if(projselect == "lac") lac.rgns else NULL
-
-        # Get the data and make sure it is valid
-        pltdata <- getPlotData(prjdata, query, pltscen, diffscen, key, "region",
-                               rgns, yearRange = c(year, year))
-        if(is.null(pltdata)) return(default.plot())
-
-        ## map plot is expecting the column coresponding to the map locations to
-        ## be called "region", so if we're working with water basins, we have to
-        ## rename it.
-        if(mapset==gcammaptools::basin235 && 'basin' %in% names(pltdata))
-            pltdata$region <- pltdata$basin
-
-        is.diff <- !is.null(diffscen)
-        map.pal <- getMapPalette(is.diff)   # color palette
-        map.limits <- getMapLimits(pltdata, is.diff)
-        map.params <- getMapParams(projselect, zoom) # map projection, extent, and zoom
-        unitstr <- summarize.unit(pltdata$Units)
-        datacol <- 'value' # name of the column with the data.
-
-        # Determine whether to use basin or region map, and which level of detail
-        simplify_map <- isTRUE(all.equal(map.params$ext, gcammaptools::EXTENT_WORLD))
-        if(mapset==gcammaptools::rgn32 && simplify_map)
-            map.dat <- gcammaptools::map.rgn32.simple    # rgn32 and world extent
-        else if(mapset==gcammaptools::rgn32)
-            map.dat <- gcammaptools::map.rgn32           # rgn32 and smaller extent
-        else if(simplify_map)
-            map.dat <- gcammaptools::map.basin235.simple # basin235 and world extent
-        else
-            map.dat <- gcammaptools::map.basin235        # basin235 and smaller extent
-
-
-        if('region' %in% names(pltdata)) {
-            # This is a table of data by region
-            pltdata <- add_region_ID(pltdata, lookupfile = mapset, drops = mapset)
-
-            plt <- plot_GCAM(map.dat, col = datacol, proj = map.params$proj,
-                             proj_type = map.params$proj_type, extent = map.params$ext,
-                             legend = TRUE, gcam_df = pltdata, gcam_key = 'id',
-                             mapdata_key = 'region_id', zoom = map.params$zoom) +
-              scale_fill_gradientn(colors = map.pal, na.value = gray(0.75),
-                                   name = query, limits = map.limits)
-
-        }
-        else if(isGrid(prjdata, pltscen, query)) {
-            if (!is.null(map)) map.dat <- map
-            plt <- plot_GCAM_grid(pltdata, datacol, map = map.dat,
-                                  proj_type = map.params$proj_type,
-                                  proj = map.params$proj, extent = map.params$ext,
-                                  zoom = map.params$zoom, legend = TRUE) +
-                # scale_fill_gradientn(colors = map.pal, name = unitstr)
-                ggplot2::scale_fill_distiller(palette = "Spectral")
-        } else {
-            plt <- default.plot(label.text = "No geographic data available for this query")
-        }
-        ## set up elements that are common to both kinds of plots here
-        plt <- plt + guides(fill=ggplot2::guide_colorbar(title=unitstr,
-                                                         barwidth=ggplot2::unit(3.1,'in'),
-                                                         title.position="bottom")) +
-                     ggplot2::theme(legend.position="bottom", legend.title.align = 0.5)
-        mapCache[[cacheKey]] <- plt
-        plt
+      n <- length(unique(pltdata[[subcatvar]]))
+      if(n < 3) {
+        fillpal <- RColorBrewer::brewer.pal(3,'Set3')
+      }
+      else if(n <= 12) {
+        fillpal <- RColorBrewer::brewer.pal(n,'Set3')
+      }
+      else {
+        # https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
+        fillpal <- rep(c("#e6194b", "#3cb44b", "#ffe119", "#0082c8",
+                         "#f58231", "#911eb4", "#46f0f0", "#f032e6",
+                         "#d2f53c", "#fabebe", "#008080", "#e6beff",
+                         "#aa6e28", "#fffac8", "#800000", "#aaffc3",
+                         "#808000", "#ffd8b1", "#000080", "#808080",
+                         "#FFFFFF", "#000000"), n / 20 + 1)
+      }
     }
+  }
+  ggplot2::scale_fill_manual(values = fillpal)
+}
+
+#' The theme for bar plots on the dashboard
+#' @param legendPos The position of the legend
+#' @importFrom ggplot2 theme element_text element_blank
+#' @keywords internal
+barPlotTheme <- function(legendPos = "right")
+{
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=13,face="bold"),
+        legend.title=element_blank(),
+        legend.position=legendPos)
+}
+
+#' Select suitable scale limits for a plot
+#'
+#' @param pltdata The data being plotted
+#' @param is.diff Boolean indicating whether the plot is a difference plot
+#' @keywords internal
+getMapLimits <- function(pltdata, is.diff)
+{
+  limits <- range(pltdata['value'], na.rm=TRUE)
+  if(is.diff) {
+    ## For a difference plot, force the limits to be balanced on either side of zero
+    mag <- max(abs(limits))
+    c(-mag, mag)
+  }
+  else {
+    limits
+  }
+}
+
+#' Summarize the unit column of a GCAM data frame by taking the most common
+#' entry.
+#'
+#' In theory the unit should have a single, common value, but in practice GCAM
+#' isn't always great about getting its unit strings consistent.
+#' @param unitcol Character vector of unit names.
+#' @keywords internal
+summarize.unit <- function(unitcol)
+{
+  unitcol[which.max(table(unitcol))]
 }
 
 #' Figure out which map to plot a query on.
@@ -515,72 +516,119 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
 
 # Plot style and construction ---------------------------------------------
 
-#' Get projection parameters for the pre-defined projections
+#' Plot a default panel
 #'
-#' Valid inputs are "global", "lac" (Latin America and Caribbean), "usa",
-#' "china", and "africa".
+#' Mainly intended for use when no data has been loaded.
 #'
-#' @param projselect Name of the predefined projection
-#' @keywords internal
-getMapParams <- function(projselect, zoom)
+#' @param label.text Text to display in the middle of the panel
+#' @importFrom ggplot2 ggplot geom_label theme_minimal aes aes_
+#' @export
+default.plot <- function(label.text='No data selected')
 {
-    if(projselect == 'global') {
-        list(proj=gcammaptools::eck3, ext=gcammaptools::EXTENT_WORLD, zoom=zoom)
-    }
-    else if(projselect == 'usa') {
-        list(proj=gcammaptools::na_aea, ext=gcammaptools::EXTENT_USA, zoom=zoom)
-    }
-    else if(projselect == 'china') {
-        list(proj=gcammaptools::ch_aea, ext=gcammaptools::EXTENT_CHINA, zoom=zoom)
-    }
-    else if(projselect == 'africa') {
-        list(proj=gcammaptools::af_ortho, ext=gcammaptools::EXTENT_AFRICA, zoom=10 + zoom)
-    }
-    else if(projselect == 'lac') {
-        list(proj=7567, proj_type='SR-ORG', ext=gcammaptools::EXTENT_LA, zoom=8 + zoom)
-    }
+  ggplot(mapping=aes(x=0,y=0)) + geom_label(aes_(label=label.text), size=10) +
+    theme_minimal()
 }
 
-#' Select a suitable color palette
-#' @param is.diff Boolean indicating whether the plot is a difference plot
-#' @keywords internal
-getMapPalette <- function(is.diff)
-{
-    if(is.diff) {
-        RColorBrewer::brewer.pal(9, 'RdBu')
-    } else {
-        RColorBrewer::brewer.pal(9,'Blues')
-    }
-}
-
-#' Select suitable scale limits for a plot
+#' Plot GCAM data on a global or regional map
 #'
-#' @param pltdata The data being plotted
-#' @param is.diff Boolean indicating whether the plot is a difference plot
-#' @keywords internal
-getMapLimits <- function(pltdata, is.diff)
+#' @param prjdata Project data file
+#' @param query Name of the query to plot
+#' @param pltscen Name of the scenario to plot
+#' @param diffscen Name of the scenario to difference against pltscen, or NULL if none
+#' @param projselect Projection to use for the map
+#' @param year Year to plot data for
+#' @param map Base map to plot on (for gridded data only)
+#' @importFrom ggplot2 scale_fill_gradientn guides
+#' @importFrom gcammaptools add_region_ID plot_GCAM plot_GCAM_grid
+#' @export
+plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map = NULL, zoom = 0)
 {
-    limits <- range(pltdata['value'], na.rm=TRUE)
-    if(is.diff) {
-        ## For a difference plot, force the limits to be balanced on either side of zero
-        mag <- max(abs(limits))
-        c(-mag, mag)
+
+  if(is.null(prjdata)) {
+    default.plot()
+  }
+  else if(!uiStateValid(prjdata, pltscen, query)) {
+    ggplot2::last_plot()
+  }
+  else {
+    # Check the cache to see if we have created this plot before
+    cacheKey <- paste0(attr(prjdata, "file"), query, pltscen, diffscen,
+                       projselect, year, length(map), zoom)
+    if(!is.null(mapCache[[cacheKey]])) return(mapCache[[cacheKey]])
+
+    mapset <- determineMapset(prjdata, pltscen, query)
+
+    if(isGrid(prjdata, pltscen, query)) {
+      key <- c('lat', 'lon')
     }
     else {
-        limits
+      key <- if(mapset==gcammaptools::basin235) 'basin' else 'region'
     }
-}
 
-#' Summarize the unit column of a GCAM data frame by taking the most common
-#' entry.
-#'
-#' In theory the unit should have a single, common value, but in practice GCAM
-#' isn't always great about getting its unit strings consistent.
-#' @param unitcol Character vector of unit names.
-#' @keywords internal
-summarize.unit <- function(unitcol)
-{
-    unitcol[which.max(table(unitcol))]
+    # This filters out all other countries for the LAC extent
+    rgns <- if(projselect == "lac") lac.rgns else NULL
+
+    # Get the data and make sure it is valid
+    pltdata <- getPlotData(prjdata, query, pltscen, diffscen, key, "region",
+                           rgns, yearRange = c(year, year))
+    if(is.null(pltdata)) return(default.plot())
+
+    ## map plot is expecting the column coresponding to the map locations to
+    ## be called "region", so if we're working with water basins, we have to
+    ## rename it.
+    if(mapset==gcammaptools::basin235 && 'basin' %in% names(pltdata))
+      pltdata$region <- pltdata$basin
+
+    is.diff <- !is.null(diffscen)
+    map.pal <- getMapPalette(is.diff)   # color palette
+    map.limits <- getMapLimits(pltdata, is.diff)
+    map.params <- getMapParams(projselect, zoom) # map projection, extent, and zoom
+    unitstr <- summarize.unit(pltdata$Units)
+    datacol <- 'value' # name of the column with the data.
+
+    # Determine whether to use basin or region map, and which level of detail
+    simplify_map <- isTRUE(all.equal(map.params$ext, gcammaptools::EXTENT_WORLD))
+    if(mapset==gcammaptools::rgn32 && simplify_map)
+      map.dat <- gcammaptools::map.rgn32.simple    # rgn32 and world extent
+    else if(mapset==gcammaptools::rgn32)
+      map.dat <- gcammaptools::map.rgn32           # rgn32 and smaller extent
+    else if(simplify_map)
+      map.dat <- gcammaptools::map.basin235.simple # basin235 and world extent
+    else
+      map.dat <- gcammaptools::map.basin235        # basin235 and smaller extent
+
+
+    if('region' %in% names(pltdata)) {
+      # This is a table of data by region
+      pltdata <- add_region_ID(pltdata, lookupfile = mapset, drops = mapset)
+
+      plt <- plot_GCAM(map.dat, col = datacol, proj = map.params$proj,
+                       proj_type = map.params$proj_type, extent = map.params$ext,
+                       legend = TRUE, gcam_df = pltdata, gcam_key = 'id',
+                       mapdata_key = 'region_id', zoom = map.params$zoom) +
+        scale_fill_gradientn(colors = map.pal, na.value = gray(0.75),
+                             name = query, limits = map.limits)
+
+    }
+    else if(isGrid(prjdata, pltscen, query)) {
+      if (!is.null(map)) map.dat <- map
+      plt <- plot_GCAM_grid(pltdata, datacol, map = map.dat,
+                            proj_type = map.params$proj_type,
+                            proj = map.params$proj, extent = map.params$ext,
+                            zoom = map.params$zoom, legend = TRUE) +
+        # scale_fill_gradientn(colors = map.pal, name = unitstr)
+        ggplot2::scale_fill_distiller(palette = "Spectral")
+    } else {
+      plt <- default.plot(label.text = "No geographic data available for this query")
+    }
+    ## set up elements that are common to both kinds of plots here
+    plt <- plt + guides(fill=ggplot2::guide_colorbar(title=unitstr,
+                                                     barwidth=ggplot2::unit(3.1,'in'),
+                                                     title.position="bottom")) +
+      ggplot2::theme(legend.position="bottom", legend.title.align = 0.5)
+    mapCache[[cacheKey]] <- plt
+    plt
+  }
 }
 
 #' Plot values over time as a bar chart
@@ -595,7 +643,7 @@ summarize.unit <- function(unitcol)
 #' @param subcatvar  Variable to use for subcategories in the plot
 #' @param rgns  Regions to filter to
 #' @importFrom magrittr "%>%"
-#' @importFrom ggplot2 ggplot aes_string geom_bar theme ylab scale_fill_manual
+#' @importFrom ggplot2 ggplot aes_string geom_bar ylab
 #' @export
 plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
 {
@@ -621,38 +669,11 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
         if(is.null(pltdata)) return(list(plot = default.plot()))
 
         plt <- ggplot(pltdata, aes_string('year','value', fill=subcatvar)) +
-               geom_bar(stat='identity') +
-               theme(axis.text=ggplot2::element_text(size=12),
-                     axis.title=ggplot2::element_text(size=13,face="bold"),
-                     legend.title=ggplot2::element_blank()) +
-               ylab(pltdata$Units)
+               geom_bar(stat='identity') + barPlotTheme() + ylab(pltdata$Units)
 
         # Get a color scheme for the subcategories
-        if(!is.null(subcatvar)) {
-            subcatvar <- toString(subcatvar)
+        plt <- plt + barPlotScale(pltdata, subcatvar)
 
-            if(subcatvar == 'region')
-                fillpal <- gcammaptools::gcam32_colors
-            else {
-                n <- length(unique(pltdata[[subcatvar]]))
-                if(n<3) {
-                    fillpal <- RColorBrewer::brewer.pal(3,'Set3')
-                }
-                else if(n<=12) {
-                    fillpal <- RColorBrewer::brewer.pal(n,'Set3')
-                }
-                else {
-                    # https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
-                    fillpal <- rep(c("#e6194b", "#3cb44b", "#ffe119", "#0082c8",
-                                     "#f58231", "#911eb4", "#46f0f0", "#f032e6",
-                                     "#d2f53c", "#fabebe", "#008080", "#e6beff",
-                                     "#aa6e28", "#fffac8", "#800000", "#aaffc3",
-                                     "#808000", "#ffd8b1", "#000080", "#808080",
-                                     "#FFFFFF", "#000000"), n / 20 + 1)
-                }
-            }
-            plt <- plt + scale_fill_manual(values=fillpal)
-        }
         list(plot = plt, plotdata = pltdata)
     }
 }
@@ -660,7 +681,7 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
 #' Plot values over time as a bar chart
 #' @param scens List of scenario names to plot
 #' @inheritParams plotTime
-#' @importFrom ggplot2 ggplot aes_string geom_bar theme ylab facet_grid element_text
+#' @importFrom ggplot2 ggplot aes_string geom_bar theme ylab facet_grid
 #' @export
 plotScenComparison <- function(prjdata, query, scens, diffscen, subcatvar, rgns)
 {
@@ -668,14 +689,14 @@ plotScenComparison <- function(prjdata, query, scens, diffscen, subcatvar, rgns)
   plt <- ggplot(data = NULL, aes_string('year','value', fill=subcatvar)) +
          facet_grid(.~panel, scales="free")
 
+  d <- NULL
   for (scen in scens) {
     pltdata <- getPlotData(prjdata, query, scen, diffscen, subcatvar, filtervar, rgns)
+    d <- rbind(d, pltdata)
     pltdata$panel <- scen
     units <- pltdata$Units
     plt <- plt + geom_bar(data = pltdata, stat = "identity")
   }
 
-  plt + ylab(units) + theme(axis.text=element_text(size=12),
-                            axis.title=element_text(size=13, face="bold"),
-                            legend.position="bottom")
+  plt + ylab(units) + barPlotTheme("bottom") + barPlotScale(d, subcatvar)
 }
