@@ -8,9 +8,32 @@ landingPageUI <- function(id) {
   ns <- NS(id)
 
   fluidRow(
+    # Bar charts on far right
+    column(6,
+      # fluidRow(
+      #   column(4,
+      #     h4("Choose a Scenario", inline=T)
+      #   ),
+      #   column(8,
+      #     selectInput(ns("dashScenario"), label = NULL, choices = list())
+      #   )
+      # ),
+
+      div(style="display: inline-block;vertical-align:top; width: 150px;", h4("Choose a Scenario", inline=T)),
+      div(style="display: inline-block;vertical-align:top; width: 150px;", selectInput(ns("dashScenario"), label = NULL, choices = list())),
+
+      box(title = 'Primary Energy Consumption by Fuel', width = NULL,
+         solidHeader = TRUE, status = "primary",
+         plotOutput(ns("landingPlot1"), height='211px')
+      ),
+      box(title = 'CO2 Emissions', width = NULL,
+         solidHeader = TRUE, status = "primary",
+         plotOutput(ns("landingPlot2"), height='211px')
+      )
+    ), # column
+
     # Tabbed box with water plots on far left
     column(3, align = "left",
-
       h4("Water"),
       tabBox(id = ns("waterTabset"), title = NULL, width = NULL, side = 'left',
         tabPanel("Supply", value = "Water Supply", plotOutput(ns("waterSupplyPlot"), height='500px')),
@@ -34,26 +57,7 @@ landingPageUI <- function(id) {
 
       sliderInput(ns('popYear'), NULL, min=2005, max=2050, step=5, value=2020,
                   sep='', animate = F)
-    ),
-
-    # Bar charts on far right
-    column(6,
-
-      h4("Energy and Emissions"),
-      box(title = 'Primary Energy Consumption by Fuel', width = NULL,
-         solidHeader = TRUE, status = "primary",
-         plotOutput(ns("landingPlot1"), height='211px')
-      ),
-      box(title = 'CO2 Emissions', width = NULL,
-         solidHeader = TRUE, status = "primary",
-         plotOutput(ns("landingPlot2"), height='211px')
-      ),
-
-      div(align="center", radioButtons(ns('lptoggle'), NULL,
-                                      c('Reference Scenario', 'Policy Scenario'),
-                                      inline = T)
-      ) # div
-    ) # column
+    )
   ) # fluidRow
 } # landingPageUI
 
@@ -72,6 +76,10 @@ landingPage <- function(input, output, session, data) {
 
     updateRadioButtons(session, 'waterYearToggle', NULL, choices = years,
                        selected = selected, inline = TRUE)
+  })
+
+  observe({
+    updateSelectInput(session, 'dashScenario', choices = listScenarios(data))
   })
 
   # Water plots
@@ -96,7 +104,7 @@ landingPage <- function(input, output, session, data) {
 
   # Bar charts
   output$landingPlot1 <- renderPlot({
-    if(input$lptoggle == "Reference Scenario")
+    if(input$dashScenario == "Reference Scenario")
       scen <- "REFlu_e6_mex"
     else
       scen <- "PIAlu_e6_mex"
@@ -104,7 +112,7 @@ landingPage <- function(input, output, session, data) {
   })
 
   output$landingPlot2 <- renderPlot({
-    if(input$lptoggle == "Reference Scenario")
+    if(input$dashScenario == "Reference Scenario")
       scen <- "REFlu_e6_mex"
     else
       scen <- "PIAlu_e6_mex"

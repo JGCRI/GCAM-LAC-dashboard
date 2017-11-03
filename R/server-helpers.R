@@ -553,7 +553,7 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map = N
   else {
     # Check the cache to see if we have created this plot before
     cacheKey <- paste0(attr(prjdata, "file"), query, pltscen, diffscen,
-                       projselect, year, length(map), zoom)
+                       projselect, year, nrow(map), zoom)
     if(!is.null(mapCache[[cacheKey]])) return(mapCache[[cacheKey]])
 
     mapset <- determineMapset(prjdata, pltscen, query)
