@@ -10,15 +10,6 @@ landingPageUI <- function(id) {
   fluidRow(
     # Bar charts on far right
     column(6,
-      # fluidRow(
-      #   column(4,
-      #     h4("Choose a Scenario", inline=T)
-      #   ),
-      #   column(8,
-      #     selectInput(ns("dashScenario"), label = NULL, choices = list())
-      #   )
-      # ),
-
       div(style="display: inline-block;vertical-align:top; width: 150px;", h4("Choose a Scenario", inline=T)),
       div(style="display: inline-block;vertical-align:top; width: 150px;", selectInput(ns("dashScenario"), label = NULL, choices = list())),
 
@@ -29,7 +20,8 @@ landingPageUI <- function(id) {
       box(title = 'CO2 Emissions', width = NULL,
          solidHeader = TRUE, status = "primary",
          plotOutput(ns("landingPlot2"), height='211px')
-      )
+      ),
+      textOutput(ns('dashboardWarning'))
     ), # column
 
     # Tabbed box with water plots on far left
@@ -79,7 +71,12 @@ landingPage <- function(input, output, session, data) {
   })
 
   observe({
-    updateSelectInput(session, 'dashScenario', choices = listScenarios(data))
+    updateSelectInput(session, 'dashScenario', choices = listScenarios(data()$proj))
+  })
+
+  output$dashboardWarning <- renderText({
+      4+4
+      data()$err
   })
 
   # Water plots
@@ -98,25 +95,30 @@ landingPage <- function(input, output, session, data) {
       query <- if(outputID == "landPlot1") "Agriculture production" else "Biomass production"
       pscen <- "REFlu_e6_mex"
       year <- input$popYear
-      plotMap(data, query, pscen, NULL, "lac", year)
+      plotMap(data()$proj, query, pscen, NULL, "lac", year)
     })
   })
 
-  # Bar charts
-  output$landingPlot1 <- renderPlot({
-    if(input$dashScenario == "Reference Scenario")
-      scen <- "REFlu_e6_mex"
-    else
-      scen <- "PIAlu_e6_mex"
-    plotTime(data, "Primary Energy Consumption (Direct Equivalent)", scen, NULL, "fuel", lac.rgns)
-  })
+  observe({
+    scen <- input$dashScenario
+    if(scen %in% listScenarios(data()$proj)) {
+      qs <- listQueries(data()$proj, scen)
 
-  output$landingPlot2 <- renderPlot({
-    if(input$dashScenario == "Reference Scenario")
-      scen <- "REFlu_e6_mex"
-    else
-      scen <- "PIAlu_e6_mex"
-    plotTime(data, "Top 12 CO2 emissions by sector", scen, NULL, "sector", lac.rgns)
+      primEnergy <- qs[grep("primary.*energy.*consumption", qs, ignore.case = T)][1]
+      if(is.na(primEnergy))
+        primEnergy <- qs[grep("primary.*energy", qs, ignore.case = T)][1]
+
+      co2BySector <- qs[grep("CO2.*emissions.*sector", qs, ignore.case = T)][1]
+      if(is.na(co2BySector))
+        co2BySector <- qs[grep("CO2.*emissions", qs, ignore.case = T)][1]
+
+      output$landingPlot1 <- renderPlot({
+        plotTime(data()$proj, primEnergy, scen, NULL, "fuel", lac.rgns)
+      })
+      output$landingPlot2 <- renderPlot({
+        plotTime(data()$proj, co2BySector, scen, NULL, "sector", lac.rgns)
+      })
+    }
   })
 }
 
