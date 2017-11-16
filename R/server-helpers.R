@@ -19,9 +19,9 @@ convertProjectToLongform <- function(projData) {
     if('year' %in% names(qtable)) {
       break
     } else {
-      ycols <- grep('^X[12]\\d{3}$', names(qtable))
-      names(qtable)[ycols] <- substring(names(qtable)[ycols], 2) # remove the X
-      qtable <- tidyr::gather(qtable, 'year', 'value', ycols, convert = T)
+      ycols <- grep('^X?[12]\\d{3}$', names(qtable))
+      names(qtable)[ycols] <- sub('X', '', names(qtable)[ycols]) # remove the X
+      qtable <- tidyr::gather(qtable, 'year', 'value', ycols, na.rm = T, convert = T)
     }
     projData <- addQueryTable(projData, qtable, q, clobber = T, saveProj = F)
   }
