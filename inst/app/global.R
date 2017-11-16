@@ -8,9 +8,24 @@ landingPageUI <- function(id) {
   ns <- NS(id)
 
   fluidRow(
+    # Bar charts on far right
+    column(6,
+      div(style="display: inline-block;vertical-align:top; width: 150px;", h4("Choose a Scenario", inline=T)),
+      div(style="display: inline-block;vertical-align:top; width: 150px;", selectInput(ns("dashScenario"), label = NULL, choices = list())),
+
+      box(title = 'Primary Energy Consumption by Fuel', width = NULL,
+         solidHeader = TRUE, status = "primary",
+         plotOutput(ns("landingPlot1"), height='211px')
+      ),
+      box(title = 'CO2 Emissions', width = NULL,
+         solidHeader = TRUE, status = "primary",
+         plotOutput(ns("landingPlot2"), height='211px')
+      ),
+      textOutput(ns('dashboardWarning'))
+    ), # column
+
     # Tabbed box with water plots on far left
     column(3, align = "left",
-
       h4("Water"),
       tabBox(id = ns("waterTabset"), title = NULL, width = NULL, side = 'left',
         tabPanel("Supply", value = "Water Supply", plotOutput(ns("waterSupplyPlot"), height='500px')),
@@ -34,26 +49,7 @@ landingPageUI <- function(id) {
 
       sliderInput(ns('popYear'), NULL, min=2005, max=2050, step=5, value=2020,
                   sep='', animate = F)
-    ),
-
-    # Bar charts on far right
-    column(6,
-
-      h4("Energy and Emissions"),
-      box(title = 'Primary Energy Consumption by Fuel', width = NULL,
-         solidHeader = TRUE, status = "primary",
-         plotOutput(ns("landingPlot1"), height='211px')
-      ),
-      box(title = 'CO2 Emissions', width = NULL,
-         solidHeader = TRUE, status = "primary",
-         plotOutput(ns("landingPlot2"), height='211px')
-      ),
-
-      div(align="center", radioButtons(ns('lptoggle'), NULL,
-                                      c('Reference Scenario', 'Policy Scenario'),
-                                      inline = T)
-      ) # div
-    ) # column
+    )
   ) # fluidRow
 } # landingPageUI
 
@@ -74,6 +70,15 @@ landingPage <- function(input, output, session, data) {
                        selected = selected, inline = TRUE)
   })
 
+  observe({
+    updateSelectInput(session, 'dashScenario', choices = listScenarios(data()$proj))
+  })
+
+  output$dashboardWarning <- renderText({
+      4+4
+      data()$err
+  })
+
   # Water plots
   lapply(c("Scarcity", "Supply", "Demand"), function(query) {
     output[[paste0("water", query, "Plot")]] <- renderPlot({
@@ -90,25 +95,30 @@ landingPage <- function(input, output, session, data) {
       query <- if(outputID == "landPlot1") "Agriculture production" else "Biomass production"
       pscen <- "REFlu_e6_mex"
       year <- input$popYear
-      plotMap(data, query, pscen, NULL, "lac", year)
+      plotMap(data()$proj, query, pscen, NULL, "lac", year)
     })
   })
 
-  # Bar charts
-  output$landingPlot1 <- renderPlot({
-    if(input$lptoggle == "Reference Scenario")
-      scen <- "REFlu_e6_mex"
-    else
-      scen <- "PIAlu_e6_mex"
-    plotTime(data, "Primary Energy Consumption (Direct Equivalent)", scen, NULL, "fuel", lac.rgns)
-  })
+  observe({
+    scen <- input$dashScenario
+    if(scen %in% listScenarios(data()$proj)) {
+      qs <- listQueries(data()$proj, scen)
 
-  output$landingPlot2 <- renderPlot({
-    if(input$lptoggle == "Reference Scenario")
-      scen <- "REFlu_e6_mex"
-    else
-      scen <- "PIAlu_e6_mex"
-    plotTime(data, "Top 12 CO2 emissions by sector", scen, NULL, "sector", lac.rgns)
+      primEnergy <- qs[grep("primary.*energy.*consumption", qs, ignore.case = T)][1]
+      if(is.na(primEnergy))
+        primEnergy <- qs[grep("primary.*energy", qs, ignore.case = T)][1]
+
+      co2BySector <- qs[grep("CO2.*emissions.*sector", qs, ignore.case = T)][1]
+      if(is.na(co2BySector))
+        co2BySector <- qs[grep("CO2.*emissions", qs, ignore.case = T)][1]
+
+      output$landingPlot1 <- renderPlot({
+        plotTime(data()$proj, primEnergy, scen, NULL, "fuel", lac.rgns)
+      })
+      output$landingPlot2 <- renderPlot({
+        plotTime(data()$proj, co2BySector, scen, NULL, "sector", lac.rgns)
+      })
+    }
   })
 }
 

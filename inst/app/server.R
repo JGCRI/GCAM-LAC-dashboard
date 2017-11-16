@@ -257,11 +257,30 @@ shinyServer(function(input, output, session) {
       }
     )
 
+    dashboardData <- reactive({
+      proj <- files[[input$fileList]]
+      s <- listScenarios(proj)
+      q <- listQueries(proj, s[1])
+      co2Present <- grep("co2.*emissions", q, ignore.case = T) %>% length > 0
+      nrgPresent <- grep("primary.*energy", q, ignore.case = T) %>% length > 0
+      agrPresent <- grep("biomass.*production", q, ignore.case = T) %>% length > 0
+      bioPresent <- grep("agriculture.*production", q, ignore.case = T) %>% length > 0
+      if(is.null(proj))
+        list("", "")
+      else if(co2Present && nrgPresent && agrPresent && bioPresent)
+        list(err = "", proj = proj)
+      else
+        list(err = paste0(length(which(!c(co2Present, nrgPresent, agrPresent, bioPresent))),
+                   " queries not found for the dataset ", input$fileList,
+                   ". Using 'GCAM LAC' dataset instead."),
+             proj = defaultData)
+    })
+
+    callModule(landingPage, "dashboard", dashboardData)
+
     # Add a hover over the time plot bar chart
     callModule(barChartHover, "timePlot", reactive(input$exploreHover),
                reactive(timePlot.df()), reactive(input$tvSubcatVar))
-
-    callModule(landingPage, "dashboard", files[[defaultProj]])
 
     callModule(scenarioComparison, "ssp", reactive(files[[input$fileList]]))
 

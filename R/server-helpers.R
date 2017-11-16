@@ -19,9 +19,9 @@ convertProjectToLongform <- function(projData) {
     if('year' %in% names(qtable)) {
       break
     } else {
-      ycols <- grep('^X[12]\\d{3}$', names(qtable))
-      names(qtable)[ycols] <- substring(names(qtable)[ycols], 2) # remove the X
-      qtable <- tidyr::gather(qtable, 'year', 'value', ycols, convert = T)
+      ycols <- grep('^X?[12]\\d{3}$', names(qtable))
+      names(qtable)[ycols] <- sub('X', '', names(qtable)[ycols]) # remove the X
+      qtable <- tidyr::gather(qtable, 'year', 'value', ycols, na.rm = T, convert = T)
     }
     projData <- addQueryTable(projData, qtable, q, clobber = T, saveProj = F)
   }
@@ -553,7 +553,7 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map = N
   else {
     # Check the cache to see if we have created this plot before
     cacheKey <- paste0(attr(prjdata, "file"), query, pltscen, diffscen,
-                       projselect, year, length(map), zoom)
+                       projselect, year, nrow(map), zoom)
     if(!is.null(mapCache[[cacheKey]])) return(mapCache[[cacheKey]])
 
     mapset <- determineMapset(prjdata, pltscen, query)
