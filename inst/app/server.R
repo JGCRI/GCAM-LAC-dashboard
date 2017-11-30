@@ -33,6 +33,24 @@ shinyServer(function(input, output, session) {
     timePlot.df <- reactiveVal()
     mapZoom <- reactiveVal(0)
 
+    # Initialize state variables to facilitate the smooth updating of the plot
+    # on the Explore panel. The scenario, query, and subcategory selectInputs
+    # are part of a chain that starts with the projectFile input, and ends with
+    # the plot. The updating of the choices in one of the three selectInputs is
+    # triggered by the user making a new selection XOR a change in an input
+    # higher up on the chain. In the latter case, the reactiveValues in the
+    # 'updates' variable let the inputs further down the chain know they need to
+    # update.
+    #
+    # This whole structure arises because updateSelectInput only triggers
+    # observers of that input if the selected parameter changes. It may be
+    # possible in the future to avoid this semi-roundabout way of signaling, if
+    # this feature gets implemented: https://github.com/rstudio/shiny/issues/928
+    updates <- reactiveValues(scenarios = 0, queries = 0, subcats = 0)
+    previous <- list(scenario = list(choices = list(), selected = ""),
+                     query    = list(choices = list(), selected = ""),
+                     subcat   = list(choices = list(), selected = ""))
+
 
     ## ----- PLOT OPTION UPDATES -----
 
@@ -54,7 +72,15 @@ shinyServer(function(input, output, session) {
       if(input$fileList != "") {
         project.data <- files[[input$fileList]]
         scens <- listScenarios(project.data)
-        updateSelectInput(session, 'scenarioInput', choices=scens)
+
+        if(isTRUE(all.equal(scens, previous$scenario$choices))) {
+          updates$scenarios <- isolate(updates$scenarios) + 1
+        }
+        else {
+          updateSelectInput(session, 'scenarioInput', choices=scens)
+          previous$scenario$choices <<- scens
+        }
+
         updateSelectInput(session, 'diffScenario', choices=scens)
         updateSelectInput(session, 'mapScenario', choices=scens)
       }
@@ -63,40 +89,72 @@ shinyServer(function(input, output, session) {
     ## When a new scenario is selected, update available queries
     observe({
       prj <- isolate(files[[input$fileList]])
+      scen <- input$scenarioInput
+      query <- isolate(input$plotQuery)
+      trigger <- updates$scenarios
 
       # Get the current scenario (or scenarios for a difference plot)
-      if(input$scenarioInput == "") {
+      if(scen == "") {
         return() # There should always be a dataset loaded
       }
       else if(input$diffCheck) {
-        qscenarios <- c(input$scenarioInput, input$diffScenario)
+        qscenarios <- c(scen, input$diffScenario)
       }
       else {
-        qscenarios <- input$scenarioInput
+        qscenarios <- scen
       }
 
       queries <- getScenarioQueries(prj, qscenarios)
 
-      ## Preserve selected value if possible, else allow update to reset selection
-      sel <- input$plotQuery
-      if(!(sel %in% queries)) sel <- NULL
+      ## Preserve selected value if possible, else take first from list
+      sel <- query
+      if(!(sel %in% queries)) sel <- queries[1]
 
-      updateSelectInput(session, 'plotQuery', choices = queries, selected = sel)
+      newQuerySelected <- sel != previous$query$selected
+      newQueryChoices <- !isTRUE(all.equal(queries, previous$query$choices))
+
+      if(newQuerySelected || newQueryChoices) {
+        updateSelectInput(session, 'plotQuery', choices = queries, selected = sel)
+        previous$scenario$selected <- scen
+      }
+
+      # If the selection hasn't changed, still trigger queries to refresh
+      if(!newQuerySelected) updates$queries <- isolate(updates$queries) + 1
+
+      previous$query$choices <<- queries
+      previous$query$selected <<- sel
+
       updateSelectInput(session, 'mapQuery', choices = queries, selected = sel)
     })
 
     ## When a new query is selected, update available subcategories
     observe({
-        prj <- files[[input$fileList]]
-        scen <- input$scenarioInput
+        prj <- isolate(files[[input$fileList]])
+        scen <- isolate(input$scenarioInput)
         query <- input$plotQuery
+        subcat <- isolate(input$tvSubcatVar)
+        trigger <- updates$queries
 
         ## Assumes that a particular query has the same columns in all scenarios
         if(uiStateValid(prj, scen, query)) {
           catvars <- getQuerySubcategories(prj, scen, query)
-          selected <- getNewSubcategory(prj, scen, query, input$tvSubcatVar)
-          updateSelectInput(session, 'tvSubcatVar', choices=c('none', catvars),
-                            selected=selected)
+          catvars <- c('none', catvars)
+          selected <- getNewSubcategory(prj, scen, query, subcat)
+
+          newSubcatSelected <- selected != previous$subcat$selected
+          newSubcatChoices <- !isTRUE(all.equal(catvars, previous$subcat$choices))
+
+          if(newSubcatSelected || newSubcatChoices) {
+            updateSelectInput(session, 'tvSubcatVar', choices=catvars,
+                             selected=selected)
+            previous$query$selected <<- query
+          }
+
+          # If the selection hasn't changed, still trigger plot to redraw
+          if(!newSubcatSelected) updates$subcats <- isolate(updates$subcats) + 1
+
+          previous$subcat$choices <<- catvars
+          previous$subcat$selected <<- selected
         }
     })
 
@@ -201,8 +259,11 @@ shinyServer(function(input, output, session) {
 
     output$timePlot <- renderPlot({
         prj <- isolate(files[[input$fileList]])
-        scen <- input$scenarioInput
-        query <- input$plotQuery
+        scen <- isolate(input$scenarioInput)
+        query <- isolate(input$plotQuery)
+        subcat <- input$tvSubcatVar
+        trigger <- updates$subcats
+
         if(!uiStateValid(prj, scen, query)) return(default.plot())
 
         diffscen <- if(input$diffCheck) input$diffScenario else NULL
@@ -220,7 +281,7 @@ shinyServer(function(input, output, session) {
 
         # If the query has changed, the value of the subcategory selector may
         # not be valid anymore. Change it to the new one.
-        tvSubcatVar <- getNewSubcategory(prj, scen, query, input$tvSubcatVar)
+        tvSubcatVar <- getNewSubcategory(prj, scen, query, subcat)
 
         output$timeTable <- renderDataTable(options = list(scrollX = TRUE), {
           if(tvSubcatVar == 'none')

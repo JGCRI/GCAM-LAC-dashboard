@@ -181,6 +181,7 @@ getNewSubcategory <- function(prj, scenario, query, oldSubcategory)
   }
   else {
     numcats <- countUniqueSubcatValues(prj, scenario, query)
+    numcats <- numcats[which(numcats != 1)] # Filter out useless categories
 
     # A good choice will have more than 2 elements, but not too many
     choices <- numcats[which(numcats > 2)]
@@ -686,6 +687,12 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
 plotScenComparison <- function(prjdata, query, scens, diffscen, subcatvar, rgns)
 {
   filtervar <- "region"
+
+  if(subcatvar=='none')
+    subcatvar <- NULL
+  else
+    subcatvar <- as.name(subcatvar)
+
   plt <- ggplot(data = NULL, aes_string('year','value', fill=subcatvar)) +
          facet_grid(.~panel, scales="free")
 

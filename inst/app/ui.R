@@ -1,7 +1,6 @@
 library(shiny)
 library(shinyBS)
 library(shinydashboard, warn.conflicts = F) # Masks 'box' from graphics package
-library(shinythemes)
 library(gcamlacdash)
 
 
