@@ -127,6 +127,18 @@ shinyServer(function(input, output, session) {
       updateSelectInput(session, 'mapQuery', choices = queries, selected = sel)
     })
 
+    observe({
+        prj <- isolate(files[[input$fileList]])
+        scen <- input$mapScenario
+        query <- input$mapQuery
+
+        if(uiStateValid(prj, scen, query)) {
+          catvars <- getQuerySubcategories(prj, scen, query)
+          catvars <- getQuery(prj, query, scen)[[catvars[2]]] %>% unique()
+          updateSelectInput(session, 'mapCats', choices=catvars)
+        }
+    })
+
     ## When a new query is selected, update available subcategories
     observe({
         prj <- isolate(files[[input$fileList]])
@@ -185,6 +197,7 @@ shinyServer(function(input, output, session) {
 
     observeEvent(input$zoomIn, { if(mapZoom() > -30) mapZoom(mapZoom() - 3) })
     observeEvent(input$zoomOut, { if(mapZoom() < 30) mapZoom(mapZoom() + 3) })
+    observeEvent(input$triggerDiffCheck, { updateCheckboxInput(session, 'diffCheck', value = F) })
 
     ## ----- FILE UPLOAD UPDATES -----
     output$projectSize <- renderText({

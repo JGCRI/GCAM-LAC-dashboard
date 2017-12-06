@@ -117,7 +117,15 @@ h4.panel-title {
 }
 
 #fileSelect>span>.form-group, #triggerUploadModal {
-  margin: 6px 0px 0px 10px;
+  margin: 6px 0 0 10px;
+}
+
+#triggerDiffCheck {
+    margin-top: 31px;
+    margin-left: -22px;
+    border-radius: 100%;
+    padding: 2px 6px 2px 6px;
+    font-size: 12px;
 }
 
 .table-title {

@@ -47,12 +47,17 @@ shinyUI(fluidPage(theme="style.css",
                                        choices=c(Global='global', USA='usa', China='china',
                                                  Africa='africa', `Latin America`='lac'),
                                        selected = 'lac'),
+                           conditionalPanel(condition = "!output.mapisGrid",
+                             selectInput('mapCats', label = "Subcategories",
+                                            choices=list(), multiple=T)),
+                                            #selectize=T)),
                            conditionalPanel(condition = "output.mapIsGrid",
                              selectInput('mapType', label = "Map Type", width = NULL,
                                          choices=c(`GCAM Regions`='regions',
                                                    Countries='countries',
                                                    Basins='basins'),
-                                         selected = 'lac')
+                                         selected = 'lac')#,
+                                         #size='400px')
                            )
                     )
                   )
@@ -101,11 +106,17 @@ shinyUI(fluidPage(theme="style.css",
                            conditionalPanel(condition = "input.diffCheck == true",
                                             selectInput('diffScenario', 'Difference Scenario:', choices=list())),
                            conditionalPanel(condition = "input.diffCheck != true",
-                                            div(style = "height: 62px;")),
+                                            div(style = "height: 67px; padding-top: 21px;",
+                                              checkboxInput('diffCheck', 'Add Difference Scenario')
+                                            )),
                            selectInput('tvSubcatVar', 'Break totals into subcategories by:',
                                        choices=list())
                     ),
-                    column(width = 2, checkboxInput('diffCheck', 'Add Difference Scenario'),
+                    column(width = 2,
+                           conditionalPanel(condition = "input.diffCheck == true",
+                             actionButton('triggerDiffCheck', NULL, icon("times"),
+                                          lib = "font-awesome")
+                           ),
                            div(class="table-title", align="right", "View as Table",
                                br(),
                                actionButton('triggerTableModal', NULL,

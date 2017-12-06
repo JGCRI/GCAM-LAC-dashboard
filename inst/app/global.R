@@ -9,7 +9,7 @@ landingPageUI <- function(id) {
 
   fluidRow(
     # Bar charts on far right
-    column(6,
+    column(4,
       div(style="display: inline-block;vertical-align:top; width: 150px;", h4("Choose a Scenario", inline=T)),
       div(style="display: inline-block;vertical-align:top; width: 150px;", selectInput(ns("dashScenario"), label = NULL, choices = list())),
 
@@ -25,7 +25,7 @@ landingPageUI <- function(id) {
     ), # column
 
     # Tabbed box with water plots on far left
-    column(3, align = "left",
+    column(4, align = "left",
       h4("Water"),
       tabBox(id = ns("waterTabset"), title = NULL, width = NULL, side = 'left',
         tabPanel("Supply", value = "Water Supply", plotOutput(ns("waterSupplyPlot"), height='500px')),
@@ -39,7 +39,7 @@ landingPageUI <- function(id) {
     ),
 
     # Tabbed box with agriculture and biomass plots in middle
-    column(3, align = "left",
+    column(4, align = "left",
 
       h4("Agriculture and Biomass"),
       tabBox(id = ns("popTabset"), title = NULL, width = NULL, side = 'left',
