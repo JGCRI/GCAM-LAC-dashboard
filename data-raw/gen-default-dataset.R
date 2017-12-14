@@ -43,14 +43,18 @@ hydro3 <- system.file('extdata/hydrology',
 
 scar <- read.gcam(hydro1, data.units="water scarcity index", scenario="Reference")
 scar <- dplyr::filter(scar, scar$value > 0 & scar$value < 1) # invalid data vals
-supp <- read.gcam(hydro2, data.units="mm per year", scenario="Reference")
-dmnd <- read.gcam(hydro3, data.units="mm per year", scenario="Reference")
+supp <- read.gcam(hydro2, data.units="mm per year", scenario="REFlu_e6_mex")
+dmnd <- read.gcam(hydro3, data.units="mm per year", scenario="REFlu_e6_mex")
 dmnd <- dplyr::filter(dmnd, dmnd$value > 0 & dmnd$value < 50)
+#Temporary -- while we don't have IAMRPT output as the data
+scar$scenario <- "REFlu_e6_mex"
+supp$scenario <- "REFlu_e6_mex"
+dmnd$scenario <- "REFlu_e6_mex"
 
-waterData <- loadProject('inst/extdata/hydro.dat')
-waterData <- addQueryTable(waterData, scar, "Water Scarcity", clobber = T)
-waterData <- addQueryTable(waterData, supp, "Water Supply")
-waterData <- addQueryTable(waterData, dmnd, "Water Demand")
+defaultData <- loadProject('inst/extdata/dashboard.dat')
+defaultData <- addQueryTable(defaultData, scar, "Water Scarcity", clobber = T)
+defaultData <- addQueryTable(defaultData, supp, "Water Supply")
+defaultData <- addQueryTable(defaultData, dmnd, "Water Demand")
 
 
 # This dataset includes queries for different SSP scenarios. The dataset itself
@@ -72,5 +76,5 @@ sspData <- loadProject(system.file('extdata/ssp.dat', package = "gcamlacdash"))
 defaultData <- loadProject(system.file('extdata/dashboard.dat', package = "gcamlacdash"))
 
 
-devtools::use_data(waterData, sspData, defaultData)
+devtools::use_data(sspData, defaultData)
 
