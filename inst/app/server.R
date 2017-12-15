@@ -15,14 +15,13 @@ shinyServer(function(input, output, session) {
     outputOptions(output, 'setupComplete', suspendWhenHidden=FALSE)
 
     # Data that should show on load. The default data come from the objects
-    # defaultData, waterData, and sspData (in the data directory).
+    # defaultData and sspData (in the data directory).
     defaultProj <- 'GCAM LAC'
-    hydroProj <- 'Water'
     sspProj <- 'SSP'
 
     # files is the master list of project files
-    files <- setNames(list(defaultData, waterData, sspData),
-                      c(defaultProj, hydroProj, sspProj))
+    files <- setNames(list(defaultData, sspData),
+                      c(defaultProj, sspProj))
 
     # To access the current project file, refer to the select in the upper right
     updateSelectInput(session, 'fileList', choices=names(files))
@@ -54,7 +53,7 @@ shinyServer(function(input, output, session) {
 
     ## ----- PLOT OPTION UPDATES -----
 
-    ## When a new file is uploaded, update available projects
+    ## FILE UPDATES - When a new file is uploaded, update available projects
     observe({
       fileinfo <- input$projectFile
       if(!is.null(input$projectFile)) {
@@ -67,7 +66,7 @@ shinyServer(function(input, output, session) {
       }
     })
 
-    ## When a new project is selected, update available scenarios
+    ## SCENARIO UPDATES - When a new project is selected, update available scenarios
     observe({
       if(input$fileList != "") {
         project.data <- files[[input$fileList]]
@@ -131,11 +130,24 @@ shinyServer(function(input, output, session) {
         prj <- isolate(files[[input$fileList]])
         scen <- input$mapScenario
         query <- input$mapQuery
+        catvars <- input$mapCats
 
         if(uiStateValid(prj, scen, query)) {
-          catvars <- getQuerySubcategories(prj, scen, query)
-          catvars <- getQuery(prj, query, scen)[[catvars[2]]] %>% unique()
-          updateSelectInput(session, 'mapCats', choices=catvars)
+          df <- getQuery(prj, query, scen)
+
+          # The first one is region and the next is the most aggregated
+          subcat <- getQuerySubcategories(prj, scen, query)[2]
+          if(!is.null(catvars)) {
+            okunits <- df[df[[subcat]] %in% catvars, ][[1, 'Units']]
+            choices <- dplyr::filter(df, Units == okunits) %>%
+                       dplyr::pull(UQ(as.name(subcat))) %>%
+                       unique()
+          } else {
+            choices <- df[[subcat]] %>% unique()
+          }
+
+          updateSelectInput(session, 'mapCats', choices=choices)
+          # updateCheckboxGroupInput(session, 'mapFilters', choices=catvars)
         }
     })
 
@@ -227,6 +239,7 @@ shinyServer(function(input, output, session) {
       prj <- files[[input$fileList]]
       scen <- input$mapScenario
       query <- input$mapQuery
+      subcat <- input$mapCats
 
       if(!uiStateValid(prj, scen, query)) return(default.plot("Updating..."))
 
@@ -246,17 +259,22 @@ shinyServer(function(input, output, session) {
                     basins =    gcammaptools::map.basin235,
                     usa =       gcammaptools::map.usa)
 
-      plotMap(prj, query, scen, NULL, input$mapExtent, year, map, mapZoom())
+      plotMap(prj, query, scen, NULL, input$mapExtent, subcat, year, map, mapZoom())
     })
 
     output$mapAltPlot <- renderPlot({
       prj <- files[[input$fileList]]
       scen <- input$mapScenario
       query <- input$mapQuery
+      subcat <- input$mapCats
       if(!uiStateValid(prj, scen, query)) return(default.plot("Updating..."))
 
       diffscen <- if(input$diffCheck) input$diffScenario
-      regions <- lac.rgns
+      filters <- list(region = lac.rgns)
+
+      # TODO: don't get subcat this way
+      sc <- getQuerySubcategories(prj, scen, query)
+      if (length(sc) > 1) filters[[sc[2]]] <- subcat
 
       # If the scenario has changed, the value of the query selector may not
       # be valid anymore.
@@ -265,7 +283,7 @@ shinyServer(function(input, output, session) {
         query <- availableQueries[1]
       }
 
-      plotTime(prj, query, scen, NULL, "region", regions)
+      plotTime(prj, query, scen, NULL, "region", filters)
     })
 
     region.filter <- callModule(regionFilter, "tpFilters")
@@ -310,8 +328,10 @@ shinyServer(function(input, output, session) {
         }
         output$tableTitle <- renderText(tableTitle)
 
+        rgnfilter <- list(region = region.filter())
+
         # Update the plot and the time plot data frame (used for the hover)
-        plt <- plotTime(prj, query, scen, diffscen, tvSubcatVar, region.filter())
+        plt <- plotTime(prj, query, scen, diffscen, tvSubcatVar, rgnfilter)
         t <- if(is.null(plt$plotdata)) 'dis' else 'en'
         session$sendCustomMessage(type = paste0(t, 'able-element'),
                                   message = 'triggerTableModal')

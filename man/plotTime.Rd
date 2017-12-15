@@ -4,7 +4,7 @@
 \alias{plotTime}
 \title{Plot values over time as a bar chart}
 \usage{
-plotTime(prjdata, query, scen, diffscen, subcatvar, rgns)
+plotTime(prjdata, query, scen, diffscen, subcatvar, filters)
 }
 \arguments{
 \item{prjdata}{A project data structure}
@@ -17,7 +17,7 @@ plotTime(prjdata, query, scen, diffscen, subcatvar, rgns)
 
 \item{subcatvar}{Variable to use for subcategories in the plot}
 
-\item{rgns}{Regions to filter to}
+\item{filters}{Named list of variables and values to filter to}
 }
 \description{
 If it is possible to build a plot with the data, this function will return

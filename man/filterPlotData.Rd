@@ -4,20 +4,19 @@
 \alias{filterPlotData}
 \title{Filter out data that should not be plotted}
 \usage{
-filterPlotData(plotData, filtervar, filterset, startYear, endYear)
+filterPlotData(plotData, filters, startYear = NULL, endYear = NULL)
 }
 \arguments{
 \item{plotData}{Data frame containing the data for a plot.}
-
-\item{filtervar}{Filter on this variable before aggregating.}
-
-\item{filterset}{Set of values to include in the filter operation.}
 
 \item{startYear}{Minimum year to display. If NULL, searches year column for
 minimum in data.}
 
 \item{endYear}{Maximum year to display. If NULL, searches year column for
 maximum in data.}
+
+\item{filters:}{Named list of variables and values to filter on before
+aggregating. Values can be character or a list.}
 }
 \value{
 Filtered data frame.

@@ -4,15 +4,13 @@
 \alias{plotMap}
 \title{Plot GCAM data on a global or regional map}
 \usage{
-plotMap(prjdata, query, pltscen, diffscen, projselect, year, map = NULL,
-  zoom = 0)
+plotMap(prjdata, query, scen, diffscen, projselect, subcat, year,
+  filters = NULL, map = NULL, zoom = 0)
 }
 \arguments{
 \item{prjdata}{Project data file}
 
 \item{query}{Name of the query to plot}
-
-\item{pltscen}{Name of the scenario to plot}
 
 \item{diffscen}{Name of the scenario to difference against pltscen, or NULL if none}
 
@@ -20,7 +18,11 @@ plotMap(prjdata, query, pltscen, diffscen, projselect, year, map = NULL,
 
 \item{year}{Year to plot data for}
 
+\item{filters}{Named list of variables and values to filter to}
+
 \item{map}{Base map to plot on (for gridded data only)}
+
+\item{pltscen}{Name of the scenario to plot}
 }
 \description{
 Plot GCAM data on a global or regional map

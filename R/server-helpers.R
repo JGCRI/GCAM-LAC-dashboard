@@ -362,18 +362,12 @@ determineMapset <- function(prjdata, pltscen, query)
 #' @return Cleaned data frame.
 cleanPlotData <- function(plotData)
 {
-  # To plot cleanly, we can only take data with the same units
-  units <- unique(plotData$Units)
-  if (length(units) > 1) {
-    mostCommonUnit <- sort(table(plotData$Units), decreasing = T)[1] %>% names()
-    plotData <- dplyr::filter(plotData, Units == mostCommonUnit)
-  }
-
   # If the data has a region column, put it in the canoncial order for GCAM.
   if('region' %in% names(plotData)) {
     plotData$region <- factor(plotData$region,
                               levels=c(names(gcammaptools::gcam32_colors), '0'),
-                              ordered=TRUE) # convert to ordered factor
+                              ordered=TRUE) %>% # convert to ordered factor
+      as.character()
   }
 
   # Convert the data to long form if it isn't already
@@ -399,14 +393,14 @@ cleanPlotData <- function(plotData)
 #' Filter out data that should not be plotted
 #'
 #' @param plotData Data frame containing the data for a plot.
-#' @param filtervar Filter on this variable before aggregating.
-#' @param filterset Set of values to include in the filter operation.
+#' @param filters: Named list of variables and values to filter on before
+#'   aggregating. Values can be character or a list.
 #' @param startYear Minimum year to display. If NULL, searches year column for
 #'   minimum in data.
 #' @param endYear Maximum year to display. If NULL, searches year column for
 #'   maximum in data.
 #' @return Filtered data frame.
-filterPlotData <- function(plotData, filtervar, filterset, startYear, endYear)
+filterPlotData <- function(plotData, filters, startYear = NULL, endYear = NULL)
 {
   # Only select relevant years
   if (is.null(startYear)) {
@@ -418,15 +412,19 @@ filterPlotData <- function(plotData, filtervar, filterset, startYear, endYear)
   plotData <- dplyr::filter(plotData, year >= startYear & year <= endYear)
 
   # Filter out all items in filterset that are found in column filtervar
-  if(!is.null(filtervar) &&
-     !is.null(filterset) &&
-     length(filterset) > 0 &&
-     filtervar %in% names(plotData)
-  ) {
-    plotData <- dplyr::filter_(plotData, lazyeval::interp(~y %in% x,
-                                                          y = as.name(filtervar),
-                                                          x = filterset))
+  filterPlotVar <- function(filtervar, filters) {
+    filterset <- filters[[filtervar]]
+    plotData <<- dplyr::filter(plotData, UQ(as.name(filtervar)) %in% filterset)
   }
+  sapply(names(filters), filterPlotVar, filters)
+
+  # To plot cleanly, we have to filter out data with different units
+  units <- unique(plotData$Units)
+  if (length(units) > 1) {
+    mostCommonUnit <- sort(table(plotData$Units), decreasing = T)[1] %>% names()
+    plotData <- dplyr::filter(plotData, Units == mostCommonUnit)
+  }
+
   plotData
 }
 
@@ -437,20 +435,19 @@ filterPlotData <- function(plotData, filtervar, filterset, startYear, endYear)
 #' @param pltscen Name of the scenario to plot
 #' @param diffscen Difference scenario, if any
 #' @param key Aggregation variable.  (e.g., 'region' or 'sector')
-#' @param filtervar If not NULL, filter on this variable before aggregating
-#' @param filterset:  Set of values to include in the filter operation.  Ignored
-#'   if filtervar is NULL.
-#' @param yearRange A vector of two integers of form c(start year, end year)
-#'   to filter the data to.
+#' @param filters: Named list of variables and values to filter on before
+#'   aggregating. Values can be character or a list.
+#' @param yearRange A vector of two integers of form \code{c(start year, end
+#'   year)} to filter the data to.
 #' @keywords internal
 #' @export
-getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
-                        filterset=NULL, yearRange = c(2005, 2050))
+getPlotData <- function(prjdata, query, pltscen, diffscen, key, filters,
+                        yearRange = c(2005, 2050))
 {
     # table plot
     tp <- getQuery(prjdata, query, pltscen) %>%
           cleanPlotData() %>%
-          filterPlotData(filtervar, filterset, yearRange[1], yearRange[2])
+          filterPlotData(filters, yearRange[1], yearRange[2])
 
     if (nrow(tp) == 0) return(NULL)
 
@@ -458,7 +455,7 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filtervar=NULL,
         # 'difference plot'
         dp <- getQuery(prjdata, query, diffscen) %>%
               cleanPlotData() %>%
-              filterPlotData(filtervar, filterset, yearRange[1], yearRange[2])
+              filterPlotData(filters, yearRange[1], yearRange[2])
     }
     else {
         dp <- NULL
@@ -538,40 +535,47 @@ default.plot <- function(label.text='No data selected')
 #' @param diffscen Name of the scenario to difference against pltscen, or NULL if none
 #' @param projselect Projection to use for the map
 #' @param year Year to plot data for
+#' @param filters Named list of variables and values to filter to
 #' @param map Base map to plot on (for gridded data only)
 #' @importFrom ggplot2 scale_fill_gradientn guides
 #' @importFrom gcammaptools add_region_ID plot_GCAM plot_GCAM_grid
 #' @export
-plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map = NULL, zoom = 0)
+plotMap <- function(prjdata, query, scen, diffscen, projselect, subcat, year,
+                    filters = NULL, map = NULL, zoom = 0)
 {
 
   if(is.null(prjdata)) {
     default.plot()
   }
-  else if(!uiStateValid(prjdata, pltscen, query)) {
+  else if(!uiStateValid(prjdata, scen, query)) {
     ggplot2::last_plot()
   }
   else {
     # Check the cache to see if we have created this plot before
-    cacheKey <- paste0(attr(prjdata, "file"), query, pltscen, diffscen,
-                       projselect, year, nrow(map), zoom)
+    cacheKey <- paste0(attr(prjdata, "file"), query, scen, diffscen, projselect,
+                       paste(subcat, collapse = ""), year, nrow(map), zoom)
     if(!is.null(mapCache[[cacheKey]])) return(mapCache[[cacheKey]])
 
-    mapset <- determineMapset(prjdata, pltscen, query)
+    mapset <- determineMapset(prjdata, scen, query)
+    filters <- list()
 
-    if(isGrid(prjdata, pltscen, query)) {
+    if(isGrid(prjdata, scen, query)) {
       key <- c('lat', 'lon')
     }
     else {
       key <- if(mapset==gcammaptools::basin235) 'basin' else 'region'
+      if(projselect == "lac") filters$region <- lac.rgns
+
+      # update same as line 136 in server.R (todo: change)
+      if (!is.null(subcat)) {
+        sc <- getQuerySubcategories(prjdata, scen, query)
+        if (length(sc) > 1) filters[[sc[2]]] <- subcat
+      }
     }
 
-    # This filters out all other countries for the LAC extent
-    rgns <- if(projselect == "lac") lac.rgns else NULL
-
     # Get the data and make sure it is valid
-    pltdata <- getPlotData(prjdata, query, pltscen, diffscen, key, "region",
-                           rgns, yearRange = c(year, year))
+    pltdata <- getPlotData(prjdata, query, scen, diffscen, key, filters,
+                           yearRange = c(year, year))
     if(is.null(pltdata)) return(default.plot())
 
     ## map plot is expecting the column coresponding to the map locations to
@@ -611,7 +615,7 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map = N
                              name = query, limits = map.limits)
 
     }
-    else if(isGrid(prjdata, pltscen, query)) {
+    else if(isGrid(prjdata, scen, query)) {
       if (!is.null(map)) map.dat <- map
       plt <- plot_GCAM_grid(pltdata, datacol, map = map.dat,
                             proj_type = map.params$proj_type,
@@ -642,11 +646,11 @@ plotMap <- function(prjdata, query, pltscen, diffscen, projselect, year, map = N
 #' @param scen  Name of the scenario to plot
 #' @param diffscen  Name of the difference scenario, or NULL if none
 #' @param subcatvar  Variable to use for subcategories in the plot
-#' @param rgns  Regions to filter to
+#' @param filters Named list of variables and values to filter to
 #' @importFrom magrittr "%>%"
 #' @importFrom ggplot2 ggplot aes_string geom_bar ylab
 #' @export
-plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
+plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filters)
 {
     if(is.null(prjdata)) {
       list(plot = default.plot())
@@ -654,19 +658,14 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, rgns)
     else if(isGrid(prjdata, scen, query)) {
       list(plot = default.plot("Can't plot time series of\nspatial grid data."))
     }
-    else if(length(rgns) == 0) {
-      list(plot = default.plot("No regions selected."))
-    }
     else {
-        filtervar <- 'region'
-
         if(subcatvar=='none')
             subcatvar <- NULL
         else
             subcatvar <- as.name(subcatvar)
 
-        pltdata <- getPlotData(prjdata, query, scen, diffscen, subcatvar,
-                               filtervar, rgns)
+        pltdata <- getPlotData(prjdata, query, scen, diffscen, subcatvar, filters)
+
         if(is.null(pltdata)) return(list(plot = default.plot()))
 
         plt <- ggplot(pltdata, aes_string('year','value', fill=subcatvar)) +

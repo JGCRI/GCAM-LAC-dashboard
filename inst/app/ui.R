@@ -47,10 +47,10 @@ shinyUI(fluidPage(theme="style.css",
                                        choices=c(Global='global', USA='usa', China='china',
                                                  Africa='africa', `Latin America`='lac'),
                                        selected = 'lac'),
-                           conditionalPanel(condition = "!output.mapisGrid",
-                             selectInput('mapCats', label = "Subcategories",
-                                            choices=list(), multiple=T)),
-                                            #selectize=T)),
+                           conditionalPanel(condition = "!output.mapIsGrid",
+                             selectizeInput('mapCats', label = "Filter by",
+                                            choices=list(), multiple=T,
+                                            options=list(placeholder='Select filters...'))),
                            conditionalPanel(condition = "output.mapIsGrid",
                              selectInput('mapType', label = "Map Type", width = NULL,
                                          choices=c(`GCAM Regions`='regions',
@@ -62,6 +62,11 @@ shinyUI(fluidPage(theme="style.css",
                     )
                   )
               ),
+              # conditionalPanel(condition = "input.mapCats",
+              #   box(title = 'Filters', width = NULL, status = "primary", height='215px',
+              #       checkboxGroupInput('mapFilters', NULL, choices = list())
+              #   )
+              # ),
               box(title = NULL, width = NULL, status = "primary",
                   plotOutput('mapAltPlot', height = '430px')
               )
@@ -69,7 +74,7 @@ shinyUI(fluidPage(theme="style.css",
             column(7,
               box(width = NULL, status = "primary", solidHeader = T,
                   title = textOutput('mapName', inline=TRUE), align = 'center',
-                  plotOutput('mapPlot', height = '600px'),
+                  plotOutput('mapPlot', height = '550px'),
                   absolutePanel(class = 'zoom-buttons', bottom = 10, right = 10,
                     column(12,
                       fluidRow(
@@ -100,7 +105,8 @@ shinyUI(fluidPage(theme="style.css",
                   fluidRow(
                     column(width = 5, selectInput('scenarioInput', 'Scenario',
                                                   choices=list()),
-                           selectInput('plotQuery', label="Variable", choices=list())
+                           selectizeInput('plotQuery', label="Variable", choices=list(),
+                                          options=list(placeholder='Choose a variable...'))
                     ),
                     column(width = 5,
                            conditionalPanel(condition = "input.diffCheck == true",
