@@ -1,9 +1,14 @@
 @import url("https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,700italic,400,300,700");
 
+/* Remove margin from page */
+.container-fluid {
+  padding: 0px;
+}
 
 /*Default skin is skin-blue, so overwrite with our own style*/
 .skin-blue .main-header .navbar {
     background-color: #ffffff;
+    padding-right: 15px;
 }
 
 .skin-blue .main-header .logo {
@@ -174,6 +179,14 @@ h4.panel-title {
   background: #ddd;
 }
 
+/* Make checkboxes smaller */
+.checkbox {
+  margin-bottom: 3px;
+}
+
+.checkbox label {
+  font-size: 12px;
+}
 
 /* Loading page spinner (Source: http://tobiasahlin.com/spinkit/)*/
 .loading-panel {

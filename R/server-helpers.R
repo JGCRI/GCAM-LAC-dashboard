@@ -298,6 +298,7 @@ barPlotScale <- function(pltdata, subcatvar)
 barPlotTheme <- function(legendPos = "right")
 {
   theme(axis.text=element_text(size=12),
+        axis.text.x=element_text(angle=90, vjust=0.5),
         axis.title=element_text(size=13,face="bold"),
         legend.title=element_blank(),
         legend.position=legendPos)

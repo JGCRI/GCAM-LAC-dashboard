@@ -99,7 +99,7 @@ shinyUI(fluidPage(theme="style.css",
             downloadButton('downloadButton')
           ),
           fluidRow(
-            column(width = 8,
+            column(width = 9,
               box(title="Plot Options", status = "primary", width = NULL,
                   solidHeader = T,
                   fluidRow(
@@ -138,7 +138,7 @@ shinyUI(fluidPage(theme="style.css",
               )
             ),
 
-            column(width = 4,
+            column(width = 3,
               regionFilterInput("tpFilters")
             )
           )
