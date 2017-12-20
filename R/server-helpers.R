@@ -174,7 +174,7 @@ getQuerySubcategories <- function(prj, scenario, query)
 #' @param query Name of the query.
 #' @param oldSubcategory The subcategory for the previous query.
 #' @export
-getNewSubcategory <- function(prj, scenario, query, oldSubcategory)
+getNewSubcategory <- function(prj, scenario, query, oldSubcategory = NULL)
 {
   if(!uiStateValid(prj, scenario, query)) {
     NULL
@@ -185,7 +185,8 @@ getNewSubcategory <- function(prj, scenario, query, oldSubcategory)
 
     # A good choice will have more than 2 elements, but not too many
     choices <- numcats[which(numcats > 2)]
-    if(oldSubcategory %in% names(numcats) || oldSubcategory == 'none') {
+    if(!is.null(oldSubcategory) & (oldSubcategory %in% names(numcats) ||
+                                   oldSubcategory == 'none')) {
       oldSubcategory
     }
     else if(length(choices) == 0) {
@@ -568,8 +569,8 @@ plotMap <- function(prjdata, query, scen, diffscen, projselect, subcat, year,
 
       # update same as line 136 in server.R (todo: change)
       if (!is.null(subcat)) {
-        sc <- getQuerySubcategories(prjdata, scen, query)
-        if (length(sc) > 1) filters[[sc[2]]] <- subcat
+        sc <- getNewSubcategory(prjdata, scen, query)
+        if (sc != 'none') filters[[sc]] <- subcat
       }
     }
 

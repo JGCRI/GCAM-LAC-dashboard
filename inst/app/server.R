@@ -166,36 +166,46 @@ shinyServer(function(input, output, session) {
         prj <- isolate(files[[input$fileList]])
         scen <- isolate(input$mapScenario)
         query <- input$mapQuery
-        catvars <- input$mapCats
+        catvars <- isolate(input$mapCats)
         trigger <- updates$mapquery
 
         if(uiStateValid(prj, scen, query)) {
-          # The first one is region and the next is the most aggregated
-          selected <- getQuerySubcategories(prj, scen, query)[2]
+          df <- getQuery(prj, query, scen)
+          subcat <- getNewSubcategory(prj, scen, query)
+          choices <- df[[subcat]] %>% unique()
 
-          newSubcatSelected <- !isTRUE(all.equal(selected, previous$mapsubcat$selected))
-          newSubcatChoices <- !isTRUE(all.equal(catvars, previous$mapsubcat$choices))
-
-          if(newSubcatSelected || newSubcatChoices) {
-            df <- getQuery(prj, query, scen)
-
-            if(!is.null(catvars)) {
-              okunits <- df[df[[selected]] %in% catvars, ][[1, 'Units']]
-              choices <- dplyr::filter(df, Units == okunits) %>%
-                         dplyr::pull(UQ(as.name(selected))) %>%
-                         unique()
-            }
-            else {
-              choices <- df[[selected]] %>% unique()
-            }
-
-            updateSelectInput(session, 'mapCats', choices=choices,
-                              selected=catvars)
-          # updateCheckboxGroupInput(session, 'mapFilters', choices=catvars)
-            previous$mapsubcat$choices <<- choices
-            previous$mapsubcat$choices <<- catvars
+          if(is.null(catvars) & length(previous$mapsubcat$selected) == 0) {
+            newSubcatSelected <- FALSE
           }
           else {
+            newSubcatSelected <- !isTRUE(all.equal(catvars, previous$mapsubcat$selected))
+          }
+
+          newSubcatChoices <- !isTRUE(all.equal(choices, previous$mapsubcat$choices))
+
+          if(newSubcatSelected || newSubcatChoices) {
+            pholder <- 'Select filters...' # placeholder for the filter input
+
+            if (subcat == 'region') {
+              choices <- list()
+              pholder <- 'No filters available'
+            }
+            else if(!is.null(catvars) & all(catvars %in% choices)) {
+              okunits <- df[df[[subcat]] %in% catvars, ][['Units']]
+              choices <- dplyr::filter(df, Units %in% okunits) %>%
+                         dplyr::pull(UQ(as.name(subcat))) %>%
+                         unique()
+            }
+
+            updateSelectizeInput(session, 'mapCats', choices=choices,
+                                 selected=catvars, options=list(placeholder=pholder))
+          # updateCheckboxGroupInput(session, 'mapFilters', choices=catvars)
+            previous$mapsubcat$choices <<- choices
+            previous$mapsubcat$selected <<- catvars
+          }
+
+          # Explicitly trigger update if the user didn't select new choice
+          if(!newSubcatSelected) {
             updates$mapsubcat <- isolate(updates$mapsubcat) + 1
           }
         }
@@ -286,10 +296,11 @@ shinyServer(function(input, output, session) {
 
     ## ----- PLOT UPDATES -----
     output$mapPlot <- renderPlot({
-      prj <- files[[input$fileList]]
-      scen <- input$mapScenario
-      query <- input$mapQuery
+      prj <- isolate(files[[input$fileList]])
+      scen <- isolate(input$mapScenario)
+      query <- isolate(input$mapQuery)
       subcat <- input$mapCats
+      trigger <- updates$mapsubcat
 
       if(!uiStateValid(prj, scen, query)) return(default.plot("Updating..."))
 
@@ -324,9 +335,8 @@ shinyServer(function(input, output, session) {
       diffscen <- if(input$diffCheck) input$diffScenario
       filters <- list(region = lac.rgns)
 
-      # TODO: don't get subcat this way
-      sc <- getQuerySubcategories(prj, scen, query)
-      if (length(sc) > 1) filters[[sc[2]]] <- subcat
+      sc <- getNewSubcategory(prj, scen, query)
+      if (sc != 'region' & !is.null(subcat)) filters[[sc]] <- subcat
 
       # If the scenario has changed, the value of the query selector may not
       # be valid anymore.
