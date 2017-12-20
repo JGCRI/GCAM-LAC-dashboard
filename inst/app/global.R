@@ -17,7 +17,7 @@ landingPageUI <- function(id) {
          solidHeader = TRUE, status = "primary",
          plotOutput(ns("landingPlot1"), height='211px')
       ),
-      box(title = 'CO2 Emissions', width = NULL,
+      box(title = 'GHG Emissions', width = NULL,
          solidHeader = TRUE, status = "primary",
          plotOutput(ns("landingPlot2"), height='211px')
       ),
@@ -43,8 +43,8 @@ landingPageUI <- function(id) {
 
       h4("Land"),
       tabBox(id = ns("popTabset"), title = NULL, width = NULL, side = 'left',
-        tabPanel("Agriculture", value = "Crops", plotOutput(ns("landPlot1"), height='500px')),
-        tabPanel("Biomass", value = "Forest Cover", plotOutput(ns("landPlot2"), height='500px'))
+        tabPanel("Crop Production", value = "Crops", plotOutput(ns("landPlot1"), height='500px')),
+        tabPanel("Forest Cover", value = "Forest Cover", plotOutput(ns("landPlot2"), height='500px'))
       ),
 
       sliderInput(ns('popYear'), NULL, min=2005, max=2050, step=5, value=2020,
@@ -59,7 +59,7 @@ landingPage <- function(input, output, session, data) {
   # When the map plots on the landing page are loaded, generate year toggle
   observe({
     query <- input$waterTabset
-    years <- getQuery(defaultData, query, "REFlu_e6_mex")$year %>% unique()
+    years <- getQuery(defaultData, query, "Reference")$year %>% unique()
 
     if(input$waterYearToggle %in% years)
       selected <- input$waterYearToggle # the previous selection
@@ -85,7 +85,7 @@ landingPage <- function(input, output, session, data) {
   lapply(c("Scarcity", "Supply", "Demand"), function(query) {
     output[[paste0("water", query, "Plot")]] <- renderPlot({
       query <- paste("Water", query)
-      pscen <- "REFlu_e6_mex"
+      pscen <- "Reference"
       year <- as.integer(input$waterYearToggle)
       plotMap(defaultData, query, pscen, NULL, "lac", NULL, year)
     })
@@ -96,14 +96,14 @@ landingPage <- function(input, output, session, data) {
   #   lapply(c("landPlot1", "landPlot2"), function(outputID) {
   #     output[[outputID]] <- renderPlot({
   #       query <- if(outputID == "landPlot1") "Agriculture production" else "Biomass production"
-  #       pscen <- "REFlu_e6_mex"
+  #       pscen <- "Reference"
   #       year <- input$popYear
   #       plotMap(data()$proj, query, pscen, NULL, "lac", year)
   #     })
   #   })
   # })
 
-  # Search for energy and CO2 queries in the input data
+  # Search for energy and GHG queries in the input data
   observe({
     scen <- input$dashScenario
     if(scen %in% listScenarios(data()$proj)) {
@@ -114,16 +114,20 @@ landingPage <- function(input, output, session, data) {
       if(is.na(primEnergy))
         primEnergy <- qs[grep("primary.*energy", qs, ignore.case = T)][1]
 
-      co2BySector <- qs[grep("CO2.*emissions.*sector", qs, ignore.case = T)][1]
-      if(is.na(co2BySector))
-        co2BySector <- qs[grep("CO2.*emissions", qs, ignore.case = T)][1]
+      ghgByType <- qs[grep("ghg.*emissions.*type", qs, ignore.case = T)][1]
+      if(is.na(ghgByType))
+        ghgByType <- qs[grep("ghg.*emissions", qs, ignore.case = T)][1]
 
       filters <- list(region = lac.rgns)
       output$landingPlot1 <- renderPlot({
-        plotTime(data()$proj, primEnergy, scen, NULL, "fuel", lac.rgns)
+        plotTime(data()$proj, primEnergy, scen, NULL, "fuel", lac.rgns)$plot +
+          ggplot2::guides(fill = ggplot2::guide_legend(keyheight = 1.0,
+                                                       keywidth = 1.0))
       })
       output$landingPlot2 <- renderPlot({
-        plotTime(data()$proj, co2BySector, scen, NULL, "sector", lac.rgns)
+        plotTime(data()$proj, ghgByType, scen, NULL, "gas_type", lac.rgns)$plot +
+          ggplot2::guides(fill = ggplot2::guide_legend(keyheight = 1.0,
+                                                       keywidth = 1.0))
       })
 
       # LAND PLOTS
@@ -142,9 +146,9 @@ landingPage <- function(input, output, session, data) {
       lapply(c("landPlot1", "landPlot2"), function(outputID) {
         output[[outputID]] <- renderPlot({
           query <- if(outputID == "landPlot1") land1 else land2
-          pscen <- "REFlu_e6_mex"
+          filter <- if(outputID == "landPlot2") list(land_type = "Forest") else NULL
           year <- input$popYear
-          plotMap(data()$proj, query, pscen, NULL, "lac", NULL, year)
+          plotMap(data()$proj, query, scen, NULL, "lac", filter, year)
         })
       })
     }

@@ -419,18 +419,20 @@ shinyServer(function(input, output, session) {
       proj <- files[[input$fileList]]
       s <- listScenarios(proj)
       q <- listQueries(proj, s[1])
-      co2Present <- grep("co2.*emissions", q, ignore.case = T) %>% length > 0
-      nrgPresent <- grep("primary.*energy", q, ignore.case = T) %>% length > 0
-      agrPresent <- grep("biomass.*production", q, ignore.case = T) %>% length > 0
-      bioPresent <- grep("agriculture.*production", q, ignore.case = T) %>% length > 0
+      ghgPresent <- any(grepl("ghg.*emissions", q, ignore.case = T))
+      nrgPresent <- any(grepl("primary.*energy", q, ignore.case = T))
+      agrPresent <- any(grepl("crop.*production", q, ignore.case = T))
+      agrPresent <- agrPresent | any(grepl("agriculture.*production", q, ignore.case = T))
+      agrPresent <- agrPresent | any(grepl("food", q, ignore.case = T))
+      lndPresent <- any(grepl("land.*allocation", q, ignore.case = T))
       if(is.null(proj))
         list("", "")
-      else if(co2Present && nrgPresent && agrPresent && bioPresent)
+      else if(ghgPresent && nrgPresent && agrPresent && lndPresent)
         list(err = "", proj = proj)
       else
-        list(err = paste0(length(which(!c(co2Present, nrgPresent, agrPresent, bioPresent))),
+        list(err = paste0(length(which(!c(ghgPresent, nrgPresent, agrPresent, lndPresent))),
                    " queries not found for the dataset ", input$fileList,
-                   ". Using 'GCAM LAC' dataset instead."),
+                   ". Displaying 'GCAM LAC' dataset instead."),
              proj = defaultData)
     })
 
