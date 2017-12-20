@@ -33,13 +33,13 @@ shinyServer(function(input, output, session) {
     mapZoom <- reactiveVal(0)
 
     # Initialize state variables to facilitate the smooth updating of the plot
-    # on the Explore panel. The scenario, query, and subcategory selectInputs
-    # are part of a chain that starts with the projectFile input, and ends with
-    # the plot. The updating of the choices in one of the three selectInputs is
-    # triggered by the user making a new selection XOR a change in an input
-    # higher up on the chain. In the latter case, the reactiveValues in the
-    # 'updates' variable let the inputs further down the chain know they need to
-    # update.
+    # on the Explore and Maps panels. The scenario, query, and subcategory
+    # selectInputs are part of a chain that starts with the projectFile input,
+    # and ends with the plot. The updating of the choices in one of the three
+    # selectInputs is triggered by the user making a new selection XOR a change
+    # in an input higher up on the chain. In the latter case, the reactiveValues
+    # in the 'updates' variable let the inputs further down the chain know they
+    # need to update.
     #
     # This whole structure arises because updateSelectInput only triggers
     # observers of that input if the selected parameter changes. It may be
@@ -82,9 +82,11 @@ shinyServer(function(input, output, session) {
           updates$mapscen <- isolate(updates$pltscen) + 1
         }
         else {
-          updateSelectInput(session, 'scenarioInput', choices=scens)
-          updateSelectInput(session, 'mapScenario', choices=scens)
-          updateSelectInput(session, 'diffScenario', choices=scens)
+          refscen <- grep("ref", scens, ignore.case = T, value = T)
+          refscen <- if(length(refscen) > 0) refscen[1] else NULL
+          updateSelectInput(session, 'scenarioInput', choices=scens, selected=refscen)
+          updateSelectInput(session, 'mapScenario', choices=scens, selected=refscen)
+          updateSelectInput(session, 'diffScenario', choices=scens, selected=refscen)
           previous$pltscen$choices <<- scens
           previous$mapscen$choices <<- scens
         }
@@ -320,7 +322,7 @@ shinyServer(function(input, output, session) {
                     basins =    gcammaptools::map.basin235,
                     usa =       gcammaptools::map.usa)
 
-      plotMap(prj, query, scen, NULL, input$mapExtent, subcat, year, map, mapZoom())
+      plotMap(prj, query, scen, NULL, input$mapExtent, subcat, year, NULL, map, mapZoom())
     })
 
     output$mapAltPlot <- renderPlot({

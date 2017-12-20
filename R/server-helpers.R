@@ -568,7 +568,6 @@ plotMap <- function(prjdata, query, scen, diffscen, projselect, subcat, year,
       key <- if(mapset==gcammaptools::basin235) 'basin' else 'region'
       if(projselect == "lac") filters$region <- lac.rgns
 
-      # update same as line 136 in server.R (todo: change)
       if (!is.null(subcat)) {
         sc <- getNewSubcategory(prjdata, scen, query)
         if (sc != 'none') filters[[sc]] <- subcat

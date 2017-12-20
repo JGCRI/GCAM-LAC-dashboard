@@ -71,7 +71,10 @@ landingPage <- function(input, output, session, data) {
   })
 
   observe({
-    updateSelectInput(session, 'dashScenario', choices = listScenarios(data()$proj))
+    scens <- listScenarios(data()$proj)
+    refscen <- grep("ref", scens, ignore.case = T, value = T)
+    refscen <- if(length(refscen) > 0) refscen[1] else NULL
+    updateSelectInput(session, 'dashScenario', choices=scens, selected=refscen)
   })
 
   output$dashboardWarning <- renderText({
