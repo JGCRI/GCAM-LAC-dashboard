@@ -281,7 +281,11 @@ shinyServer(function(input, output, session) {
 
     observeEvent(input$zoomIn, { if(mapZoom() > -30) mapZoom(mapZoom() - 3) })
     observeEvent(input$zoomOut, { if(mapZoom() < 30) mapZoom(mapZoom() + 3) })
-    observeEvent(input$triggerDiffCheck, { updateCheckboxInput(session, 'diffCheck', value = F) })
+
+    observe({
+      t <- if(input$diffCheck) 'enable-element' else 'disable-element'
+      session$sendCustomMessage(type = t, message = 'diffScenario')
+    })
 
     ## ----- FILE UPLOAD UPDATES -----
     output$projectSize <- renderText({

@@ -109,24 +109,22 @@ shinyUI(fluidPage(theme="style.css",
                                           options=list(placeholder='Choose a variable...'))
                     ),
                     column(width = 5,
-                           conditionalPanel(condition = "input.diffCheck == true",
-                                            selectInput('diffScenario', 'Difference Scenario:', choices=list())),
-                           conditionalPanel(condition = "input.diffCheck != true",
-                                            div(style = "height: 67px; padding-top: 21px;",
-                                              checkboxInput('diffCheck', 'Add Difference Scenario')
-                                            )),
-                           selectInput('tvSubcatVar', 'Break totals into subcategories by:',
+                           selectInput('diffScenario',
+                                       'Difference Scenario:',
+                                       choices=list()),
+                           selectInput('tvSubcatVar', 'Breakdown by:',
                                        choices=list())
                     ),
                     column(width = 2,
-                           conditionalPanel(condition = "input.diffCheck == true",
-                             actionButton('triggerDiffCheck', NULL, icon("times"),
-                                          lib = "font-awesome")
+                           div(style="height: 130px;",
+                           div(style="position: absolute; top: 20px; left: 5px;",
+                             checkboxInput('diffCheck', 'Compare')
                            ),
-                           div(class="table-title", align="right", "View as Table",
+                           div(class="table-title", align="right", span("View as Table"),
                                br(),
                                actionButton('triggerTableModal', NULL,
                                             icon("table", lib = "font-awesome"))
+                           )
                            )
                     )
                   )
