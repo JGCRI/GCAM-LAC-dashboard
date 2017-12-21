@@ -27,11 +27,15 @@ landingPageUI <- function(id) {
     # Tabbed box with water plots on far left
     column(4, align = "left",
       h4("Water"),
-      tabBox(id = ns("waterTabset"), title = NULL, width = NULL, side = 'left',
-        tabPanel("Supply", value = "Water Supply", plotOutput(ns("waterSupplyPlot"), height='500px')),
-        tabPanel("Demand", value = "Water Demand", plotOutput(ns("waterDemandPlot"), height='500px')),
-        tabPanel("Scarcity", value = "Water Scarcity", plotOutput(ns("waterScarcityPlot"), height='500px'))
-      ),
+      uiOutput(ns('waterTabset')),
+      # tabBox(id = ns("waterTabset"), title = NULL, width = NULL, side = 'left',
+      #   tabPanel("Supply", value = textOutput(ns("waterSupplyTitle")),
+      #            plotOutput(ns("waterSupplyPlot"), height='500px')),
+      #   tabPanel("Demand", value = "Water Demand",
+      #            plotOutput(ns("waterDemandPlot"), height='500px')),
+      #   tabPanel("Scarcity", value = "Water Scarcity",
+      #            plotOutput(ns("waterScarcityPlot"), height='500px'))
+      # ),
 
       div(align="center", radioButtons(ns('waterYearToggle'), NULL,
                                       choices = 2050, inline = T)
@@ -56,20 +60,6 @@ landingPageUI <- function(id) {
 
 landingPage <- function(input, output, session, data) {
 
-  # When the map plots on the landing page are loaded, generate year toggle
-  observe({
-    query <- input$waterTabset
-    years <- getQuery(defaultData, query, "Reference")$year %>% unique()
-
-    if(input$waterYearToggle %in% years)
-      selected <- input$waterYearToggle # the previous selection
-    else
-      selected <- years[(length(years) + 1) / 2] # the middle year
-
-    updateRadioButtons(session, 'waterYearToggle', NULL, choices = years,
-                       selected = selected, inline = TRUE)
-  })
-
   observe({
     scens <- listScenarios(data()$proj)
     refscen <- grep("ref", scens, ignore.case = T, value = T)
@@ -80,28 +70,6 @@ landingPage <- function(input, output, session, data) {
   output$dashboardWarning <- renderText({
       data()$err
   })
-
-  # Water plots
-  lapply(c("Scarcity", "Supply", "Demand"), function(query) {
-    output[[paste0("water", query, "Plot")]] <- renderPlot({
-      query <- paste("Water", query)
-      pscen <- "Reference"
-      year <- as.integer(input$waterYearToggle)
-      plotMap(defaultData, query, pscen, NULL, "lac", NULL, year)
-    })
-  })
-
-  # # Search for agriculture and biomass data to map in the input data
-  # observe({
-  #   lapply(c("landPlot1", "landPlot2"), function(outputID) {
-  #     output[[outputID]] <- renderPlot({
-  #       query <- if(outputID == "landPlot1") "Agriculture production" else "Biomass production"
-  #       pscen <- "Reference"
-  #       year <- input$popYear
-  #       plotMap(data()$proj, query, pscen, NULL, "lac", year)
-  #     })
-  #   })
-  # })
 
   # Search for energy and GHG queries in the input data
   observe({
@@ -128,6 +96,46 @@ landingPage <- function(input, output, session, data) {
         plotTime(data()$proj, ghgByType, scen, NULL, "gas_type", lac.rgns)$plot +
           ggplot2::guides(fill = ggplot2::guide_legend(keyheight = 1.0,
                                                        keywidth = 1.0))
+      })
+
+      # WATER PLOTS
+      water <- qs[grep("water", qs, ignore.case = T)]
+      water.grid <- sapply(water, function(q) { isGrid(data()$proj, scen, q) })
+      if(any(water.grid)) water <- water[water.grid]
+      if(length(water) > 3) water <- water[1:3] # limit to max 3 tabs
+
+      output$waterTabset <- renderUI({
+        tabs <- lapply(water, function(tabqry) {
+          tabname <- sapply(strsplit(tabqry, " "), tail, 1)
+          tabPanel(tabname, value = tabqry,
+                   plotOutput(session$ns(gsub(" ", "-", paste(tabqry, "plot"))),
+                              height = "500px"))
+        })
+        names(tabs) <- NULL
+        do.call(tabBox, c(tabs, id = session$ns("waterTabBox"), width = 12))
+      })
+
+      lapply(water, function(query) {
+        output[[gsub(" ", "-", paste(query, "plot"))]] <- renderPlot({
+          year <- as.integer(input$waterYearToggle)
+          plotMap(defaultData, query, scen, NULL, "lac", NULL, year)
+        })
+      })
+
+      # When the map plots on the landing page are loaded, generate year toggle
+      observe({
+        query <- input$waterTabBox
+        if(!is.null(query)) {
+          years <- getQuery(defaultData, query, scen)$year %>% unique()
+
+          if(input$waterYearToggle %in% years)
+            selected <- input$waterYearToggle # the previous selection
+          else
+            selected <- years[(length(years) + 1) / 2] # the middle year
+
+          updateRadioButtons(session, 'waterYearToggle', NULL, choices = years,
+                             selected = selected, inline = TRUE)
+        }
       })
 
       # LAND PLOTS
