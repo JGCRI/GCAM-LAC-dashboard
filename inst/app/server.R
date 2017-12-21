@@ -46,14 +46,14 @@ shinyServer(function(input, output, session) {
     # possible in the future to avoid this semi-roundabout way of signaling, if
     # this feature gets implemented: https://github.com/rstudio/shiny/issues/928
     updates <- reactiveValues(pltscen = 0, pltquery = 0, pltsubcat = 0,
-                              mapquery = 0, mapsubcat = 0)
+                              mapquery = 0, mapfilters = 0)
     previous <- list(pltscen   = list(choices = list(), selected = ""),
                      pltquery  = list(choices = list(), selected = ""),
                      pltsubcat = list(choices = list(), selected = ""),
                      mapscen   = list(choices = list(), selected = ""),
                      mapquery  = list(choices = list(), selected = ""),
-                     mapsubcat = list(choices = list(), selected = list()),
-                     mapfilter = list(choices = list(), selected = ""))
+                     mapsubcat = list(choices = list(), selected = ""),
+                     mapfilter = list(choices = list(), selected = list()))
 
     ## ----- PLOT OPTION UPDATES -----
 
@@ -122,14 +122,14 @@ shinyServer(function(input, output, session) {
 
       if(newQuerySelected || newQueryChoices) {
         updateSelectInput(session, 'plotQuery', choices = queries, selected = sel)
-        previous$pltscen$selected <- scen
+        previous$pltquery$choices <<- queries
       }
 
       # If the selection hasn't changed, still trigger queries to refresh
       if(!newQuerySelected) updates$pltquery <- isolate(updates$pltquery) + 1
 
-      previous$pltquery$choices <<- queries
       previous$pltquery$selected <<- sel
+      previous$pltscen$selected <<- scen
 
       updateSelectInput(session, 'mapQuery', choices = queries, selected = sel)
     })
@@ -153,22 +153,22 @@ shinyServer(function(input, output, session) {
 
       if(newQuerySelected || newQueryChoices) {
         updateSelectInput(session, 'mapQuery', choices = queries, selected = sel)
-        previous$mapscen$selected <- scen
+        previous$mapquery$choices <<- queries
       }
 
       # If the selection hasn't changed, still trigger queries to refresh
       if(!newQuerySelected) updates$mapquery <- isolate(updates$mapquery) + 1
 
-      previous$mapquery$choices <<- queries
       previous$mapquery$selected <<- sel
+      previous$mapscen$selected <<- scen
     })
 
-    ## MAP SUBCATEGORIES - When a new query is selected, update available subcategories
+    ## MAP FILTERS - When a new query is selected, update available filters
     observe({
         prj <- isolate(files[[input$fileList]])
         scen <- isolate(input$mapScenario)
         query <- input$mapQuery
-        catvars <- isolate(input$mapCats)
+        filter <- isolate(input$mapCats)
         trigger <- updates$mapquery
 
         if(uiStateValid(prj, scen, query)) {
@@ -176,40 +176,50 @@ shinyServer(function(input, output, session) {
           subcat <- getNewSubcategory(prj, scen, query)
           choices <- df[[subcat]] %>% unique()
 
-          if(is.null(catvars) & length(previous$mapsubcat$selected) == 0) {
-            newSubcatSelected <- FALSE
-          }
-          else {
-            newSubcatSelected <- !isTRUE(all.equal(catvars, previous$mapsubcat$selected))
-          }
+          if(is.null(filter) & length(previous$mapfilter$selected) == 0)
+            newFilterSelected <- FALSE
+          else if(!all(filter %in% choices)) # means the query changed
+            newFilterSelected <- TRUE
+          else
+            newFilterSelected <- !isTRUE(all.equal(filter, previous$mapfilter$selected))
 
-          newSubcatChoices <- !isTRUE(all.equal(choices, previous$mapsubcat$choices))
+          newFilterChoices <- !isTRUE(all.equal(choices, previous$mapfilter$choices))
 
-          if(newSubcatSelected || newSubcatChoices) {
+          if(newFilterSelected || newFilterChoices) {
             pholder <- 'Select filters...' # placeholder for the filter input
 
             if (subcat == 'region') {
               choices <- list()
               pholder <- 'No filters available'
+              newFilterSelected <- !is.null(filter)
             }
-            else if(!is.null(catvars) & all(catvars %in% choices)) {
-              okunits <- df[df[[subcat]] %in% catvars, ][['Units']]
-              choices <- dplyr::filter(df, Units %in% okunits) %>%
-                         dplyr::pull(UQ(as.name(subcat))) %>%
-                         unique()
+            else if(!is.null(filter)) {
+              # Filter out choices that don't match units of filters selected
+              if(all(filter %in% choices)) {
+                okunits <- df[df[[subcat]] %in% filter, ][['Units']]
+                choices <- dplyr::filter(df, Units %in% okunits) %>%
+                           dplyr::pull(UQ(as.name(filter))) %>%
+                           unique()
+              }
+              else {
+                filter <- NULL
+              }
             }
 
             updateSelectizeInput(session, 'mapCats', choices=choices,
-                                 selected=catvars, options=list(placeholder=pholder))
+                                 selected=filter, options=list(placeholder=pholder))
           # updateCheckboxGroupInput(session, 'mapFilters', choices=catvars)
-            previous$mapsubcat$choices <<- choices
-            previous$mapsubcat$selected <<- catvars
+            previous$mapfilter$choices <<- choices
+            previous$mapfilter$selected <<- filter
+            previous$mapsubcat$selected <<- subcat
           }
 
           # Explicitly trigger update if the user didn't select new choice
-          if(!newSubcatSelected) {
-            updates$mapsubcat <- isolate(updates$mapsubcat) + 1
+          if(!newFilterSelected) {
+            updates$mapfilters <- isolate(updates$mapfilters) + 1
           }
+
+          previous$mapquery$selected <<- query
         }
     })
 
@@ -301,11 +311,12 @@ shinyServer(function(input, output, session) {
       prj <- isolate(files[[input$fileList]])
       scen <- isolate(input$mapScenario)
       query <- isolate(input$mapQuery)
-      subcat <- input$mapCats
-      trigger <- updates$mapsubcat
+      filter <- input$mapCats
+      trigger <- updates$mapfilters
 
       if(!uiStateValid(prj, scen, query)) return(default.plot("Updating..."))
 
+      previous$mapfilter$selected <<- filter
       diffscen <- if(input$diffCheck) input$diffScenario
 
       # If the scenario has changed, the value of the query selector may not
@@ -322,7 +333,7 @@ shinyServer(function(input, output, session) {
                     basins =    gcammaptools::map.basin235,
                     usa =       gcammaptools::map.usa)
 
-      plotMap(prj, query, scen, NULL, input$mapExtent, subcat, year, NULL, map, mapZoom())
+      plotMap(prj, query, scen, NULL, input$mapExtent, filter, year, NULL, map, mapZoom())
     })
 
     output$mapAltPlot <- renderPlot({
@@ -330,7 +341,7 @@ shinyServer(function(input, output, session) {
       scen <- isolate(input$mapScenario)
       query <- isolate(input$mapQuery)
       subcat <- input$mapCats
-      trigger <- updates$mapsubcat
+      trigger <- updates$mapfilters
 
       if(!uiStateValid(prj, scen, query)) return(default.plot("Updating..."))
 
