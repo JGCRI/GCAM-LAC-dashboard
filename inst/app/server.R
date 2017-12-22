@@ -9,11 +9,6 @@ shinyServer(function(input, output, session) {
 
     ## ----- INITIALIZATION -----
 
-    # Show loading screen on start up
-    initComplete <- reactiveVal(FALSE)
-    output$setupComplete <- reactive({ initComplete() })
-    outputOptions(output, 'setupComplete', suspendWhenHidden=FALSE)
-
     # Data that should show on load. The default data come from the objects
     # defaultData and sspData (in the data directory).
     defaultProj <- 'GCAM LAC'
@@ -458,7 +453,5 @@ shinyServer(function(input, output, session) {
                reactive(timePlot.df()), reactive(input$tvSubcatVar))
 
     callModule(scenarioComparison, "ssp", reactive(files[[input$fileList]]))
-
-    initComplete(TRUE)
 
 })

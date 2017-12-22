@@ -27,7 +27,7 @@ shinyUI(fluidPage(theme="style.css",
     ),
     dashboardBody(
       # Wrap everything in conditional panel to only show when loaded
-      conditionalPanel("output.setupComplete", {
+      conditionalPanel("input.setupComplete", {
       tabItems(
         tabItem(tabName = "dashboard", landingPageUI("dashboard")),
         tabItem(tabName = "maps",
@@ -144,7 +144,7 @@ shinyUI(fluidPage(theme="style.css",
         tabItem(tabName = "scenarios", scenarioComparisonUI("ssp"))
       ) # tabItems
       }), # loading panel
-      conditionalPanel("!output.setupComplete", {
+      conditionalPanel("!input.setupComplete", {
         div(class="loading-panel", div(class="loading-panel-container",
           h3("Loading"),
           div(class="spinner",

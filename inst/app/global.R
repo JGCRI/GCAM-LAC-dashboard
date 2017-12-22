@@ -38,7 +38,7 @@ landingPageUI <- function(id) {
       # ),
 
       div(align="center", radioButtons(ns('waterYearToggle'), NULL,
-                                      choices = 2050, inline = T)
+                                      choices = 0, inline = T)
       )
     ),
 
@@ -107,6 +107,7 @@ landingPage <- function(input, output, session, data) {
       output$waterTabset <- renderUI({
         tabs <- lapply(water, function(tabqry) {
           tabname <- sapply(strsplit(tabqry, " "), tail, 1)
+          outputOptions(output, gsub(" ", "-", paste(tabqry, "plot")), suspendWhenHidden=FALSE)
           tabPanel(tabname, value = tabqry,
                    plotOutput(session$ns(gsub(" ", "-", paste(tabqry, "plot"))),
                               height = "500px"))
@@ -114,10 +115,12 @@ landingPage <- function(input, output, session, data) {
         names(tabs) <- NULL
         do.call(tabBox, c(tabs, id = session$ns("waterTabBox"), width = 12))
       })
+      outputOptions(output, 'waterTabset', suspendWhenHidden=FALSE)
 
       lapply(water, function(query) {
         output[[gsub(" ", "-", paste(query, "plot"))]] <- renderPlot({
           year <- as.integer(input$waterYearToggle)
+          outputOptions(output, gsub(" ", "-", paste(query, "plot")), suspendWhenHidden=FALSE)
           plotMap(defaultData, query, scen, NULL, "lac", NULL, year)
         })
       })
