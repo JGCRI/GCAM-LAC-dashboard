@@ -28,17 +28,15 @@ landingPageUI <- function(id) {
     column(4, align = "left",
       h4("Water"),
       uiOutput(ns('waterTabset')),
-      # tabBox(id = ns("waterTabset"), title = NULL, width = NULL, side = 'left',
-      #   tabPanel("Supply", value = textOutput(ns("waterSupplyTitle")),
-      #            plotOutput(ns("waterSupplyPlot"), height='500px')),
-      #   tabPanel("Demand", value = "Water Demand",
-      #            plotOutput(ns("waterDemandPlot"), height='500px')),
-      #   tabPanel("Scarcity", value = "Water Scarcity",
-      #            plotOutput(ns("waterScarcityPlot"), height='500px'))
-      # ),
 
-      div(align="center", radioButtons(ns('waterYearToggle'), NULL,
-                                      choices = 0, inline = T)
+      div(align="center",
+        conditionalPanel("output['dashboard-numYrs'] <= 3",
+          radioButtons(ns('waterYearToggle'), NULL, choices = 0, inline = T)
+        )
+      ),
+      conditionalPanel("output['dashboard-numYrs'] > 3",
+        sliderInput(ns('waterYearSlider'), NULL, min=2005, max=2050,
+                    value=2050, step=5, sep="")
       )
     ),
 
@@ -60,6 +58,7 @@ landingPageUI <- function(id) {
 
 landingPage <- function(input, output, session, data) {
 
+  # Update the landing page's senario select; default to the reference scenario
   observe({
     scens <- listScenarios(data()$proj)
     refscen <- grep("ref", scens, ignore.case = T, value = T)
@@ -67,11 +66,9 @@ landingPage <- function(input, output, session, data) {
     updateSelectInput(session, 'dashScenario', choices=scens, selected=refscen)
   })
 
-  output$dashboardWarning <- renderText({
-      data()$err
-  })
+  output$dashboardWarning <- renderText({ data()$err })
 
-  # Search for energy and GHG queries in the input data
+  # Search for energy, water, and GHG queries in the input data
   observe({
     scen <- input$dashScenario
     if(scen %in% listScenarios(data()$proj)) {
@@ -117,13 +114,26 @@ landingPage <- function(input, output, session, data) {
       })
       outputOptions(output, 'waterTabset', suspendWhenHidden=FALSE)
 
+      # Plots the maps in the newly constructed tabs
       lapply(water, function(query) {
         output[[gsub(" ", "-", paste(query, "plot"))]] <- renderPlot({
-          year <- as.integer(input$waterYearToggle)
-          outputOptions(output, gsub(" ", "-", paste(query, "plot")), suspendWhenHidden=FALSE)
+          nYrs <- getQuery(defaultData, input$waterTabBox, scen)$year %>%
+            unique() %>% length()
+          year <- if(nYrs <= 3) as.integer(input$waterYearToggle) else input$waterYearSlider
           plotMap(defaultData, query, scen, NULL, "lac", NULL, year)
         })
       })
+      outputOptions(output, gsub(" ", "-", paste(water[1], "plot")), suspendWhenHidden=FALSE)
+
+      # Keeps track of whether to use a slider or a radio toggle
+      output$numYrs <- reactive({
+        nYrs <- 0
+        if(!is.null(input$waterTabBox))
+          nYrs <- getQuery(defaultData, input$waterTabBox, scen)$year %>%
+                  unique() %>% length()
+        nYrs
+      })
+      outputOptions(output, "numYrs", suspendWhenHidden = FALSE)
 
       # When the map plots on the landing page are loaded, generate year toggle
       observe({
@@ -131,13 +141,19 @@ landingPage <- function(input, output, session, data) {
         if(!is.null(query)) {
           years <- getQuery(defaultData, query, scen)$year %>% unique()
 
-          if(input$waterYearToggle %in% years)
-            selected <- input$waterYearToggle # the previous selection
-          else
-            selected <- years[(length(years) + 1) / 2] # the middle year
+          selected <- median(years)
 
-          updateRadioButtons(session, 'waterYearToggle', NULL, choices = years,
-                             selected = selected, inline = TRUE)
+          if(length(years) > 3) {
+            if(input$waterYearSlider %in% years)
+              selected <- input$waterYearSlide # the previous selection
+            updateSliderInput(session, 'waterYearSlider', NULL, value = selected)
+          }
+          else {
+            if(input$waterYearToggle %in% years)
+              selected <- input$waterYearToggle
+            updateRadioButtons(session, 'waterYearToggle', NULL, choices = years,
+                               selected = selected, inline = TRUE)
+          }
         }
       })
 

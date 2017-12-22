@@ -10,6 +10,8 @@ $(document).on('shiny:sessioninitialized', function(event) {
   Shiny.onInputChange("setupComplete", false);
   console.log('init');
 
+  var t = 0;
+
   $('#dashboard-waterTabset').on('DOMSubtreeModified', function() {
     // Check if the map image has loaded
     img = $('#dashboard-waterTabset').find('img');
@@ -23,10 +25,17 @@ $(document).on('shiny:sessioninitialized', function(event) {
     }
     // console.log(msg);
     if(img.length) {// && img[0].currentSrc) {
-      // send message to Shiny
-      Shiny.onInputChange("setupComplete", true);
-      console.log("sent message");
+      t += 1;
+
+      if(t == 2) {
+        // send message to Shiny
+        Shiny.onInputChange("setupComplete", true);
+        console.log("sent message");
+      }
     }
+
+    // Because I don't know how to do this with Shiny:
+    $('#dashboard-waterTabset').children().first().attr('class', 'col-sm-');
   });
 
 });

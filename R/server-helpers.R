@@ -686,7 +686,7 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filters)
 #' @export
 plotScenComparison <- function(prjdata, query, scens, diffscen, subcatvar, rgns)
 {
-  filtervar <- "region"
+  filters <- list(region = rgns)
 
   if(subcatvar=='none')
     subcatvar <- NULL
@@ -698,7 +698,7 @@ plotScenComparison <- function(prjdata, query, scens, diffscen, subcatvar, rgns)
 
   d <- NULL
   for (scen in scens) {
-    pltdata <- getPlotData(prjdata, query, scen, diffscen, subcatvar, filtervar, rgns)
+    pltdata <- getPlotData(prjdata, query, scen, diffscen, subcatvar, filters)
     d <- rbind(d, pltdata)
     pltdata$panel <- scen
     units <- pltdata$Units
