@@ -4,7 +4,7 @@
 \alias{barPlotTheme}
 \title{The theme for bar plots on the dashboard}
 \usage{
-barPlotTheme(legendPos = "right")
+barPlotTheme(pltdata, subcatvar, legendPos = "right")
 }
 \arguments{
 \item{legendPos}{The position of the legend}

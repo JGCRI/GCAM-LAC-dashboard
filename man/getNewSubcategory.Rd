@@ -4,7 +4,7 @@
 \alias{getNewSubcategory}
 \title{Get the subcategory to show for a new query}
 \usage{
-getNewSubcategory(prj, scenario, query, oldSubcategory)
+getNewSubcategory(prj, scenario, query, oldSubcategory = NULL)
 }
 \arguments{
 \item{prj}{Project data structure.}

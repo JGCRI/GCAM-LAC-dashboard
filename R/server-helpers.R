@@ -293,15 +293,19 @@ barPlotScale <- function(pltdata, subcatvar)
 
 #' The theme for bar plots on the dashboard
 #' @param legendPos The position of the legend
-#' @importFrom ggplot2 theme element_text element_blank
+#' @importFrom ggplot2 theme element_text element_blank margin
 #' @keywords internal
-barPlotTheme <- function(legendPos = "right")
+barPlotTheme <- function(pltdata, subcatvar, legendPos = "right")
 {
+  uq <- length(unique(pltdata[[subcatvar]]))
+  vshift <- if (uq > 10) 10 * (uq - 10) else 0
+
   theme(axis.text=element_text(size=12),
         axis.text.x=element_text(angle=90, vjust=0.5),
         axis.title=element_text(size=13,face="bold"),
         legend.title=element_blank(),
-        legend.position=legendPos)
+        legend.position=legendPos,
+        legend.margin=margin(vshift, 0, 0, 0))
 }
 
 #' Select suitable scale limits for a plot
@@ -670,7 +674,8 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filters)
         if(is.null(pltdata)) return(list(plot = default.plot()))
 
         plt <- ggplot(pltdata, aes_string('year','value', fill=subcatvar)) +
-               geom_bar(stat='identity') + barPlotTheme() + ylab(pltdata$Units)
+               geom_bar(stat='identity') + barPlotTheme(pltdata, subcatvar) +
+               ylab(pltdata$Units)
 
         # Get a color scheme for the subcategories
         plt <- plt + barPlotScale(pltdata, subcatvar)

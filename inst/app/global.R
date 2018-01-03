@@ -85,12 +85,12 @@ landingPage <- function(input, output, session, data) {
 
       filters <- list(region = lac.rgns)
       output$landingPlot1 <- renderPlot({
-        plotTime(data()$proj, primEnergy, scen, NULL, "fuel", lac.rgns)$plot +
+        plotTime(data()$proj, primEnergy, scen, NULL, "fuel", filters)$plot +
           ggplot2::guides(fill = ggplot2::guide_legend(keyheight = 1.0,
                                                        keywidth = 1.0))
       })
       output$landingPlot2 <- renderPlot({
-        plotTime(data()$proj, ghgByType, scen, NULL, "gas_type", lac.rgns)$plot +
+        plotTime(data()$proj, ghgByType, scen, NULL, "gas_type", filters)$plot +
           ggplot2::guides(fill = ggplot2::guide_legend(keyheight = 1.0,
                                                        keywidth = 1.0))
       })

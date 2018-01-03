@@ -371,6 +371,8 @@ shinyServer(function(input, output, session) {
 
         if(!uiStateValid(prj, scen, query)) return(default.plot())
 
+        previous$pltsubcat$selected <<- subcat
+
         diffscen <- if(input$diffCheck) input$diffScenario else NULL
         if(!is.null(diffscen) && diffscen == scen) {
           timePlot.df(NULL)
