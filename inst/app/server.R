@@ -193,7 +193,7 @@ shinyServer(function(input, output, session) {
               if(all(filter %in% choices)) {
                 okunits <- df[df[[subcat]] %in% filter, ][['Units']]
                 choices <- dplyr::filter(df, Units %in% okunits) %>%
-                           dplyr::pull(UQ(as.name(filter))) %>%
+                           dplyr::pull(UQ(as.name(subcat))) %>%
                            unique()
               }
               else {

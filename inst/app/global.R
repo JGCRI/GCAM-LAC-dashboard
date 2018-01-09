@@ -117,10 +117,13 @@ landingPage <- function(input, output, session, data) {
       # Plots the maps in the newly constructed tabs
       lapply(water, function(query) {
         output[[gsub(" ", "-", paste(query, "plot"))]] <- renderPlot({
-          nYrs <- getQuery(defaultData, input$waterTabBox, scen)$year %>%
-            unique() %>% length()
+          nYrs <- 0
+          if(uiStateValid(data()$proj, scen, query)) {
+            nYrs <- getQuery(data()$proj, query, scen)$year %>% unique() %>%
+                    length()
+          }
           year <- if(nYrs <= 3) as.integer(input$waterYearToggle) else input$waterYearSlider
-          plotMap(defaultData, query, scen, NULL, "lac", NULL, year)
+          plotMap(data()$proj, query, scen, NULL, "lac", NULL, year)
         })
       })
       outputOptions(output, gsub(" ", "-", paste(water[1], "plot")), suspendWhenHidden=FALSE)
@@ -128,8 +131,9 @@ landingPage <- function(input, output, session, data) {
       # Keeps track of whether to use a slider or a radio toggle
       output$numYrs <- reactive({
         nYrs <- 0
-        if(!is.null(input$waterTabBox))
-          nYrs <- getQuery(defaultData, input$waterTabBox, scen)$year %>%
+        query <- input$waterTabBox
+        if(!is.null(query) && uiStateValid(data()$proj, scen, query))
+          nYrs <- getQuery(data()$proj, query, scen)$year %>%
                   unique() %>% length()
         nYrs
       })
@@ -138,8 +142,8 @@ landingPage <- function(input, output, session, data) {
       # When the map plots on the landing page are loaded, generate year toggle
       observe({
         query <- input$waterTabBox
-        if(!is.null(query)) {
-          years <- getQuery(defaultData, query, scen)$year %>% unique()
+        if(!is.null(query)  && uiStateValid(data()$proj, scen, query)) {
+          years <- getQuery(data()$proj, query, scen)$year %>% unique()
 
           selected <- median(years)
 

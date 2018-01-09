@@ -710,5 +710,6 @@ plotScenComparison <- function(prjdata, query, scens, diffscen, subcatvar, rgns)
     plt <- plt + geom_bar(data = pltdata, stat = "identity")
   }
 
-  plt + ylab(units) + barPlotTheme("bottom") + barPlotScale(d, subcatvar)
+  plt + ylab(units) + barPlotTheme(pltdata, subcatvar, "bottom") +
+        barPlotScale(d, subcatvar)
 }
