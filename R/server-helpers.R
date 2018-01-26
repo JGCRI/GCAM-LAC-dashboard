@@ -399,7 +399,7 @@ cleanPlotData <- function(plotData)
 #' Filter out data that should not be plotted
 #'
 #' @param plotData Data frame containing the data for a plot.
-#' @param filters: Named list of variables and values to filter on before
+#' @param filters Named list of variables and values to filter on before
 #'   aggregating. Values can be character or a list.
 #' @param startYear Minimum year to display. If NULL, searches year column for
 #'   minimum in data.
@@ -537,14 +537,17 @@ default.plot <- function(label.text='No data selected')
 #'
 #' @param prjdata Project data file
 #' @param query Name of the query to plot
-#' @param pltscen Name of the scenario to plot
+#' @param scen Name of the scenario to plot
 #' @param diffscen Name of the scenario to difference against pltscen, or NULL if none
 #' @param projselect Projection to use for the map
+#' @param subcat Name of the subcategory to plot
 #' @param year Year to plot data for
 #' @param filters Named list of variables and values to filter to
 #' @param map Base map to plot on (for gridded data only)
+#' @param zoom Map zoom level
 #' @importFrom ggplot2 scale_fill_gradientn guides
 #' @importFrom gcammaptools add_region_ID plot_GCAM plot_GCAM_grid
+#' @importFrom grDevices gray
 #' @export
 plotMap <- function(prjdata, query, scen, diffscen, projselect, subcat, year,
                     filters = NULL, map = NULL, zoom = 0)
@@ -686,6 +689,7 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filters)
 
 #' Plot values over time as a bar chart
 #' @param scens List of scenario names to plot
+#' @param rgns List of regions to filter to
 #' @inheritParams plotTime
 #' @importFrom ggplot2 ggplot aes_string geom_bar theme ylab facet_grid
 #' @export

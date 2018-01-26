@@ -77,11 +77,11 @@ or click on one and press delete.
 }
 
 \author{
-\strong{Maintainer}: Robert Link \email{robert.link@pnnl.gov}
+\strong{Maintainer}: Caleb Braun \email{caleb.braun@pnnl.gov}
 
 Authors:
 \itemize{
-  \item Caleb Braun \email{caleb.braun@pnnl.gov}
+  \item Robert Link \email{robert.link@pnnl.gov}
 }
 
 }

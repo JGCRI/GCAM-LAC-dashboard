@@ -1,24 +1,22 @@
 Package: gcamlacdash
 Title: An Interactive Dashboard for Exploring GCAM Scenario Data
-Version: 0.2.0
+Version: 1.0.0
 Authors@R: c(
-    person("Robert", "Link", email = "robert.link@pnnl.gov", role = c("aut", "cre")),
-    person("Caleb", "Braun", email = "caleb.braun@pnnl.gov", role = c("aut")))
-Description: This package provides a Shiny app for getting a quick and easy look at GCAM data.
+    person("Caleb", "Braun", email = "caleb.braun@pnnl.gov", role = c("aut", "cre")),
+    person("Robert", "Link", email = "robert.link@pnnl.gov", role = c("aut")))
+Description: This package provides a Shiny app for exploring GCAM data, with a focus on Latin America and the Caribbean.
 Depends: R (>= 3.3.3)
 Imports: 
     rgcam (>= 0.4.0),
     gcammaptools (>= 0.4.0),
     ggplot2 (>= 2.2.1),
     dplyr (>= 0.5.0),
-    magrittr (>= 1.5),
     tidyr (>= 0.6.0),
-    lazyeval (>= 0.2.0),
+    magrittr (>= 1.5),
     RColorBrewer (>= 1.1.2),
     shiny (>= 1.0.0),
     shinyBS (>= 0.61),
     shinydashboard (>= 0.6.1),
-    shinythemes (>= 1.1.1)
 Remotes:
     JGCRI/rgcam,
     JGCRI/gcammaptools

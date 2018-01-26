@@ -16,6 +16,8 @@ plotScenComparison(prjdata, query, scens, diffscen, subcatvar, rgns)
 \item{diffscen}{Name of the difference scenario, or NULL if none}
 
 \item{subcatvar}{Variable to use for subcategories in the plot}
+
+\item{rgns}{List of regions to filter to}
 }
 \description{
 Plot values over time as a bar chart

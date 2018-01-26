@@ -9,14 +9,14 @@ filterPlotData(plotData, filters, startYear = NULL, endYear = NULL)
 \arguments{
 \item{plotData}{Data frame containing the data for a plot.}
 
+\item{filters}{Named list of variables and values to filter on before
+aggregating. Values can be character or a list.}
+
 \item{startYear}{Minimum year to display. If NULL, searches year column for
 minimum in data.}
 
 \item{endYear}{Maximum year to display. If NULL, searches year column for
 maximum in data.}
-
-\item{filters:}{Named list of variables and values to filter on before
-aggregating. Values can be character or a list.}
 }
 \value{
 Filtered data frame.
