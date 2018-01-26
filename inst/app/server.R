@@ -437,14 +437,15 @@ shinyServer(function(input, output, session) {
       agrPresent <- agrPresent | any(grepl("agriculture.*production", q, ignore.case = T))
       agrPresent <- agrPresent | any(grepl("food", q, ignore.case = T))
       lndPresent <- any(grepl("land.*allocation", q, ignore.case = T))
+      wtrPresent <- any(grepl("water", q, ignore.case = T))
       if(is.null(proj))
         list("", "")
-      else if(ghgPresent && nrgPresent && agrPresent && lndPresent)
+      else if(ghgPresent && nrgPresent && agrPresent && lndPresent && wtrPresent)
         list(err = "", proj = proj)
       else
-        list(err = paste0(length(which(!c(ghgPresent, nrgPresent, agrPresent, lndPresent))),
-                   " queries not found for the dataset ", input$fileList,
-                   ". Displaying 'GCAM LAC' dataset instead."),
+        list(err = paste0(sum(!c(ghgPresent, nrgPresent, agrPresent, lndPresent, wtrPresent)),
+                   " dashboard queries not found for the dataset ",
+                   input$fileList, ". Displaying 'GCAM LAC' dataset instead."),
              proj = defaultData)
     })
 

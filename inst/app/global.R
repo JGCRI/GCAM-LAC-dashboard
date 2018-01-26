@@ -1,7 +1,6 @@
 library(shiny)
 
 
-
 # Dashboard Tab -----------------------------------------------------------
 
 landingPageUI <- function(id) {
@@ -85,12 +84,14 @@ landingPage <- function(input, output, session, data) {
 
       filters <- list(region = lac.rgns)
       output$landingPlot1 <- renderPlot({
-        plotTime(data()$proj, primEnergy, scen, NULL, "fuel", filters)$plot +
+        pd <- isolate(data()$proj)
+        plotTime(pd, primEnergy, scen, NULL, "fuel", filters)$plot +
           ggplot2::guides(fill = ggplot2::guide_legend(keyheight = 1.0,
                                                        keywidth = 1.0))
       })
       output$landingPlot2 <- renderPlot({
-        plotTime(data()$proj, ghgByType, scen, NULL, "gas_type", filters)$plot +
+        pd <- isolate(data()$proj)
+        plotTime(pd, ghgByType, scen, NULL, "gas_type", filters)$plot +
           ggplot2::guides(fill = ggplot2::guide_legend(keyheight = 1.0,
                                                        keywidth = 1.0))
       })
@@ -121,9 +122,11 @@ landingPage <- function(input, output, session, data) {
           if(uiStateValid(data()$proj, scen, query)) {
             nYrs <- getQuery(data()$proj, query, scen)$year %>% unique() %>%
                     length()
+            year <- if(nYrs <= 3) as.integer(input$waterYearToggle) else input$waterYearSlider
+            plotMap(data()$proj, query, scen, NULL, "lac", NULL, year)
           }
-          year <- if(nYrs <= 3) as.integer(input$waterYearToggle) else input$waterYearSlider
-          plotMap(data()$proj, query, scen, NULL, "lac", NULL, year)
+          else
+            default.plot()
         })
       })
       outputOptions(output, gsub(" ", "-", paste(water[1], "plot")), suspendWhenHidden=FALSE)
@@ -142,7 +145,7 @@ landingPage <- function(input, output, session, data) {
       # When the map plots on the landing page are loaded, generate year toggle
       observe({
         query <- input$waterTabBox
-        if(!is.null(query)  && uiStateValid(data()$proj, scen, query)) {
+        if(!is.null(query) && uiStateValid(data()$proj, scen, query)) {
           years <- getQuery(data()$proj, query, scen)$year %>% unique()
 
           selected <- median(years)
