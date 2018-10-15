@@ -1,6 +1,7 @@
 ### Helper functions for the server side of the app.
 
 tag.noscen <- '->No scenarios selected<-'     # placeholder when no scenario selected
+# TODO: Shiny now (as of v 1.1.0) has a function for this called renderCachedPlots()
 mapCache <- new.env() # Use this environment for efficiently caching maps
 
 
@@ -236,10 +237,10 @@ getMapParams <- function(projselect, zoom)
     list(proj=gcammaptools::ch_aea, ext=gcammaptools::EXTENT_CHINA, zoom=zoom)
   }
   else if(projselect == 'africa') {
-    list(proj=gcammaptools::af_ortho, ext=gcammaptools::EXTENT_AFRICA, zoom=10 + zoom)
+    list(proj=gcammaptools::af_ortho, ext=gcammaptools::EXTENT_AFRICA, zoom=zoom)
   }
   else if(projselect == 'lac') {
-    list(proj=7567, proj_type='SR-ORG', ext=gcammaptools::EXTENT_LA, zoom=8 + zoom)
+    list(proj=7567, proj_type='SR-ORG', ext=gcammaptools::EXTENT_LA, zoom=zoom)
   }
 }
 
@@ -497,7 +498,7 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filters,
         if(!is.null(key) &&
            toString(key) %in% (tp %>% names %>% setdiff(c('year', 'Units')))
            ) {
-          tp <- dplyr::group_by_(tp, key, 'year', 'Units') %>%
+          tp <- dplyr::group_by(tp, !!key, year, Units) %>%
                 dplyr::summarise(value = sum(value))
         }
         else {
@@ -525,12 +526,12 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filters,
 #' Mainly intended for use when no data has been loaded.
 #'
 #' @param label.text Text to display in the middle of the panel
-#' @importFrom ggplot2 ggplot geom_label theme_minimal aes aes_
+#' @importFrom ggplot2 ggplot geom_label aes theme_void
 #' @export
 default.plot <- function(label.text='No data selected')
 {
-  ggplot(mapping=aes(x=0,y=0)) + geom_label(aes_(label=label.text), size=10) +
-    theme_minimal()
+  ggplot(mapping=aes(x=0,y=0)) + geom_label(aes(label=!!label.text), size=10) +
+    theme_void()
 }
 
 #' Plot GCAM data on a global or regional map
@@ -656,7 +657,7 @@ plotMap <- function(prjdata, query, scen, diffscen, projselect, subcat, year,
 #' @param subcatvar  Variable to use for subcategories in the plot
 #' @param filters Named list of variables and values to filter to
 #' @importFrom magrittr "%>%"
-#' @importFrom ggplot2 ggplot aes_string geom_bar ylab
+#' @importFrom ggplot2 ggplot geom_bar ylab
 #' @export
 plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filters)
 {
@@ -676,7 +677,7 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filters)
 
         if(is.null(pltdata)) return(list(plot = default.plot()))
 
-        plt <- ggplot(pltdata, aes_string('year','value', fill=subcatvar)) +
+        plt <- ggplot(pltdata, aes(x=year, y=value, fill=!!subcatvar)) +
                geom_bar(stat='identity') + barPlotTheme(pltdata, subcatvar) +
                ylab(pltdata$Units)
 
@@ -691,7 +692,7 @@ plotTime <- function(prjdata, query, scen, diffscen, subcatvar, filters)
 #' @param scens List of scenario names to plot
 #' @param rgns List of regions to filter to
 #' @inheritParams plotTime
-#' @importFrom ggplot2 ggplot aes_string geom_bar theme ylab facet_grid
+#' @importFrom ggplot2 ggplot geom_bar theme ylab facet_grid
 #' @export
 plotScenComparison <- function(prjdata, query, scens, diffscen, subcatvar, rgns)
 {
@@ -702,7 +703,7 @@ plotScenComparison <- function(prjdata, query, scens, diffscen, subcatvar, rgns)
   else
     subcatvar <- as.name(subcatvar)
 
-  plt <- ggplot(data = NULL, aes_string('year','value', fill=subcatvar)) +
+  plt <- ggplot(data = NULL, aes(x=year, y=value, fill=!!subcatvar)) +
          facet_grid(.~panel, scales="free")
 
   d <- NULL
