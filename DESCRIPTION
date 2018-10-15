@@ -14,7 +14,7 @@ Imports:
     tidyr (>= 0.6.0),
     magrittr (>= 1.5),
     RColorBrewer (>= 1.1.2),
-    shiny (>= 1.0.0),
+    shiny (>= 1.0.1),
     shinyBS (>= 0.61),
     shinydashboard (>= 0.6.1),
 Remotes:

@@ -36,8 +36,9 @@ $(document).on('shiny:sessioninitialized', function(event) {
 
     // Because I don't know how to do this with Shiny:
     $('#dashboard-waterTabset').children().first().attr('class', 'col-sm-');
-  });
 
+    Shiny.onInputChange("setupComplete", true);
+  });
 });
 
 

@@ -105,7 +105,7 @@ landingPage <- function(input, output, session, data) {
       output$waterTabset <- renderUI({
         tabs <- lapply(water, function(tabqry) {
           tabname <- sapply(strsplit(tabqry, " "), tail, 1)
-          outputOptions(output, gsub(" ", "-", paste(tabqry, "plot")), suspendWhenHidden=FALSE)
+          # outputOptions(output, gsub(" ", "-", paste(tabqry, "plot")), suspendWhenHidden=FALSE)
           tabPanel(tabname, value = tabqry,
                    plotOutput(session$ns(gsub(" ", "-", paste(tabqry, "plot"))),
                               height = "500px"))
@@ -129,7 +129,8 @@ landingPage <- function(input, output, session, data) {
             default.plot()
         })
       })
-      outputOptions(output, gsub(" ", "-", paste(water[1], "plot")), suspendWhenHidden=FALSE)
+      # This used to work but doesn't anymore, maybe due to updates to shiny or shinydashboard
+      # outputOptions(output, gsub(" ", "-", paste(water[1], "plot")), suspendWhenHidden=FALSE)
 
       # Keeps track of whether to use a slider or a radio toggle
       output$numYrs <- reactive({

@@ -483,12 +483,11 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filters,
 
         value <- joint.data$value.x - joint.data$value.y
 
-        mergenames <- sapply(mergenames, as.name) # Don't eval hyphenated col names
-
         # Construct the new data frame.  We use the scenario name from the left
         # (dp) data frame.
         tp <- dplyr::rename(joint.data, scenario=scenario.x) %>%
-           dplyr::select_(.dots=c('scenario', mergenames, 'Units')) %>% cbind(value)
+           dplyr::select(scenario, dplyr::one_of(mergenames), Units) %>%
+           dplyr::bind_cols(value = value)
     }
 
     if(!isGrid(prjdata, pltscen, query)) {
@@ -498,17 +497,17 @@ getPlotData <- function(prjdata, query, pltscen, diffscen, key, filters,
         if(!is.null(key) &&
            toString(key) %in% (tp %>% names %>% setdiff(c('year', 'Units')))
            ) {
-          tp <- dplyr::group_by(tp, !!key, year, Units) %>%
+          tp <- dplyr::group_by(tp, !!as.name(key), year, Units) %>%
                 dplyr::summarise(value = sum(value))
         }
         else {
-          tp <- dplyr::group_by_(tp, 'year', 'Units') %>%
+          tp <- dplyr::group_by(tp, year, Units) %>%
                 dplyr::summarise(value = sum(value))
         }
     }
     else {
         ## for gridded data, just get the lat, lon, year, data, and units
-        tp <- dplyr::select_(tp, .dots=c('lat', 'lon', 'value', 'year', 'Units'))
+        tp <- dplyr::select(tp, lat, lon, value, year, Units)
     }
 
     ## Occasionally you get a region with "0.0" for the unit string because
@@ -633,6 +632,7 @@ plotMap <- function(prjdata, query, scen, diffscen, projselect, subcat, year,
         # scale_fill_gradientn(colors = map.pal, name = unitstr)
         ggplot2::scale_fill_distiller(palette = "Spectral")
     } else {
+      print('what is going on?')
       plt <- default.plot(label.text = "No geographic data available for this query")
     }
     ## set up elements that are common to both kinds of plots here
