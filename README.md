@@ -86,3 +86,45 @@ scenarios side-by-side.  Like the other tabs, it allows you to choose a specific
 variable to plot, but this time for multiple scenarios at once.  To add or
 remove scenarios, choose them from the 'Selected Scenarios' dropdown, or click
 on one and press delete.
+
+## Creating a project file with rgcam
+
+The `rgcam` package provides functions for extracting GCAM data from GCAM output databases and importing it into R for analysis. The central concept in rgcam is the "project data file", which contains an R-native representation of selected queries for one or more scenarios. The package provides functions to run the GCAM Model Interface to extract data and add the results to a new or existing project data file, as well as to manage previously created project data.
+
+### Installation
+
+To use `rgcam` it is necessary to have R installed, and an IDE such as RStudio is highly recommended. To install rgcam, open an R session and run
+
+```
+install_github('JGCRI/rgcam')
+```
+
+The package includes a copy of the GCAM Model Interface and BaseX library, so it is not necessary to have it otherwise installed or configured. It also requires having a version of Java that can run the Model Interface, which is a minimum of Java version of 1.7*. 
+
+## Usage
+
+To extract data from a GCAM output database, rgcam uses an XML file containing the queries to retrieve. With that file, it is possible to create or add to a project file using the `addScenario` function. For example:
+
+```
+conn <- localDBConn('/path/to/dbs', 'my-gcamdb_basexdb')
+prj <- addScenario(conn, 'my-project-name.dat', 'my-scenario-name'
+                   'my-batch-queries.xml')
+```
+
+This command would run the queries in `my-batch-queries.xml` against the database `my-gcamdb_basexdb`, extract the results for a scenario called "my-scenario-name", and write the results to a file called "my-project-name.dat". Other scenarios, whether in the same database or a different one, can make additional calls to `addScenario` to add them to the project data. The results are also returned and assigned to prj if further processing is desired. Any file created this way can then be used in the GCAM Dashboard.
+
+Existing project data files can be loaded using `loadProject`:
+
+```
+prj <- loadProject('my-project-name.dat')
+```
+
+The `rgcam` package supports a number of advanced usage modes that are described in a vignette included with the package. Once you have the rgcam installed, run
+
+```
+devtools::build_vignettes('rgcam')
+browseVignettes('rgcam')
+```
+
+For further information, visit https://github.com/JGCRI/rgcam.
+
